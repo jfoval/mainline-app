@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
 import { v4 as uuid } from 'uuid';
-import { buildUpdate } from '@/lib/api-helpers';
+import { buildUpdate, nowCentral } from '@/lib/api-helpers';
 
 const ALLOWED_PATCH_FIELDS = ['content', 'area', 'cadence', 'last_triggered', 'sort_order'];
 
@@ -53,7 +53,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (rawUpdates.last_triggered === 'now') {
-      rawUpdates.last_triggered = new Date().toISOString().slice(0, 10);
+      rawUpdates.last_triggered = nowCentral().dateStr;
     }
     const update = buildUpdate(rawUpdates, ALLOWED_PATCH_FIELDS);
     if (!update) return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });

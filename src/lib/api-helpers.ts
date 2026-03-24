@@ -58,7 +58,51 @@ export function validateEnum(
   return null;
 }
 
+/** Get current date/time parts in America/Chicago (Central Time).
+ *  Works correctly on Vercel where new Date() returns UTC. */
+export function nowCentral() {
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Chicago',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    weekday: 'long',
+  }).formatToParts(now);
+
+  const get = (type: string) => parts.find(p => p.type === type)!.value;
+
+  const year = Number(get('year'));
+  const month = Number(get('month'));
+  const day = Number(get('day'));
+  const hour = Number(get('hour') === '24' ? '0' : get('hour'));
+  const minute = Number(get('minute'));
+  const second = Number(get('second'));
+  const weekday = get('weekday');
+
+  const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].indexOf(weekday);
+
+  return {
+    /** Date object set to the Central Time calendar date at noon (safe for girls-week calc) */
+    date: new Date(year, month - 1, day, 12, 0, 0),
+    dayOfWeek,
+    weekday,
+    hour,
+    minute,
+    /** "HH:MM" string for routine block comparison */
+    timeStr: `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+    /** "YYYY-MM-DD" string for date comparisons */
+    dateStr: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
+    /** "YYYY-MM-DD HH:MM:SS" for updated_at fields */
+    timestamp: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`,
+  };
+}
+
 /** Consistent local timestamp for updated_at fields */
 export function nowLocal(): string {
-  return new Date().toISOString().slice(0, 19).replace('T', ' ');
+  return nowCentral().timestamp;
 }

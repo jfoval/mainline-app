@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
+import { nowCentral } from '@/lib/api-helpers';
 
 export async function GET(req: NextRequest) {
   try {
@@ -72,7 +73,7 @@ export async function GET(req: NextRequest) {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
       result.recent_daily_notes = await sql`SELECT * FROM daily_notes WHERE date >= ${thirtyDaysAgo} ORDER BY date DESC`;
 
-      const currentMonth = new Date().toISOString().slice(0, 7);
+      const currentMonth = nowCentral().dateStr.slice(0, 7);
       const healthRows = await sql`SELECT * FROM health_log WHERE month = ${currentMonth}`;
       result.health_log = healthRows[0] || null;
 
@@ -93,11 +94,12 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     const key = body.type === 'monthly' ? 'last_monthly_review' : 'last_weekly_review';
-    const now = new Date().toISOString();
+    const ct = nowCentral();
+    const now = ct.timestamp;
     await sql`INSERT INTO settings (key, value) VALUES (${key}, ${now}) ON CONFLICT (key) DO UPDATE SET value = ${now}`;
 
     if (body.notes) {
-      const notesKey = `${body.type}_review_notes_${new Date().toISOString().slice(0, 10)}`;
+      const notesKey = `${body.type}_review_notes_${ct.dateStr}`;
       const notesJson = JSON.stringify(body.notes);
       await sql`INSERT INTO settings (key, value) VALUES (${notesKey}, ${notesJson}) ON CONFLICT (key) DO UPDATE SET value = ${notesJson}`;
     }

@@ -2,17 +2,17 @@ import { NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
 import { isGirlsWeek as checkGirlsWeek } from '@/lib/girls-week';
+import { nowCentral } from '@/lib/api-helpers';
 
 export async function GET() {
   try {
     await ensureDb();
 
-    const isGirlsWeek = checkGirlsWeek();
+    const ct = nowCentral();
+    const isGirlsWeek = checkGirlsWeek(ct.date);
 
-    const now = new Date();
-    const day = now.getDay();
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const dayName = dayNames[day];
+    const day = ct.dayOfWeek;
+    const dayName = ct.weekday;
 
     let routineType: string;
     if (day === 0) routineType = 'sunday';
@@ -23,7 +23,7 @@ export async function GET() {
       SELECT * FROM routine_blocks WHERE routine_type = ${routineType} ORDER BY sort_order
     ` as Array<{ id: string; start_time: string; end_time: string; label: string; description: string; is_non_negotiable: number }>;
 
-    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const timeStr = ct.timeStr;
     const currentBlock = blocks.find(b => timeStr >= b.start_time && timeStr < b.end_time) || null;
     const currentBlockIndex = currentBlock ? blocks.indexOf(currentBlock) : -1;
     let nextBlock = null;
@@ -106,7 +106,7 @@ export async function GET() {
       revenuePriority = 4;
     }
 
-    const today = now.toISOString().slice(0, 10);
+    const today = ct.dateStr;
     const dailyNoteRows = await sql`SELECT * FROM daily_notes WHERE date = ${today}`;
     const dailyNote = dailyNoteRows[0] as {
       top3_revenue: string | null;
@@ -114,7 +114,8 @@ export async function GET() {
       top3_third: string | null;
     } | undefined;
 
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const sevenDaysAgoDate = new Date(ct.date.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const sevenDaysAgo = `${sevenDaysAgoDate.getFullYear()}-${String(sevenDaysAgoDate.getMonth() + 1).padStart(2, '0')}-${String(sevenDaysAgoDate.getDate()).padStart(2, '0')}`;
     const staleWaiting = await sql`
       SELECT * FROM next_actions WHERE context = 'waiting_for' AND status = 'active' AND waiting_since IS NOT NULL AND waiting_since <= ${sevenDaysAgo}
     ` as Array<{ content: string; waiting_on_person: string | null; waiting_since: string }>;

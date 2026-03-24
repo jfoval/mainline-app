@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
 import { isGirlsWeek as checkGirlsWeek } from '@/lib/girls-week';
+import { nowCentral } from '@/lib/api-helpers';
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,10 +17,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(blocks);
     }
 
-    // Return current routine based on day
-    const isGirlsWeek = checkGirlsWeek();
-    const now = new Date();
-    const day = now.getDay();
+    // Return current routine based on day (Central Time)
+    const ct = nowCentral();
+    const isGirlsWeek = checkGirlsWeek(ct.date);
+    const day = ct.dayOfWeek;
 
     let routineType: string;
     if (day === 0) routineType = 'sunday';
@@ -30,16 +31,14 @@ export async function GET(req: NextRequest) {
       SELECT * FROM routine_blocks WHERE routine_type = ${routineType} ORDER BY sort_order
     `;
 
-    const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
     const currentBlock = (blocks as Array<{ start_time: string; end_time: string }>).find(
-      b => timeStr >= b.start_time && timeStr < b.end_time
+      b => ct.timeStr >= b.start_time && ct.timeStr < b.end_time
     );
 
     return NextResponse.json({
       routine_type: routineType,
       is_girls_week: isGirlsWeek,
-      current_time: timeStr,
+      current_time: ct.timeStr,
       current_block: currentBlock || null,
       blocks,
     });

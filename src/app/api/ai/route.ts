@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
 import { isGirlsWeek as checkGirlsWeek } from '@/lib/girls-week';
+import { nowCentral } from '@/lib/api-helpers';
 
 function getApiKey(): string | null {
   return process.env.ANTHROPIC_API_KEY || null;
@@ -126,8 +127,9 @@ Respond with a JSON object (no markdown): {"actionable": boolean, "suggestion": 
 
 // ─── Morning Briefing ──────────────────────
 async function morningBriefing(apiKey: string) {
-  const today = new Date().toISOString().slice(0, 10);
-  const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][new Date().getDay()];
+  const ct = nowCentral();
+  const today = ct.dateStr;
+  const dayName = ct.weekday;
 
   const inboxCountResult = await sql`SELECT COUNT(*) as count FROM inbox_items WHERE status = 'pending'`;
   const inboxCount = Number(inboxCountResult[0].count);
