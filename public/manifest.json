@@ -1,7 +1,7 @@
 {
-  "name": "Foval GTD",
-  "short_name": "GTD",
-  "description": "Personal GTD system for John Foval",
+  "name": "Mainline",
+  "short_name": "Mainline",
+  "description": "Personal productivity system powered by GTD",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

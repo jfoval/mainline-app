@@ -36,17 +36,12 @@ export async function GET(req: NextRequest) {
 
     const recurringTasks = await sql`SELECT * FROM recurring_tasks ORDER BY cadence, area, sort_order`;
 
-    const activeDeals = await sql`SELECT * FROM pipeline_deals WHERE stage NOT IN ('closed_won', 'closed_lost') ORDER BY stage, updated_at DESC`;
-    const warmLeads = await sql`SELECT * FROM pipeline_warm_leads ORDER BY added_at DESC`;
-
-    const offerings = await sql`SELECT * FROM offerings ORDER BY CASE readiness WHEN 'ready_to_sell' THEN 1 WHEN 'building_now' THEN 2 WHEN 'designed' THEN 3 WHEN 'concept' THEN 4 WHEN 'long_horizon' THEN 5 END`;
-
     const horizons = await sql`SELECT * FROM horizons ORDER BY type`;
 
+    // Dynamic context counts
     const actionCounts: Record<string, number> = {};
-    const contexts = ['work', 'errands', 'home', 'waiting_for', 'agendas', 'haley', 'prayers'];
-    for (const ctx of contexts) {
-      actionCounts[ctx] = allActions.filter(a => a.context === ctx).length;
+    for (const a of allActions) {
+      actionCounts[a.context] = (actionCounts[a.context] || 0) + 1;
     }
 
     const result: Record<string, unknown> = {
@@ -62,9 +57,6 @@ export async function GET(req: NextRequest) {
       stale_waiting: staleWaiting,
       agendas,
       recurring_tasks: recurringTasks,
-      active_deals: activeDeals,
-      warm_leads: warmLeads,
-      offerings,
     };
 
     if (type === 'monthly') {

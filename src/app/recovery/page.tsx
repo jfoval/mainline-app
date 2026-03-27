@@ -30,7 +30,7 @@ const SEVERITY_STYLES: Record<string, string> = {
 
 const VALID_LINKS = new Set([
   '/inbox/process', '/inbox', '/projects', '/actions', '/review',
-  '/pipeline', '/process', '/shutdown', '/horizons', '/clients',
+  '/process', '/shutdown', '/horizons',
   '/reference', '/recovery', '/ai', '/settings', '/',
 ]);
 
@@ -41,7 +41,6 @@ function sanitizeLink(link: string): string {
   if (link.includes('review')) return '/review';
   if (link.includes('project')) return '/projects';
   if (link.includes('action')) return '/actions';
-  if (link.includes('pipeline') || link.includes('deal')) return '/pipeline';
   if (link.includes('horizon') || link.includes('goal')) return '/horizons';
   if (link.includes('morning') || link.includes('process')) return '/process';
   if (link.includes('shutdown')) return '/shutdown';

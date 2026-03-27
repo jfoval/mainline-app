@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import {
   CheckCircle2, Circle, AlertTriangle, Inbox,
-  FolderKanban, ListTodo, Clock, Calendar, RotateCcw, TrendingUp,
+  FolderKanban, ListTodo, Clock, Calendar, RotateCcw,
   Target, ArrowRight, Check, Sparkles, Plus, Trash2
 } from 'lucide-react';
 import Link from 'next/link';
@@ -21,9 +21,6 @@ interface ReviewData {
   stale_waiting: Array<{ id: string; content: string; waiting_on_person: string; waiting_since: string }>;
   agendas: Array<{ id: string; content: string; agenda_person: string }>;
   recurring_tasks: Array<{ id: string; content: string; area: string; cadence: string; last_triggered: string }>;
-  active_deals: Array<{ id: string; company: string; stage: string; next_action: string; value: string }>;
-  warm_leads: Array<{ id: string; name: string; company: string; interest: string }>;
-  offerings: Array<{ id: string; name: string; readiness: string; build_status: string }>;
   horizons?: Array<{ id: string; type: string; content: string }>;
 }
 
@@ -34,18 +31,17 @@ const WEEKLY_STEPS = [
   { id: 'waiting', label: 'Review @waiting-for & @agendas', icon: Clock, description: 'Follow up needed? Upcoming meetings to prep? Stale items to remove?' },
   { id: 'calendar', label: 'Review Calendar', icon: Calendar, description: 'Look back 1 week (anything fall through?). Look ahead 2 weeks (need to prepare?).' },
   { id: 'recurring', label: 'Check Recurring Tasks', icon: RotateCcw, description: 'Any monthly, quarterly, or annual tasks due soon? Add as next actions.' },
-  { id: 'pipeline', label: 'Review Pipeline & Offerings', icon: TrendingUp, description: 'Active deals, warm leads, offering landscape. Anything need attention?' },
-  { id: 'areas', label: 'Review Areas of Focus', icon: Target, description: 'Faith, marriage, kids, health, Nurik, LSU, music, finances, home, growth.' },
+  { id: 'areas', label: 'Review Areas of Focus', icon: Target, description: 'Review each area of focus. Are you giving it adequate attention? Need a project or next action?' },
 ];
 
 const MONTHLY_EXTRA_STEPS = [
   { id: 'thinking', label: 'Thinking Doc Connections', icon: Sparkles, description: 'Scan for clusters, orphans, redundancy. Any docs to consolidate?' },
   { id: 'goals', label: 'Goals Check', icon: Target, description: 'Are active projects aligned with your 1-2 year goals? Any misalignment?' },
   { id: 'systems', label: 'Systems Check', icon: RotateCcw, description: 'Pick 1-2 areas. What is working? What is friction? What could improve?' },
-  { id: 'pulse', label: 'Personal Pulse Check', icon: CheckCircle2, description: 'How are you as a husband, father, person? Is business crowding out other callings?' },
+  { id: 'pulse', label: 'Personal Pulse Check', icon: CheckCircle2, description: 'How are you doing in your key life roles? Is work crowding out what matters most?' },
 ];
 
-const STORAGE_KEY = 'gtd_review_progress';
+const STORAGE_KEY = 'mainline_review_progress';
 
 function loadProgress(): { reviewType: 'weekly' | 'monthly'; currentStep: number; completedSteps: number[]; notes: Record<number, string> } | null {
   try {
@@ -152,7 +148,7 @@ export default function ReviewPage() {
           >
             <Calendar size={32} className="text-primary mb-3" />
             <h2 className="text-lg font-semibold">Weekly Review</h2>
-            <p className="text-sm text-muted mt-2">8-step guided walkthrough. Clear inboxes, review projects, actions, pipeline, and areas of focus.</p>
+            <p className="text-sm text-muted mt-2">7-step guided walkthrough. Clear inboxes, review projects, actions, and areas of focus.</p>
             <p className="text-xs text-muted mt-3">Saturday 7:30-8:30 AM · 60-90 min</p>
           </button>
 
@@ -436,75 +432,18 @@ function StepContent({ stepId, data }: { stepId: string; data: ReviewData }) {
     case 'recurring':
       return <RecurringTasksStep tasks={data.recurring_tasks} />;
 
-    case 'pipeline':
-      return (
-        <div className="space-y-3">
-          <div className="grid md:grid-cols-2 gap-3">
-            <div className="p-3 rounded-lg bg-background">
-              <p className="font-medium text-xs uppercase text-muted mb-2">Active Deals ({data.active_deals.length})</p>
-              {data.active_deals.length === 0 ? (
-                <p className="text-xs text-muted">No active deals</p>
-              ) : (
-                <div className="space-y-1">
-                  {data.active_deals.map(d => (
-                    <div key={d.id} className="text-xs">
-                      <span className="font-medium">{d.company}</span> — {d.stage.replace('_', ' ')}
-                      {!d.next_action && <span className="text-red-600 ml-1">(no next action!)</span>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="p-3 rounded-lg bg-background">
-              <p className="font-medium text-xs uppercase text-muted mb-2">Warm Leads ({data.warm_leads.length})</p>
-              {data.warm_leads.length === 0 ? (
-                <p className="text-xs text-muted">No warm leads</p>
-              ) : (
-                <div className="space-y-1">
-                  {data.warm_leads.map(l => (
-                    <p key={l.id} className="text-xs">{l.name}{l.company ? ` (${l.company})` : ''}</p>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="p-3 rounded-lg bg-background">
-            <p className="font-medium text-xs uppercase text-muted mb-2">Offering Landscape</p>
-            {data.offerings.length === 0 ? (
-              <p className="text-xs text-muted">No offerings tracked yet</p>
-            ) : (
-              <div className="space-y-1">
-                {data.offerings.map(o => (
-                  <p key={o.id} className="text-xs">
-                    <span className="font-medium">{o.name}</span>
-                    <span className="text-muted ml-1">({o.readiness.replace(/_/g, ' ')})</span>
-                    {o.build_status && <span className="text-muted"> — {o.build_status}</span>}
-                  </p>
-                ))}
-              </div>
-            )}
-          </div>
-          <Link href="/pipeline" className="flex items-center gap-1 text-xs text-primary hover:underline">
-            <ArrowRight size={12} /> Open Pipeline
-          </Link>
-        </div>
-      );
-
     case 'areas':
       return (
         <div className="space-y-2">
           <p className="text-sm mb-2">Scan each area. Keeping up? Need a project or next action?</p>
           {[
-            { area: 'God/Faith', prompt: 'Check @prayers. Growing? Reading? Journaling?' },
-            { area: 'Marriage', prompt: 'Check @haley. Anything fun planned this week?' },
-            { area: 'Kids', prompt: 'Who gets 1-on-1 time? Girls week? Family meeting prep?' },
-            { area: 'Health', prompt: 'Workouts on track? Sleep? Nutrition?' },
-            { area: 'Nurik', prompt: 'Client delivery solid? Building toward goals?' },
-            { area: 'LSU', prompt: 'Any teaching commitments or prep needed?' },
-            { area: 'Music', prompt: 'Recording progress? Any sessions or projects moving forward?' },
-            { area: 'Finances', prompt: 'Books current? Invoicing up to date?' },
+            { area: 'Health & Wellness', prompt: 'Workouts on track? Sleep? Nutrition?' },
+            { area: 'Relationships', prompt: 'Key people getting enough attention? Any follow-ups needed?' },
+            { area: 'Career / Business', prompt: 'Delivery solid? Building toward goals?' },
+            { area: 'Finances', prompt: 'Books current? Invoicing up to date? Budget on track?' },
             { area: 'Home', prompt: 'Maintenance? Projects? Anything stalled?' },
             { area: 'Personal Growth', prompt: 'Growth intentions still right? Any to graduate or add?' },
+            { area: 'Fun & Recreation', prompt: 'Making time for things you enjoy?' },
           ].map(item => (
             <div key={item.area} className="flex items-start gap-2 p-2 rounded-lg bg-background">
               <Circle size={14} className="text-muted mt-0.5 flex-shrink-0" />
@@ -558,8 +497,8 @@ function StepContent({ stepId, data }: { stepId: string; data: ReviewData }) {
         <div className="space-y-3 text-sm">
           <p>Pick 1-2 areas to review this month. What is working, what is friction, what could improve?</p>
           <div className="grid grid-cols-2 gap-2">
-            {['Nurik delivery workflow', 'GTD system', 'Home organization', 'Financial systems',
-              'Family routines', 'Recording setup', 'Tools & workflow', 'Computer/tools',
+            {['Work delivery process', 'GTD system', 'Home organization', 'Financial systems',
+              'Family routines', 'Daily routines', 'Tools & workflow', 'Communication systems',
             ].map(area => (
               <div key={area} className="flex items-center gap-2 p-2 rounded-lg bg-background">
                 <Circle size={12} className="text-muted" />

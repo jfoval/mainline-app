@@ -313,4 +313,110 @@ const embeddedMigrations: { version: number; name: string; statements: string[] 
       `ALTER TABLE pipeline_deals ADD COLUMN IF NOT EXISTS win_notes TEXT`,
     ],
   },
+  {
+    version: 5,
+    name: '005_remove_pipeline_rename_top3',
+    statements: [
+      // Rename top3_revenue to top3_first in daily_notes
+      `ALTER TABLE daily_notes RENAME COLUMN top3_revenue TO top3_first`,
+    ],
+  },
+  {
+    version: 6,
+    name: '006_week_patterns',
+    statements: [
+      `CREATE TABLE IF NOT EXISTS week_patterns (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        sort_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS week_pattern_blocks (
+        id TEXT PRIMARY KEY,
+        pattern_id TEXT NOT NULL REFERENCES week_patterns(id) ON DELETE CASCADE,
+        day_of_week INTEGER NOT NULL,
+        start_time TEXT NOT NULL,
+        end_time TEXT NOT NULL,
+        label TEXT NOT NULL,
+        description TEXT,
+        is_non_negotiable INTEGER DEFAULT 0,
+        sort_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS week_schedule (
+        id TEXT PRIMARY KEY,
+        week_start TEXT NOT NULL UNIQUE,
+        pattern_id TEXT NOT NULL REFERENCES week_patterns(id),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS week_pattern_rotation (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        pattern_ids TEXT NOT NULL,
+        start_date TEXT NOT NULL,
+        is_active INTEGER DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+
+      `CREATE INDEX IF NOT EXISTS idx_wpb_pattern ON week_pattern_blocks(pattern_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_wpb_day ON week_pattern_blocks(day_of_week)`,
+      `CREATE INDEX IF NOT EXISTS idx_ws_week ON week_schedule(week_start)`,
+    ],
+  },
+  {
+    version: 7,
+    name: '007_disciplines',
+    statements: [
+      `CREATE TABLE IF NOT EXISTS disciplines (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'discipline',
+        description TEXT,
+        frequency TEXT NOT NULL DEFAULT 'daily',
+        time_of_day TEXT NOT NULL DEFAULT 'morning',
+        is_active INTEGER NOT NULL DEFAULT 1,
+        sort_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+
+      `CREATE TABLE IF NOT EXISTS discipline_logs (
+        id TEXT PRIMARY KEY,
+        discipline_id TEXT NOT NULL REFERENCES disciplines(id) ON DELETE CASCADE,
+        date TEXT NOT NULL,
+        completed INTEGER NOT NULL DEFAULT 0,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_dl_discipline_date ON discipline_logs(discipline_id, date)`,
+      `CREATE INDEX IF NOT EXISTS idx_dl_date ON discipline_logs(date)`,
+      `CREATE INDEX IF NOT EXISTS idx_disciplines_active ON disciplines(is_active)`,
+    ],
+  },
+  {
+    version: 8,
+    name: '008_context_lists',
+    statements: [
+      `CREATE TABLE IF NOT EXISTS context_lists (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        key TEXT NOT NULL UNIQUE,
+        color TEXT,
+        icon TEXT,
+        sort_order INTEGER DEFAULT 0,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+
+      `CREATE INDEX IF NOT EXISTS idx_cl_active ON context_lists(is_active)`,
+      `CREATE INDEX IF NOT EXISTS idx_cl_key ON context_lists(key)`,
+    ],
+  },
 ];

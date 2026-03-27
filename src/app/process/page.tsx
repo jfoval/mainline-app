@@ -5,8 +5,8 @@ import Link from 'next/link';
 import {
   Sun,
   Inbox,
-  DollarSign,
   ListChecks,
+  Target,
   Rocket,
   Check,
   ChevronRight,
@@ -21,7 +21,7 @@ interface DailyNote {
   reflection_fell_short: string;
   reflection_noticed: string;
   reflection_grateful: string;
-  top3_revenue: string;
+  top3_first: string;
   top3_second: string;
   top3_third: string;
   notes: string;
@@ -35,31 +35,31 @@ interface InboxItem {
   status: string;
 }
 
-interface Deal {
-  company: string;
-  stage: string;
-  next_action: string;
-  value: string;
-}
-
-interface PipelineData {
-  deals: Deal[];
-  warm_leads: Array<{ name?: string; company?: string; interest?: string }>;
-  contacts: Array<Record<string, unknown>>;
-}
-
 interface Action {
   content: string;
   context: string;
   status: string;
 }
 
+interface DisciplineItem {
+  id: string;
+  name: string;
+  type: 'discipline' | 'value';
+  description: string | null;
+  time_of_day: string;
+}
+
+interface DisciplineLogItem {
+  discipline_id: string;
+  completed: number;
+}
+
 // ── Steps config ─────────────────────────────────────────────────────
 const STEPS = [
   { id: 'reflection', label: 'Daily Note & Reflection', icon: Sun },
   { id: 'inbox', label: 'Process Inbox', icon: Inbox },
-  { id: 'revenue', label: 'Revenue Focus', icon: DollarSign },
   { id: 'top3', label: 'Pick Top 3', icon: ListChecks },
+  { id: 'disciplines', label: 'Disciplines', icon: Target },
   { id: 'ready', label: 'Ready to Work', icon: Rocket },
 ];
 
@@ -83,7 +83,6 @@ export default function MorningProcessPage() {
   const [dailyNote, setDailyNote] = useState<DailyNote | null>(null);
   const [yesterdayNote, setYesterdayNote] = useState<DailyNote | null>(null);
   const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
-  const [pipeline, setPipeline] = useState<PipelineData | null>(null);
   const [actions, setActions] = useState<Action[]>([]);
   const [stalledProjects, setStalledProjects] = useState<{title: string}[]>([]);
 
@@ -94,9 +93,11 @@ export default function MorningProcessPage() {
     noticed: '',
     grateful: '',
   });
-  const [revenueFocus, setRevenueFocus] = useState('');
+  const [top3First, setTop3First] = useState('');
   const [top3Second, setTop3Second] = useState('');
   const [top3Third, setTop3Third] = useState('');
+  const [morningDisciplines, setMorningDisciplines] = useState<DisciplineItem[]>([]);
+  const [disciplineLogs, setDisciplineLogs] = useState<DisciplineLogItem[]>([]);
 
   // Loading
   const [loading, setLoading] = useState(true);
@@ -106,14 +107,15 @@ export default function MorningProcessPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [noteRes, yesterdayRes, inboxRes, pipelineRes, actionsRes, projectsRes] =
+        const [noteRes, yesterdayRes, inboxRes, actionsRes, projectsRes, discRes, discLogsRes] =
           await Promise.all([
             fetch(`/api/daily-notes?date=${todayStr()}`),
             fetch(`/api/daily-notes?date=${yesterdayStr()}`),
             fetch('/api/inbox'),
-            fetch('/api/pipeline'),
             fetch('/api/actions'),
             fetch('/api/projects?status=active'),
+            fetch('/api/disciplines'),
+            fetch(`/api/disciplines/logs?date=${todayStr()}`),
           ]);
 
         const noteData = await noteRes.json();
@@ -125,7 +127,7 @@ export default function MorningProcessPage() {
             noticed: noteData.reflection_noticed || '',
             grateful: noteData.reflection_grateful || '',
           });
-          if (noteData.top3_revenue) setRevenueFocus(noteData.top3_revenue);
+          if (noteData.top3_first) setTop3First(noteData.top3_first);
           if (noteData.top3_second) setTop3Second(noteData.top3_second);
           if (noteData.top3_third) setTop3Third(noteData.top3_third);
         }
@@ -136,9 +138,6 @@ export default function MorningProcessPage() {
         const inboxData = await inboxRes.json();
         setInboxItems(Array.isArray(inboxData) ? inboxData.filter((i: InboxItem) => i.status === 'pending') : []);
 
-        const pData = await pipelineRes.json();
-        setPipeline(pData);
-
         const aData = await actionsRes.json();
         setActions(Array.isArray(aData) ? aData.filter((a: Action) => a.status === 'active') : []);
 
@@ -148,6 +147,15 @@ export default function MorningProcessPage() {
             pjData.filter((p: { active_action_count?: number }) => p.active_action_count === 0)
               .map((p: { title: string }) => ({ title: p.title }))
           );
+        }
+
+        const discData = await discRes.json();
+        if (Array.isArray(discData)) {
+          setMorningDisciplines(discData.filter((d: DisciplineItem) => d.time_of_day === 'morning'));
+        }
+        const dlData = await discLogsRes.json();
+        if (Array.isArray(dlData)) {
+          setDisciplineLogs(dlData);
         }
       } catch (err) {
         console.error('Failed to load morning process data', err);
@@ -352,19 +360,17 @@ export default function MorningProcessPage() {
           </div>
         );
 
-      // ── Step 2: Revenue Focus ────────────────────────────────────
-      case 2: {
-        const activeDeals = pipeline?.deals || [];
-
+      // ── Step 2: Pick Top 3 ───────────────────────────────────────
+      case 2:
         return (
           <div className="space-y-6">
             <div>
               <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <DollarSign size={24} className="text-emerald-500" />
-                Revenue Focus
+                <ListChecks size={24} className="text-violet-500" />
+                Pick Your Top 3
               </h2>
               <p className="text-muted mt-1">
-                Review your pipeline and pick the highest-leverage revenue move for today.
+                What three outcomes would make today a win?
               </p>
             </div>
 
@@ -377,105 +383,17 @@ export default function MorningProcessPage() {
               </div>
             )}
 
-            {/* Active Deals */}
-            <div className="bg-card rounded-xl border border-border p-6 space-y-3">
-              <h3 className="font-semibold text-foreground">Active Deals</h3>
-              {activeDeals.length === 0 ? (
-                <p className="text-muted text-sm">No active deals in pipeline.</p>
-              ) : (
-                <div className="space-y-2">
-                  {activeDeals.map((deal, i) => (
-                    <div key={i} className="flex items-start justify-between gap-4 py-2 border-b border-border last:border-0">
-                      <div>
-                        <p className="font-medium text-foreground">{deal.company}</p>
-                        <p className="text-sm text-muted">
-                          Stage: <span className="text-foreground">{deal.stage}</span>
-                          {deal.value && <> &middot; {deal.value}</>}
-                        </p>
-                        {deal.next_action && (
-                          <p className="text-sm text-muted mt-0.5">
-                            Next: <span className="text-foreground">{deal.next_action}</span>
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Warm leads */}
-            {(pipeline?.warm_leads || []).length > 0 && (
-              <div className="bg-card rounded-xl border border-border p-6 space-y-3">
-                <h3 className="font-semibold text-foreground">Warm Leads</h3>
-                <div className="space-y-2">
-                  {(pipeline?.warm_leads || []).map((lead, i) => (
-                    <div key={i} className="flex items-start justify-between gap-4 py-2 border-b border-border last:border-0">
-                      <div>
-                        <p className="font-medium text-foreground">{lead.name}</p>
-                        {lead.company && <p className="text-sm text-muted">{lead.company}</p>}
-                        {lead.interest && <p className="text-sm text-muted">{lead.interest}</p>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Revenue focus input */}
-            <div className="bg-card rounded-xl border border-border p-6 space-y-3">
-              <h3 className="font-semibold text-foreground">
-                What feels like the highest-leverage revenue move today?
-              </h3>
-              <textarea
-                rows={2}
-                value={revenueFocus}
-                onChange={(e) => setRevenueFocus(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
-                placeholder="e.g. Send follow-up proposal to Acme Corp..."
-              />
-            </div>
-
-            <button
-              onClick={async () => {
-                if (revenueFocus.trim()) {
-                  await patchNote({ top3_revenue: revenueFocus.trim() });
-                }
-                advance();
-              }}
-              disabled={saving || !revenueFocus.trim()}
-              className="px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-hover disabled:opacity-50 flex items-center gap-2 font-medium transition-colors"
-            >
-              {saving ? <Loader2 size={16} className="animate-spin" /> : <ChevronRight size={16} />}
-              Lock in Revenue Focus &amp; Continue
-            </button>
-          </div>
-        );
-      }
-
-      // ── Step 3: Pick Top 3 ───────────────────────────────────────
-      case 3:
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <ListChecks size={24} className="text-violet-500" />
-                Pick Your Top 3
-              </h2>
-              <p className="text-muted mt-1">
-                Your revenue focus is locked as #1. Choose two more things that would make today a win.
-              </p>
-            </div>
-
             <div className="bg-card rounded-xl border border-border p-6 space-y-5">
-              {/* Slot 1 - auto-filled */}
+              {/* Slot 1 */}
               <div>
-                <label className="block text-sm font-semibold text-emerald-500 mb-1">
-                  #1 Revenue Focus (locked)
-                </label>
-                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-4 py-3 text-foreground">
-                  {revenueFocus || <span className="text-muted italic">Not set</span>}
-                </div>
+                <label className="block text-sm font-semibold text-foreground mb-1">#1 — Most important</label>
+                <textarea
+                  rows={2}
+                  value={top3First}
+                  onChange={(e) => setTop3First(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                  placeholder="The single most important outcome for today..."
+                />
               </div>
 
               {/* Slot 2 */}
@@ -506,7 +424,7 @@ export default function MorningProcessPage() {
             <button
               onClick={async () => {
                 await patchNote({
-                  top3_revenue: revenueFocus.trim(),
+                  top3_first: top3First.trim(),
                   top3_second: top3Second.trim(),
                   top3_third: top3Third.trim(),
                 });
@@ -520,6 +438,98 @@ export default function MorningProcessPage() {
             </button>
           </div>
         );
+
+      // ── Step 3: Today's Disciplines ───────────────────────────────
+      case 3: {
+        const toggleDiscipline = async (disciplineId: string) => {
+          const existing = disciplineLogs.find(l => l.discipline_id === disciplineId);
+          const newCompleted = existing?.completed === 1 ? 0 : 1;
+
+          await fetch('/api/disciplines/logs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              discipline_id: disciplineId,
+              date: todayStr(),
+              completed: newCompleted,
+            }),
+          });
+
+          if (existing) {
+            setDisciplineLogs(disciplineLogs.map(l =>
+              l.discipline_id === disciplineId ? { ...l, completed: newCompleted } : l
+            ));
+          } else {
+            setDisciplineLogs([...disciplineLogs, { discipline_id: disciplineId, completed: newCompleted }]);
+          }
+        };
+
+        const morningChecked = morningDisciplines.filter(d =>
+          disciplineLogs.find(l => l.discipline_id === d.id)?.completed === 1
+        ).length;
+
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <Target size={24} className="text-emerald-500" />
+                Today&apos;s Disciplines
+              </h2>
+              <p className="text-muted mt-1">
+                Check off your morning disciplines. {morningDisciplines.length > 0 ? `${morningChecked}/${morningDisciplines.length} done.` : ''}
+              </p>
+            </div>
+
+            {morningDisciplines.length === 0 ? (
+              <div className="bg-card rounded-xl border border-border p-6 text-center space-y-3">
+                <Target size={36} className="mx-auto text-muted" />
+                <p className="text-foreground font-medium">No morning disciplines set up yet.</p>
+                <p className="text-muted text-sm">
+                  Add disciplines in the <Link href="/disciplines" className="text-primary underline">Disciplines</Link> page.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-card rounded-xl border border-border p-6 space-y-2">
+                {morningDisciplines.map(d => {
+                  const log = disciplineLogs.find(l => l.discipline_id === d.id);
+                  const done = log?.completed === 1;
+                  return (
+                    <button
+                      key={d.id}
+                      onClick={() => toggleDiscipline(d.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
+                        done ? 'bg-green-50 border border-green-200' : 'bg-background border border-border hover:border-primary/30'
+                      }`}
+                    >
+                      <span className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
+                        done ? 'bg-green-500' : 'border-2 border-border'
+                      }`}>
+                        {done && <Check size={12} className="text-white" />}
+                      </span>
+                      <div>
+                        <span className={`text-sm ${done ? 'line-through text-muted' : 'text-foreground'}`}>
+                          {d.name}
+                        </span>
+                        {d.description && (
+                          <p className="text-xs text-muted">{d.description}</p>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            <button
+              onClick={() => advance()}
+              className="px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-hover flex items-center gap-2 font-medium transition-colors"
+            >
+              <ChevronRight size={16} />
+              Continue
+            </button>
+          </div>
+        );
+      }
 
       // ── Step 4: Ready to Work ────────────────────────────────────
       case 4: {
@@ -545,7 +555,7 @@ export default function MorningProcessPage() {
               <ol className="space-y-3 list-none">
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-7 h-7 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-sm font-bold">1</span>
-                  <span className="text-foreground pt-0.5">{revenueFocus || <span className="text-muted italic">Not set</span>}</span>
+                  <span className="text-foreground pt-0.5">{top3First || <span className="text-muted italic">Not set</span>}</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-7 h-7 rounded-full bg-violet-500/10 text-violet-500 flex items-center justify-center text-sm font-bold">2</span>

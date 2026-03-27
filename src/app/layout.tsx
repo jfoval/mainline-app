@@ -18,13 +18,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Foval GTD",
-  description: "Personal GTD system for John Foval",
+  title: "Mainline",
+  description: "Personal productivity system powered by GTD",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Foval GTD",
+    title: "Mainline",
   },
 };
 

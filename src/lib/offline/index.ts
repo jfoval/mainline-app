@@ -1,8 +1,8 @@
 export { offlineDb } from './db';
 export type {
   InboxItem, NextAction, ListItem,
-  PipelineDeal, PipelineContact, PipelineWarmLead,
   Project, DailyNote, RoutineBlock, ReferenceDoc,
+  Discipline, DisciplineLog, ContextList,
 } from './db';
 export { useOfflineStore } from './use-offline-store';
 export { useOfflineQuery } from './use-offline-query';
@@ -12,13 +12,13 @@ export {
   nextActionsStore,
   inboxStore,
   listItemsStore,
-  pipelineDealsStore,
-  pipelineContactsStore,
-  pipelineWarmLeadsStore,
   projectsStore,
   dailyNotesStore,
   routineBlocksStore,
   referenceDocsStore,
+  disciplinesStore,
+  disciplineLogsStore,
+  contextListsStore,
 } from './stores';
 export { OnlineStatusProvider, useOnlineStatus } from './OnlineStatusProvider';
 export { performInitialSync } from './initial-sync';

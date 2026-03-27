@@ -42,51 +42,6 @@ export interface ListItem {
   updated_at?: string;
 }
 
-export interface PipelineDeal {
-  id: string;
-  company: string;
-  contact_name: string | null;
-  what_they_need: string | null;
-  stage: string;
-  next_action: string | null;
-  last_contact: string | null;
-  value: string | null;
-  loss_reason: string | null;
-  win_notes: string | null;
-  closed_date: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface PipelineContact {
-  id: string;
-  name: string;
-  company: string | null;
-  role: string | null;
-  email: string | null;
-  phone: string | null;
-  how_you_know: string | null;
-  contact_type: string;
-  engagement_type: string | null;
-  start_date: string | null;
-  date_range: string | null;
-  last_contact: string | null;
-  notes: string | null;
-  created_at: string;
-  updated_at?: string;
-}
-
-export interface PipelineWarmLead {
-  id: string;
-  name: string;
-  company: string | null;
-  interest: string | null;
-  source: string | null;
-  added_at: string;
-  notes: string | null;
-  updated_at?: string;
-}
-
 export interface Project {
   id: string;
   title: string;
@@ -109,7 +64,7 @@ export interface DailyNote {
   reflection_fell_short: string | null;
   reflection_noticed: string | null;
   reflection_grateful: string | null;
-  top3_revenue: string | null;
+  top3_first: string | null;
   top3_second: string | null;
   top3_third: string | null;
   notes: string | null;
@@ -136,6 +91,40 @@ export interface ReferenceDoc {
   category: string;
   subcategory: string | null;
   content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Discipline {
+  id: string;
+  name: string;
+  type: 'discipline' | 'value';
+  description: string | null;
+  frequency: string; // 'daily' | 'weekly' | JSON days array e.g. '["mon","wed","fri"]'
+  time_of_day: 'morning' | 'shutdown';
+  is_active: number;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DisciplineLog {
+  id: string;
+  discipline_id: string;
+  date: string;
+  completed: number;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface ContextList {
+  id: string;
+  name: string;
+  key: string;
+  color: string | null;
+  icon: string | null;
+  sort_order: number;
+  is_active: number;
   created_at: string;
   updated_at: string;
 }
@@ -171,23 +160,23 @@ export interface ConflictEntry {
 
 // ---- Database ----
 
-class GTDOfflineDB extends Dexie {
+class MainlineOfflineDB extends Dexie {
   inbox_items!: Table<InboxItem, string>;
   next_actions!: Table<NextAction, string>;
   list_items!: Table<ListItem, string>;
-  pipeline_deals!: Table<PipelineDeal, string>;
-  pipeline_contacts!: Table<PipelineContact, string>;
-  pipeline_warm_leads!: Table<PipelineWarmLead, string>;
   projects!: Table<Project, string>;
   daily_notes!: Table<DailyNote, string>;
   routine_blocks!: Table<RoutineBlock, string>;
   reference_docs!: Table<ReferenceDoc, string>;
+  disciplines!: Table<Discipline, string>;
+  discipline_logs!: Table<DisciplineLog, string>;
+  context_lists!: Table<ContextList, string>;
   sync_queue!: Table<SyncQueueEntry, number>;
   sync_meta!: Table<SyncMeta, string>;
   conflicts!: Table<ConflictEntry, number>;
 
   constructor() {
-    super('foval-gtd');
+    super('mainline');
     this.version(1).stores({
       inbox_items: 'id, status, captured_at',
       next_actions: 'id, context, status, project_id, sort_order',
@@ -232,7 +221,57 @@ class GTDOfflineDB extends Dexie {
       sync_meta: 'table',
       conflicts: '++conflictId, table, recordId, detectedAt',
     });
+
+    // Version 4: Drop pipeline tables
+    this.version(4).stores({
+      inbox_items: 'id, status, captured_at',
+      next_actions: 'id, context, status, project_id, sort_order',
+      list_items: 'id, list_type, sort_order',
+      pipeline_deals: null,
+      pipeline_contacts: null,
+      pipeline_warm_leads: null,
+      projects: 'id, status, category',
+      daily_notes: 'id, date',
+      routine_blocks: 'id, routine_type, sort_order',
+      reference_docs: 'id, category, slug',
+      sync_queue: '++queueId, timestamp',
+      sync_meta: 'table',
+      conflicts: '++conflictId, table, recordId, detectedAt',
+    });
+
+    // Version 5: Add disciplines + discipline_logs
+    this.version(5).stores({
+      inbox_items: 'id, status, captured_at',
+      next_actions: 'id, context, status, project_id, sort_order',
+      list_items: 'id, list_type, sort_order',
+      projects: 'id, status, category',
+      daily_notes: 'id, date',
+      routine_blocks: 'id, routine_type, sort_order',
+      reference_docs: 'id, category, slug',
+      disciplines: 'id, type, is_active, sort_order',
+      discipline_logs: 'id, discipline_id, date, [discipline_id+date]',
+      sync_queue: '++queueId, timestamp',
+      sync_meta: 'table',
+      conflicts: '++conflictId, table, recordId, detectedAt',
+    });
+
+    // Version 6: Add context_lists
+    this.version(6).stores({
+      inbox_items: 'id, status, captured_at',
+      next_actions: 'id, context, status, project_id, sort_order',
+      list_items: 'id, list_type, sort_order',
+      projects: 'id, status, category',
+      daily_notes: 'id, date',
+      routine_blocks: 'id, routine_type, sort_order',
+      reference_docs: 'id, category, slug',
+      disciplines: 'id, type, is_active, sort_order',
+      discipline_logs: 'id, discipline_id, date, [discipline_id+date]',
+      context_lists: 'id, key, is_active, sort_order',
+      sync_queue: '++queueId, timestamp',
+      sync_meta: 'table',
+      conflicts: '++conflictId, table, recordId, detectedAt',
+    });
   }
 }
 
-export const offlineDb = new GTDOfflineDB();
+export const offlineDb = new MainlineOfflineDB();

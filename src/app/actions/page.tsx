@@ -1,25 +1,67 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Plus, Check, Trash2 } from 'lucide-react';
 import { Suspense } from 'react';
 import { useOfflineStore, nextActionsStore } from '@/lib/offline';
 
-const CONTEXTS = [
-  { key: 'work', label: '@Work', color: 'bg-blue-100 text-blue-700' },
-  { key: 'errands', label: '@Errands', color: 'bg-green-100 text-green-700' },
-  { key: 'home', label: '@Home', color: 'bg-orange-100 text-orange-700' },
-  { key: 'waiting_for', label: '@Waiting For', color: 'bg-yellow-100 text-yellow-700' },
-  { key: 'agendas', label: '@Agendas', color: 'bg-purple-100 text-purple-700' },
-  { key: 'haley', label: '@Haley', color: 'bg-pink-100 text-pink-700' },
-  { key: 'prayers', label: '@Prayers', color: 'bg-indigo-100 text-indigo-700' },
-];
+interface ContextItem {
+  key: string;
+  name: string;
+  color: string | null;
+}
+
+const COLOR_MAP: Record<string, string> = {
+  blue: 'bg-blue-100 text-blue-700',
+  green: 'bg-green-100 text-green-700',
+  orange: 'bg-orange-100 text-orange-700',
+  yellow: 'bg-yellow-100 text-yellow-700',
+  purple: 'bg-purple-100 text-purple-700',
+  teal: 'bg-teal-100 text-teal-700',
+  gray: 'bg-gray-100 text-gray-700',
+  indigo: 'bg-indigo-100 text-indigo-700',
+  red: 'bg-red-100 text-red-700',
+  pink: 'bg-pink-100 text-pink-700',
+};
+
+function getColorClasses(color: string | null): string {
+  return COLOR_MAP[color || 'gray'] || 'bg-gray-100 text-gray-700';
+}
 
 function ActionsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeContext = searchParams.get('context') || 'work';
+
+  const [contexts, setContexts] = useState<ContextItem[]>([]);
+
+  useEffect(() => {
+    fetch('/api/context-lists')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setContexts(data.map((c: { key: string; name: string; color: string | null }) => ({
+            key: c.key,
+            name: c.name,
+            color: c.color,
+          })));
+        } else {
+          // Fallback defaults if API fails or no contexts configured
+          setContexts([
+            { key: 'work', name: 'Work', color: 'blue' },
+            { key: 'errands', name: 'Errands', color: 'green' },
+            { key: 'home', name: 'Home', color: 'orange' },
+            { key: 'waiting_for', name: 'Waiting For', color: 'yellow' },
+            { key: 'agendas', name: 'Agendas', color: 'purple' },
+            { key: 'calls', name: 'Calls', color: 'teal' },
+            { key: 'computer', name: 'Computer', color: 'gray' },
+            { key: 'anywhere', name: 'Anywhere', color: 'indigo' },
+          ]);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const { data: actions, create, update, remove } = useOfflineStore(
     nextActionsStore,
@@ -62,7 +104,7 @@ function ActionsContent() {
     await remove(id);
   }
 
-  const contextInfo = CONTEXTS.find(c => c.key === activeContext)!;
+  const contextInfo = contexts.find(c => c.key === activeContext) || { key: activeContext, name: activeContext, color: 'gray' };
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -82,17 +124,17 @@ function ActionsContent() {
 
       {/* Context Tabs */}
       <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        {CONTEXTS.map(ctx => (
+        {contexts.map(ctx => (
           <button
             key={ctx.key}
             onClick={() => router.push(`/actions?context=${ctx.key}`)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
               activeContext === ctx.key
-                ? ctx.color
+                ? getColorClasses(ctx.color)
                 : 'bg-card text-muted hover:bg-primary/5'
             }`}
           >
-            {ctx.label}
+            @{ctx.name}
           </button>
         ))}
       </div>
@@ -131,7 +173,7 @@ function ActionsContent() {
               type="submit"
               className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary-hover transition-colors text-sm"
             >
-              Add to {contextInfo.label}
+              Add to @{contextInfo.name}
             </button>
             <button
               type="button"
@@ -147,7 +189,7 @@ function ActionsContent() {
       {/* Actions List */}
       {actions.length === 0 ? (
         <div className="text-center py-12 text-muted">
-          <p className="text-lg font-medium">No items in {contextInfo.label}</p>
+          <p className="text-lg font-medium">No items in @{contextInfo.name}</p>
           <p className="text-sm mt-1">Add an action or process your inbox.</p>
         </div>
       ) : (

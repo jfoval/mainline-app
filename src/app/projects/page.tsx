@@ -7,13 +7,13 @@ import { useOfflineStore, projectsStore } from '@/lib/offline';
 import type { Project } from '@/lib/offline';
 
 const CATEGORIES = [
-  'nurik', 'personal', 'home', 'family', 'lsu', 'music', 'health', 'finance'
+  'business', 'personal', 'home', 'family', 'health', 'finance', 'learning', 'other'
 ];
 
 export default function ProjectsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const [newCategory, setNewCategory] = useState('nurik');
+  const [newCategory, setNewCategory] = useState('personal');
   const [newPurpose, setNewPurpose] = useState('');
   const [viewStatus, setViewStatus] = useState<'active' | 'someday_maybe'>('active');
 

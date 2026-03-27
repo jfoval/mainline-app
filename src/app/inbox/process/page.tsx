@@ -22,18 +22,24 @@ interface Project {
   category: string;
 }
 
-const CONTEXTS = [
+interface ContextItem {
+  key: string;
+  label: string;
+}
+
+const FALLBACK_CONTEXTS: ContextItem[] = [
   { key: 'work', label: '@Work' },
   { key: 'errands', label: '@Errands' },
   { key: 'home', label: '@Home' },
   { key: 'waiting_for', label: '@Waiting For' },
   { key: 'agendas', label: '@Agendas' },
-  { key: 'haley', label: '@Haley' },
-  { key: 'prayers', label: '@Prayers' },
+  { key: 'calls', label: '@Calls' },
+  { key: 'computer', label: '@Computer' },
+  { key: 'anywhere', label: '@Anywhere' },
 ];
 
 const CATEGORIES = [
-  'nurik', 'personal', 'home', 'family', 'lsu', 'music', 'health', 'finance'
+  'business', 'personal', 'home', 'family', 'health', 'finance', 'learning', 'other'
 ];
 
 type RouteDestination =
@@ -50,6 +56,7 @@ export default function ProcessPage() {
   const router = useRouter();
   const [items, setItems] = useState<InboxItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [contexts, setContexts] = useState<ContextItem[]>(FALLBACK_CONTEXTS);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [step, setStep] = useState<'actionable' | 'route_action' | 'route_non_action' | 'route_reference' | 'create_project' | 'done'>('actionable');
 
@@ -61,7 +68,7 @@ export default function ProcessPage() {
 
   // New project form
   const [newProjectTitle, setNewProjectTitle] = useState('');
-  const [newProjectCategory, setNewProjectCategory] = useState('nurik');
+  const [newProjectCategory, setNewProjectCategory] = useState('personal');
   const [firstAction, setFirstAction] = useState('');
   const [firstActionContext, setFirstActionContext] = useState('work');
 
@@ -81,14 +88,23 @@ export default function ProcessPage() {
   }, []);
 
   async function fetchData() {
-    const [inboxRes, projectsRes] = await Promise.all([
+    const [inboxRes, projectsRes, ctxRes] = await Promise.all([
       fetch('/api/inbox'),
       fetch('/api/projects'),
+      fetch('/api/context-lists'),
     ]);
     const inboxData = await inboxRes.json();
     const projectsData = await projectsRes.json();
     setItems(inboxData);
     setProjects(projectsData);
+
+    const ctxData = await ctxRes.json();
+    if (Array.isArray(ctxData) && ctxData.length > 0) {
+      setContexts(ctxData.map((c: { key: string; name: string }) => ({
+        key: c.key,
+        label: `@${c.name}`,
+      })));
+    }
 
     if (inboxData.length === 0) {
       setStep('done');
@@ -211,7 +227,7 @@ export default function ProcessPage() {
     setSelectedProject('');
     setWaitingPerson('');
     setNewProjectTitle('');
-    setNewProjectCategory('nurik');
+    setNewProjectCategory('personal');
     setFirstAction('');
     setFirstActionContext('work');
     setSelectedRefCategory('');
@@ -389,7 +405,7 @@ export default function ProcessPage() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {CONTEXTS.map(ctx => (
+                {contexts.map(ctx => (
                   <button
                     key={ctx.key}
                     onClick={() => {
@@ -550,19 +566,6 @@ export default function ProcessPage() {
               </div>
             </button>
 
-            <button
-              onClick={() => {
-                setActionText(`Discuss with Haley: ${currentItem.content}`);
-                routeItem({ type: 'action', context: 'haley' });
-              }}
-              className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors text-left"
-            >
-              <Users size={18} className="text-pink-600" />
-              <div>
-                <p className="text-sm font-medium">Discuss with Haley</p>
-                <p className="text-xs text-muted">Add to @haley list</p>
-              </div>
-            </button>
           </div>
         </div>
       )}
@@ -705,7 +708,7 @@ export default function ProcessPage() {
             <div>
               <label className="text-xs text-muted block mb-1">Context for first action</label>
               <div className="flex flex-wrap gap-2">
-                {CONTEXTS.map(ctx => (
+                {contexts.map(ctx => (
                   <button
                     key={ctx.key}
                     onClick={() => setFirstActionContext(ctx.key)}

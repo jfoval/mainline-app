@@ -3,13 +3,16 @@ import { jwtVerify } from 'jose';
 
 const PUBLIC_PATHS = [
   '/login',
+  '/setup',
   '/api/auth/login',
   '/api/auth/logout',
+  '/api/setup',
   '/_next',
   '/manifest.json',
   '/sw.js',
   '/icons',
   '/favicon.ico',
+  '/branding',
 ];
 
 function isPublicPath(pathname: string): boolean {
@@ -25,7 +28,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Check for auth cookie
-  const token = req.cookies.get('gtd-auth')?.value;
+  const token = req.cookies.get('mainline-auth')?.value;
 
   if (!token) {
     // API routes return 401, pages redirect to login
@@ -46,7 +49,7 @@ export async function middleware(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const response = NextResponse.redirect(new URL('/login', req.url));
-    response.cookies.delete('gtd-auth');
+    response.cookies.delete('mainline-auth');
     return response;
   }
 }

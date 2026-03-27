@@ -1,11 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
-import { isGirlsWeek as checkGirlsWeek } from '@/lib/girls-week';
 import { nowCentral } from '@/lib/api-helpers';
 
-function getApiKey(): string | null {
-  return process.env.ANTHROPIC_API_KEY || null;
+// Cache the API key lookup to avoid hitting DB on every request
+let cachedApiKey: string | null | undefined = undefined;
+
+async function getApiKey(): Promise<string | null> {
+  if (cachedApiKey !== undefined) return cachedApiKey;
+
+  // Check settings table first
+  try {
+    const row = await sql`SELECT value FROM settings WHERE key = 'anthropic_api_key'`;
+    if (row.length > 0 && row[0].value) {
+      cachedApiKey = row[0].value as string;
+      return cachedApiKey;
+    }
+  } catch {
+    // Settings table may not exist or key not set
+  }
+
+  // Fall back to env var
+  cachedApiKey = process.env.ANTHROPIC_API_KEY || null;
+  return cachedApiKey;
 }
 
 // Simple in-memory rate limiter
@@ -33,9 +50,9 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
   const { action, data } = body;
 
-  const apiKey = getApiKey();
+  const apiKey = await getApiKey();
   if (!apiKey) {
-    return NextResponse.json({ error: 'No Claude API key configured. Set ANTHROPIC_API_KEY environment variable.' }, { status: 400 });
+    return NextResponse.json({ error: 'No Claude API key configured. Add one in Settings or set ANTHROPIC_API_KEY environment variable.' }, { status: 400 });
   }
 
   try {
@@ -43,9 +60,7 @@ export async function POST(req: NextRequest) {
       case 'process_inbox': return NextResponse.json(await processInboxItem(apiKey, data));
       case 'morning_briefing': return NextResponse.json(await morningBriefing(apiKey));
       case 'prioritize': return NextResponse.json(await prioritizeDay(apiKey));
-      case 'worksheet': return NextResponse.json(await generateWorksheet(apiKey, data));
       case 'ask': return NextResponse.json(await askAssistant(apiKey, data));
-      case 'client_notes': return NextResponse.json(await analyzeClientNotes(apiKey, data));
       case 'recovery': return NextResponse.json(await recoveryWorkflow(apiKey));
       default: return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
     }
@@ -60,9 +75,7 @@ const MODELS: Record<string, string> = {
   process_inbox: DEFAULT_MODEL,
   morning_briefing: DEFAULT_MODEL,
   prioritize: DEFAULT_MODEL,
-  worksheet: DEFAULT_MODEL,
   ask: DEFAULT_MODEL,
-  client_notes: DEFAULT_MODEL,
   recovery: DEFAULT_MODEL,
 };
 
@@ -97,12 +110,16 @@ async function processInboxItem(apiKey: string, data: { content: string }) {
   const projects = await sql`SELECT id, title, category FROM projects WHERE status = 'active' ORDER BY title` as Array<{ id: string; title: string; category: string }>;
   const projectList = projects.map(p => `- ${p.title} (${p.category})`).join('\n');
 
-  const system = `You are a GTD (Getting Things Done) processing assistant for John, a business owner who runs Nurik (consulting/training), teaches at LSU, and records music. He has a wife Haley and 4 kids.
+  // Get user's context lists dynamically
+  const contextRows = await sql`SELECT DISTINCT context FROM next_actions WHERE status = 'active' ORDER BY context` as Array<{ context: string }>;
+  const contextList = contextRows.map(c => `@${c.context}`).join(', ');
+
+  const system = `You are a GTD (Getting Things Done) processing assistant.
 
 Your job is to help route inbox items through the GTD decision tree:
 1. Is it actionable? If no: trash, someday/maybe, or reference.
 2. If actionable: Is it a 2-minute task? If yes, do it now.
-3. If longer: What context list? (@work, @errands, @home, @waiting_for, @agendas, @haley, @prayers)
+3. If longer: What context list? (${contextList || '@work, @errands, @home, @waiting_for, @agendas'})
 4. Does it belong to an existing project? Or need a new one?
 
 Active projects:
@@ -110,10 +127,10 @@ ${projectList}
 
 IMPORTANT: If the item is actionable, check if the suggested action is concrete and specific. A concrete action starts with a verb and specifies exactly what to do, who to contact, or what to produce.
 Vague: "Handle taxes", "Deal with email", "Work on proposal"
-Concrete: "Call Nathan at BCE CPA about quarterly estimate deadline", "Reply to Sarah's email about project timeline", "Draft introduction section of Acme Corp proposal"
+Concrete: "Call accountant about quarterly estimate deadline", "Reply to Sarah's email about project timeline", "Draft introduction section of proposal"
 If the action seems vague, set "concrete": false and provide a "reworded" field with a more specific version.
 
-Respond with a JSON object (no markdown): {"actionable": boolean, "suggestion": "brief routing suggestion", "context": "@work|@errands|@home|@waiting_for|@agendas|@haley|@prayers|null", "project_match": "project title or null", "two_minute": boolean, "category": "action|trash|someday|reference|thinking|list", "concrete": true, "reworded": null}`;
+Respond with a JSON object (no markdown): {"actionable": boolean, "suggestion": "brief routing suggestion", "context": "${contextList ? contextList.split(', ')[0] : '@work'}|...|null", "project_match": "project title or null", "two_minute": boolean, "category": "action|trash|someday|reference|thinking|list", "concrete": true, "reworded": null}`;
 
   const response = await callClaude(apiKey, system, `Route this inbox item: "${data.content}"`);
 
@@ -150,31 +167,17 @@ async function morningBriefing(apiKey: string) {
   const dailyNoteRows = await sql`SELECT * FROM daily_notes WHERE date = ${today}`;
   const dailyNote = dailyNoteRows[0] as Record<string, string> | undefined;
 
-  const activeDeals = await sql`
-    SELECT company, stage, next_action FROM pipeline_deals WHERE stage NOT IN ('closed_won', 'closed_lost')
-  ` as Array<{ company: string; stage: string; next_action: string }>;
-
-  const isGirlsWeek = checkGirlsWeek();
-
-  const themes: Record<string, string> = {
-    Monday: 'Business Development', Tuesday: 'Nurik IP', Wednesday: 'Business Development',
-    Thursday: 'Research & Learning', Friday: 'Operations & Admin',
-  };
-
   const context = `Today: ${dayName}, ${today}
-Girls week: ${isGirlsWeek ? 'Yes' : 'No'}
-Afternoon theme: ${themes[dayName] || 'Weekend'}
 Inbox items: ${inboxCount}
 Stalled projects: ${stalledProjects.map(p => p.title).join(', ') || 'None'}
 @work actions: ${workActions.map(a => a.content).join('; ') || 'None'}
 Stale waiting-for: ${waitingStale.map(w => `${w.content} (${w.waiting_on_person})`).join('; ') || 'None'}
-Active deals: ${activeDeals.map(d => `${d.company} [${d.stage}]${d.next_action ? ': ' + d.next_action : ''}`).join('; ') || 'None'}
-Top 3 from daily note: ${dailyNote ? [dailyNote.top3_revenue, dailyNote.top3_second, dailyNote.top3_third].filter(Boolean).join(', ') : 'Not set yet'}`;
+Top 3 from daily note: ${dailyNote ? [dailyNote.top3_first, dailyNote.top3_second, dailyNote.top3_third].filter(Boolean).join(', ') : 'Not set yet'}`;
 
-  const system = `You are John's GTD assistant. Generate a concise morning briefing. Be direct, warm but professional. Focus on:
-1. What needs attention today (revenue first)
+  const system = `You are a GTD assistant. Generate a concise morning briefing. Be direct, warm but professional. Focus on:
+1. What needs attention today
 2. Any alerts (stalled projects, stale waiting-for, full inbox)
-3. Today's theme and recommended focus
+3. Recommended focus areas
 Keep it to 150 words max. No markdown headers.`;
 
   const response = await callClaude(apiKey, system, context);
@@ -187,26 +190,17 @@ async function prioritizeDay(apiKey: string) {
     SELECT na.content, p.title as project_title FROM next_actions na LEFT JOIN projects p ON na.project_id = p.id WHERE na.context = 'work' AND na.status = 'active' ORDER BY na.sort_order
   ` as Array<{ content: string; project_title: string }>;
 
-  const activeDeals = await sql`
-    SELECT company, stage, next_action, value FROM pipeline_deals WHERE stage NOT IN ('closed_won', 'closed_lost')
-  ` as Array<{ company: string; stage: string; next_action: string; value: string }>;
+  const context = `@work actions:\n${workActions.map(a => `- ${a.content}${a.project_title ? ` (${a.project_title})` : ''}`).join('\n') || 'None'}`;
 
-  const buildingNow = await sql`SELECT name, build_status FROM offerings WHERE readiness = 'building_now'` as Array<{ name: string; build_status: string }>;
+  const system = `You are a GTD assistant. Help the user prioritize their day by recommending their Top 3 tasks from their @work list.
 
-  const context = `@work actions:\n${workActions.map(a => `- ${a.content}${a.project_title ? ` (${a.project_title})` : ''}`).join('\n') || 'None'}
+Consider:
+- Urgency and deadlines
+- Impact and importance
+- Dependencies (what unblocks other work)
+- Energy and focus requirements
 
-Active deals:\n${activeDeals.map(d => `- ${d.company} [${d.stage}] ${d.value ? '$' + d.value : ''} ${d.next_action || ''}`).join('\n') || 'None'}
-
-Building now:\n${buildingNow.map(o => `- ${o.name} ${o.build_status || ''}`).join('\n') || 'None'}`;
-
-  const system = `You are John's GTD assistant. Apply the Revenue Priority Stack to recommend his Top 3 for today:
-1. Client delivery (active deals with next actions)
-2. Warm prospect pursuit
-3. Build the next sellable thing
-4. Create new prospects
-5. Content / thought leadership
-
-Return JSON (no markdown): {"top3": [{"task": "...", "why": "..."}], "revenue_focus": "one sentence"}`;
+Return JSON (no markdown): {"top3": [{"task": "...", "why": "..."}]}`;
 
   const response = await callClaude(apiKey, system, context);
   try {
@@ -215,28 +209,6 @@ Return JSON (no markdown): {"top3": [{"task": "...", "why": "..."}], "revenue_fo
   } catch {
     return { suggestion: response };
   }
-}
-
-// ─── Generate Worksheet ──────────────────────
-async function generateWorksheet(apiKey: string, data: { child_name: string; subject?: string }) {
-  const profileRows = await sql`SELECT * FROM learning_profiles WHERE name = ${data.child_name}`;
-  const profiles = profileRows[0] as Record<string, string> | undefined;
-
-  const profileContext = profiles
-    ? `Name: ${profiles.name}\nType: ${profiles.type}\nGrade: ${profiles.grade || 'unknown'}\nAge: ${profiles.age || 'unknown'}\nFocus areas: ${profiles.focus_areas || 'general'}\nProgression: ${profiles.progression_path || 'standard'}\nProgress: ${profiles.progress_log || 'none yet'}`
-    : `Name: ${data.child_name}. No learning profile found — generate a general age-appropriate worksheet.`;
-
-  const system = `You are an educational worksheet generator. Create a timed practice worksheet for a child.
-The worksheet should be:
-- Printable (clean text format)
-- 10-15 problems or questions
-- Include clear instructions
-- Include an answer key at the bottom
-- Age and skill-level appropriate based on the profile
-${data.subject ? `Focus on: ${data.subject}` : 'Choose the most relevant subject based on their focus areas.'}`;
-
-  const response = await callClaude(apiKey, system, profileContext);
-  return { worksheet: response, child: data.child_name };
 }
 
 // ─── General Assistant ──────────────────────
@@ -249,59 +221,15 @@ async function askAssistant(apiKey: string, data: { question: string; context?: 
   const projectCount = Number(projectCountResult[0].count);
   const actionCount = Number(actionCountResult[0].count);
 
-  const system = `You are John's GTD assistant built into his personal productivity app. You have context about his system:
+  const system = `You are a GTD assistant built into a personal productivity app. You have context about the user's system:
 - ${inboxCount} inbox items pending
 - ${projectCount} active projects
 - ${actionCount} active next actions
 ${data.context || ''}
 
-Be concise, practical, and direct. You know the GTD methodology deeply. John runs Nurik (consulting/training), teaches at LSU, records music, and has a wife Haley and 4 kids (Aiden, Liam, and two girls on alternating weeks).`;
+Be concise, practical, and direct. You know the GTD methodology deeply.`;
 
   const response = await callClaude(apiKey, system, data.question);
-  return { response };
-}
-
-// ─── Client Notes Analysis ──────────────────────
-async function analyzeClientNotes(apiKey: string, data: { client_name: string; question: string }) {
-  const notes = await sql`
-    SELECT date, content FROM client_notes WHERE client_name = ${data.client_name} ORDER BY date DESC
-  ` as Array<{ date: string; content: string }>;
-
-  if (notes.length === 0) {
-    return { response: `No notes found for ${data.client_name}.` };
-  }
-
-  const notesText = notes.map(n => `[${n.date}] ${n.content}`).join('\n\n');
-
-  const contactRows = await sql`SELECT * FROM pipeline_contacts WHERE name = ${data.client_name}`;
-  const contact = contactRows[0] as Record<string, string> | undefined;
-
-  const deals = await sql`
-    SELECT company, stage, value, next_action FROM pipeline_deals WHERE company = ${data.client_name}
-  ` as Array<{ company: string; stage: string; value: string; next_action: string }>;
-
-  const pipelineContext = contact
-    ? `\nPipeline info: ${contact.contact_type}, ${contact.company || ''}, ${contact.role || ''}`
-    : '';
-  const dealsContext = deals.length > 0
-    ? `\nDeals: ${deals.map(d => `${d.company} [${d.stage}] ${d.value ? '$' + d.value : ''}`).join('; ')}`
-    : '';
-
-  const system = `You are John's client notes analyst. You have access to all notes for the client "${data.client_name}".${pipelineContext}${dealsContext}
-
-Your job is to answer questions about this client based on the notes. You can:
-- Search for specific information mentioned in any note
-- Summarize the relationship history
-- Identify action items, commitments, or follow-ups mentioned
-- Spot patterns or trends across the notes
-- Provide a timeline of key events
-
-Be concise and direct. Reference specific dates when citing information from notes.
-
-Here are all the notes (newest first):
-${notesText}`;
-
-  const response = await callClaude(apiKey, system, data.question, 'client_notes');
   return { response };
 }
 
@@ -336,7 +264,7 @@ async function recoveryWorkflow(apiKey: string) {
 - Days since last daily note: ${daysSinceNote}
 - Days since last weekly review: ${daysSinceReview}`;
 
-  const system = `You are John's GTD recovery assistant. He's been away from his system and needs help getting back on track. Be warm but direct.
+  const system = `You are a GTD recovery assistant. The user has been away from their system and needs help getting back on track. Be warm but direct.
 
 Generate a prioritized recovery plan based on the current system state. Focus on what matters most first.
 
@@ -347,11 +275,9 @@ VALID LINKS (use ONLY these):
 - /projects — Review projects
 - /actions — Review next action lists
 - /review — Weekly or monthly review
-- /pipeline — Pipeline and deals
 - /process — Morning process
 - /shutdown — Shutdown routine
 - /horizons — Purpose, vision, goals
-- /clients — Client notes
 - /reference — Reference lists
 
 Guidelines:

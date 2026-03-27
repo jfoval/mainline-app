@@ -6,7 +6,7 @@ import { buildUpdate, nowLocal } from '@/lib/api-helpers';
 
 const ALLOWED_PATCH_FIELDS = [
   'reflection_showed_up', 'reflection_fell_short', 'reflection_noticed',
-  'reflection_grateful', 'top3_revenue', 'top3_second', 'top3_third',
+  'reflection_grateful', 'top3_first', 'top3_second', 'top3_third',
   'notes', 'tomorrow',
 ];
 

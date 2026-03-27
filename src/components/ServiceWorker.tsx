@@ -7,7 +7,7 @@ export function ServiceWorkerRegistrar() {
     if ('serviceWorker' in navigator) {
       // Clear old caches on startup
       caches.keys().then((names) => {
-        names.forEach((name) => { if (name !== 'foval-gtd-v8') caches.delete(name); });
+        names.forEach((name) => { if (name !== 'mainline-v8') caches.delete(name); });
       });
 
       navigator.serviceWorker.register('/sw.js').then((registration) => {

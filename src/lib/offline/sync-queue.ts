@@ -18,15 +18,12 @@ export async function enqueue(
 function tableFromUrl(url: string): string {
   if (url.includes('/api/actions')) return 'next_actions';
   if (url.includes('/api/projects')) return 'projects';
-  if (url.includes('/api/pipeline')) {
-    if (url.includes('type=deal') || url.includes('entity_type')) return 'pipeline_deals';
-    if (url.includes('type=warm_lead')) return 'pipeline_warm_leads';
-    if (url.includes('type=contact')) return 'pipeline_contacts';
-    return 'pipeline_deals'; // default for pipeline PATCH
-  }
   if (url.includes('/api/daily-notes')) return 'daily_notes';
   if (url.includes('/api/lists')) return 'list_items';
   if (url.includes('/api/inbox')) return 'inbox_items';
+  if (url.includes('/api/disciplines/logs')) return 'discipline_logs';
+  if (url.includes('/api/disciplines')) return 'disciplines';
+  if (url.includes('/api/context-lists')) return 'context_lists';
   return 'unknown';
 }
 
@@ -57,10 +54,7 @@ export async function processQueue(): Promise<{ processed: number; failed: numbe
         const bodyParsed = entry.body ? JSON.parse(entry.body) : {};
         const table = tableFromUrl(entry.url);
         // Also check the body for entity_type to refine table name
-        let resolvedTable = table;
-        if (bodyParsed.entity_type === 'deal') resolvedTable = 'pipeline_deals';
-        else if (bodyParsed.entity_type === 'warm_lead') resolvedTable = 'pipeline_warm_leads';
-        else if (bodyParsed.entity_type === 'contact') resolvedTable = 'pipeline_contacts';
+        const resolvedTable = table;
 
         await offlineDb.conflicts.add({
           table: resolvedTable,

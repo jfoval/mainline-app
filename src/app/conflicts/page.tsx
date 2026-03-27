@@ -7,9 +7,6 @@ import type { ConflictEntry } from '@/lib/offline/db';
 const TABLE_LABELS: Record<string, string> = {
   next_actions: 'Action',
   projects: 'Project',
-  pipeline_deals: 'Deal',
-  pipeline_contacts: 'Contact',
-  pipeline_warm_leads: 'Warm Lead',
   daily_notes: 'Daily Note',
   list_items: 'List Item',
 };

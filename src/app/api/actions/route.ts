@@ -4,7 +4,8 @@ import { ensureDb } from '@/lib/init';
 import { v4 as uuid } from 'uuid';
 import { buildUpdate, nowLocal, validateRequired, validateEnum } from '@/lib/api-helpers';
 
-const VALID_CONTEXTS = ['work', 'errands', 'home', 'waiting_for', 'agendas', 'haley', 'prayers'];
+// Context validation removed — users can define their own context lists (Phase 5)
+// Any non-empty string is valid as a context
 
 const ALLOWED_PATCH_FIELDS = [
   'content', 'context', 'project_id', 'status', 'completed_at',
@@ -51,8 +52,10 @@ export async function POST(req: NextRequest) {
     const missing = validateRequired(body, ['content', 'context']);
     if (missing) return NextResponse.json({ error: missing }, { status: 400 });
 
-    const badContext = validateEnum(body.context, VALID_CONTEXTS, 'context');
-    if (badContext) return NextResponse.json({ error: badContext }, { status: 400 });
+    // Context is user-defined — just ensure it's a non-empty string
+    if (!body.context || typeof body.context !== 'string') {
+      return NextResponse.json({ error: 'context is required' }, { status: 400 });
+    }
 
     const {
       content,

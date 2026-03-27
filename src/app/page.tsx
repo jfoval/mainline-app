@@ -4,39 +4,30 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
 import {
   Inbox, CheckSquare, FolderKanban, Clock, AlertTriangle,
-  DollarSign, Users, ArrowRight,
+  Users, ArrowRight,
   Mic, MicOff, Check
 } from 'lucide-react';
 import Link from 'next/link';
 
 interface DashboardData {
-  is_girls_week: boolean;
   day_name: string;
-  routine_type: string;
+  pattern_name: string | null;
   current_time: string;
   current_block: { id: string; start_time: string; end_time: string; label: string; description: string; is_non_negotiable: number } | null;
   next_block: { id: string; start_time: string; end_time: string; label: string; description: string } | null;
   blocks: Array<{ id: string; start_time: string; end_time: string; label: string; description: string; is_non_negotiable: number }>;
-  today_theme: string | null;
   inbox_count: number;
   action_counts: Record<string, number>;
   total_actions: number;
   active_project_count: number;
   stalled_projects: Array<{ id: string; title: string; category: string }>;
-  revenue: {
-    focus: string;
-    priority_level: number;
-    active_deals: Array<{ company: string; stage: string; next_action: string | null; value: string | null }>;
-    warm_leads: Array<{ name: string; company: string | null }>;
-    building_now: Array<{ name: string; build_status: string | null }>;
-    ready_to_sell: Array<{ name: string }>;
-  };
-  daily_note: { top3_revenue: string | null; top3_second: string | null; top3_third: string | null } | null;
+  daily_note: { top3_first: string | null; top3_second: string | null; top3_third: string | null } | null;
   stale_waiting: Array<{ content: string; waiting_on_person: string | null; waiting_since: string }>;
-  client_actions: Array<{ content: string; title: string }>;
+  disciplines_done: number;
+  disciplines_total: number;
 }
 
-const DASHBOARD_CACHE_KEY = 'gtd_dashboard_cache';
+const DASHBOARD_CACHE_KEY = 'mainline_dashboard_cache';
 
 function cacheDashboard(data: DashboardData) {
   try {
@@ -224,15 +215,13 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{greeting ? `Good ${greeting}, John` : 'Foval GTD'}</h1>
+          <h1 className="text-2xl font-bold">{greeting ? `Good ${greeting}` : 'Dashboard'}</h1>
           <p className="text-muted mt-1">{displayDate}</p>
-          <div className="flex items-center gap-2 mt-2">
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-              data.is_girls_week ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'
-            }`}>
-              {data.is_girls_week ? 'Girls Week' : 'Non-Girls Week'}
+          {data.pattern_name && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 mt-2">
+              {data.pattern_name}
             </span>
-          </div>
+          )}
         </div>
 
         {/* Quick Voice Capture */}
@@ -387,70 +376,64 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Revenue Focus */}
-      <Link href="/pipeline" className="bg-card rounded-xl p-5 border border-border hover:border-primary transition-colors block">
-        <div className="flex items-center gap-2 mb-3">
-          <DollarSign size={18} className="text-primary" />
-          <h2 className="font-semibold">Revenue Focus</h2>
+      {/* Today's Top 3 */}
+      {data.daily_note && (data.daily_note.top3_first || data.daily_note.top3_second || data.daily_note.top3_third) ? (
+        <div className="bg-card rounded-xl p-5 border border-border">
+          <h2 className="font-semibold mb-3">Today&apos;s Top 3</h2>
+          <div className="space-y-1">
+            {data.daily_note.top3_first && (
+              <p className="text-sm"><span className="text-primary font-medium">1.</span> {data.daily_note.top3_first}</p>
+            )}
+            {data.daily_note.top3_second && (
+              <p className="text-sm"><span className="font-medium">2.</span> {data.daily_note.top3_second}</p>
+            )}
+            {data.daily_note.top3_third && (
+              <p className="text-sm"><span className="font-medium">3.</span> {data.daily_note.top3_third}</p>
+            )}
+          </div>
         </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="text-center">
-            <p className="text-2xl font-bold">{data.revenue.active_deals.length}</p>
-            <p className="text-xs text-muted">Active Deals</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold">{data.revenue.warm_leads.length}</p>
-            <p className="text-xs text-muted">Warm Leads</p>
-          </div>
-        </div>
-
-        {/* Today's Top 3 */}
-        {data.daily_note && (data.daily_note.top3_revenue || data.daily_note.top3_second || data.daily_note.top3_third) && (
-          <div className="mt-3 pt-3 border-t border-border">
-            <p className="text-xs text-muted mb-2">Today&apos;s Top 3</p>
-            <div className="space-y-1">
-              {data.daily_note.top3_revenue && (
-                <p className="text-sm"><span className="text-primary font-medium">1. Revenue:</span> {data.daily_note.top3_revenue}</p>
-              )}
-              {data.daily_note.top3_second && (
-                <p className="text-sm"><span className="font-medium">2.</span> {data.daily_note.top3_second}</p>
-              )}
-              {data.daily_note.top3_third && (
-                <p className="text-sm"><span className="font-medium">3.</span> {data.daily_note.top3_third}</p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {!data.daily_note?.top3_revenue && (
-          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border text-sm text-primary">
+      ) : (
+        <Link href="/process" className="bg-card rounded-xl p-5 border border-border hover:border-primary transition-colors block">
+          <div className="flex items-center gap-2 text-sm text-primary">
             <ArrowRight size={14} />
             Set today&apos;s Top 3 in Morning Process
           </div>
-        )}
-      </Link>
+        </Link>
+      )}
+
+      {/* Disciplines Progress */}
+      {data.disciplines_total > 0 && (
+        <Link href="/disciplines" className="bg-card rounded-xl p-5 border border-border hover:border-primary transition-colors block">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="font-semibold">Disciplines</h2>
+            <span className="text-sm font-medium text-primary">
+              {data.disciplines_done}/{data.disciplines_total} done
+            </span>
+          </div>
+          <div className="w-full h-2 rounded-full bg-border overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${(data.disciplines_done / data.disciplines_total) * 100}%`,
+                backgroundColor: data.disciplines_done === data.disciplines_total ? '#22c55e' : 'var(--color-primary)',
+              }}
+            />
+          </div>
+        </Link>
+      )}
 
       {/* Context List Summary */}
       <div className="bg-card rounded-xl p-5 border border-border">
         <h2 className="font-semibold mb-4">Context Lists ({data.total_actions} total)</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { key: 'work', label: '@Work' },
-            { key: 'errands', label: '@Errands' },
-            { key: 'home', label: '@Home' },
-            { key: 'waiting_for', label: '@Waiting For' },
-            { key: 'agendas', label: '@Agendas' },
-            { key: 'haley', label: '@Haley' },
-            { key: 'prayers', label: '@Prayers' },
-          ].map(ctx => (
+          {Object.entries(data.action_counts).map(([key, count]) => (
             <Link
-              key={ctx.key}
-              href={`/actions?context=${ctx.key}`}
+              key={key}
+              href={`/actions?context=${key}`}
               className="flex items-center justify-between px-3 py-2 rounded-lg bg-background hover:bg-primary/5 transition-colors"
             >
-              <span className="text-sm">{ctx.label}</span>
-              <span className="text-sm font-bold text-muted">{data.action_counts[ctx.key] || 0}</span>
+              <span className="text-sm">@{key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
+              <span className="text-sm font-bold text-muted">{count}</span>
             </Link>
           ))}
         </div>

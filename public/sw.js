@@ -1,5 +1,5 @@
 const CACHE_VERSION = 8;
-const CACHE_NAME = `foval-gtd-v${CACHE_VERSION}`;
+const CACHE_NAME = `mainline-v${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
   '/',

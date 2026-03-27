@@ -32,8 +32,9 @@ const CONTEXTS = [
   { key: 'home', label: '@Home' },
   { key: 'waiting_for', label: '@Waiting For' },
   { key: 'agendas', label: '@Agendas' },
-  { key: 'haley', label: '@Haley' },
-  { key: 'prayers', label: '@Prayers' },
+  { key: 'calls', label: '@Calls' },
+  { key: 'computer', label: '@Computer' },
+  { key: 'anywhere', label: '@Anywhere' },
 ];
 
 export default function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {

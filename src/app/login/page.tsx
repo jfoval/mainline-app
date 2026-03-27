@@ -1,14 +1,29 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [checking, setChecking] = useState(true);
   const router = useRouter();
+
+  // Check if app is configured — if not, redirect to setup
+  useEffect(() => {
+    fetch('/api/setup/status')
+      .then(r => r.json())
+      .then(data => {
+        if (!data.configured) {
+          router.replace('/setup');
+        } else {
+          setChecking(false);
+        }
+      })
+      .catch(() => setChecking(false));
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -19,7 +34,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ password }),
       });
 
       const data = await res.json();
@@ -38,29 +53,23 @@ export default function LoginPage() {
     }
   }
 
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="animate-spin text-primary" size={36} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold">Foval GTD</h1>
-          <p className="text-sm text-muted mt-1">Sign in to continue</p>
+          <h1 className="text-2xl font-bold">Mainline</h1>
+          <p className="text-sm text-muted mt-1">Enter your password to continue</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-card rounded-xl border border-border p-6 space-y-4">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium mb-1.5">Email</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-              autoFocus
-              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
-              placeholder="you@example.com"
-            />
-          </div>
-
           <div>
             <label htmlFor="password" className="block text-sm font-medium mb-1.5">Password</label>
             <input
@@ -69,6 +78,7 @@ export default function LoginPage() {
               value={password}
               onChange={e => setPassword(e.target.value)}
               required
+              autoFocus
               className="w-full px-4 py-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50"
               placeholder="Enter password"
             />

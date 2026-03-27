@@ -202,7 +202,7 @@ export default function AIPage() {
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Bot size={20} /> Ask Claude
             </h2>
-            <p className="text-xs text-muted">Your GTD assistant. Knows your projects, actions, and pipeline.</p>
+            <p className="text-xs text-muted">Your GTD assistant. Knows your projects, actions, and system.</p>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -214,7 +214,7 @@ export default function AIPage() {
                   {[
                     'What should I focus on today?',
                     'Which projects are stalled?',
-                    'Help me think through my pipeline strategy',
+                    'Help me think through my priorities',
                   ].map(q => (
                     <button
                       key={q}

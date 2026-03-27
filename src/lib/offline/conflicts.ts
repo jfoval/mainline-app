@@ -59,9 +59,6 @@ function urlForTable(table: string, data: Record<string, unknown>): string {
   switch (table) {
     case 'next_actions': return '/api/actions';
     case 'projects': return '/api/projects';
-    case 'pipeline_deals': return '/api/pipeline';
-    case 'pipeline_contacts': return '/api/pipeline';
-    case 'pipeline_warm_leads': return '/api/pipeline';
     case 'daily_notes': return '/api/daily-notes';
     case 'list_items': return '/api/lists';
     case 'inbox_items': return '/api/inbox';

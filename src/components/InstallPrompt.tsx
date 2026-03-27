@@ -61,7 +61,7 @@ export default function InstallPrompt() {
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <Download size={18} className="text-primary" />
-          <p className="font-medium text-sm">Install Foval GTD</p>
+          <p className="font-medium text-sm">Install Mainline</p>
         </div>
         <button onClick={dismiss} className="p-1 text-muted hover:text-foreground">
           <X size={16} />

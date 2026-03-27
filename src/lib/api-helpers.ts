@@ -87,7 +87,7 @@ export function nowCentral() {
   const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].indexOf(weekday);
 
   return {
-    /** Date object set to the Central Time calendar date at noon (safe for girls-week calc) */
+    /** Date object set to the Central Time calendar date at noon */
     date: new Date(year, month - 1, day, 12, 0, 0),
     dayOfWeek,
     weekday,

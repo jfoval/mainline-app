@@ -1,8 +1,8 @@
 import { offlineDb } from './db';
 import type {
   InboxItem, NextAction, ListItem,
-  PipelineDeal, PipelineContact, PipelineWarmLead,
   Project, DailyNote, RoutineBlock, ReferenceDoc,
+  Discipline, DisciplineLog, ContextList,
 } from './db';
 import { enqueue } from './sync-queue';
 import { v4 as uuid } from 'uuid';
@@ -201,171 +201,6 @@ export const listItemsStore: StoreConfig<ListItem> = {
   },
 };
 
-// ---- Pipeline Deals ----
-
-export const pipelineDealsStore: StoreConfig<PipelineDeal> = {
-  table: 'pipeline_deals',
-
-  fetchUrl: '/api/pipeline/deals',
-
-  parseResponse: (json) => json as PipelineDeal[],
-
-  queryLocal: async () => {
-    const stageOrder: Record<string, number> = {
-      discovery: 1, proposal_sent: 2, negotiating: 3,
-      verbal_yes: 4, closed_won: 5, closed_lost: 6,
-    };
-    const results = await offlineDb.pipeline_deals.toArray();
-    return results.sort((a, b) =>
-      (stageOrder[a.stage] || 99) - (stageOrder[b.stage] || 99) ||
-      new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-    );
-  },
-
-  mutate: {
-    create: async (data) => {
-      const id = uuid();
-      const now = nowLocal();
-      const item: PipelineDeal = {
-        id,
-        company: data.company as string,
-        contact_name: (data.contact_name as string) ?? null,
-        what_they_need: (data.what_they_need as string) ?? null,
-        stage: (data.stage as string) || 'discovery',
-        next_action: (data.next_action as string) ?? null,
-        last_contact: (data.last_contact as string) ?? null,
-        value: (data.value as string) ?? null,
-        loss_reason: null,
-        win_notes: null,
-        closed_date: null,
-        created_at: now,
-        updated_at: now,
-      };
-      await offlineDb.pipeline_deals.put(item);
-      await enqueue('POST', '/api/pipeline', { id, entity_type: 'deal', ...data });
-      return item;
-    },
-
-    update: async (data) => {
-      const { id, ...updates } = data;
-      const existing = await offlineDb.pipeline_deals.get(id);
-      const baseUpdatedAt = existing?.updated_at;
-      updates.updated_at = nowLocal();
-      await offlineDb.pipeline_deals.update(id, updates);
-      await enqueue('PATCH', '/api/pipeline', { id, entity_type: 'deal', ...updates, _base_updated_at: baseUpdatedAt });
-    },
-
-    remove: async (id) => {
-      await offlineDb.pipeline_deals.delete(id);
-      await enqueue('DELETE', `/api/pipeline?id=${id}&type=deal`, null);
-    },
-  },
-};
-
-// ---- Pipeline Contacts ----
-
-export const pipelineContactsStore: StoreConfig<PipelineContact> = {
-  table: 'pipeline_contacts',
-
-  fetchUrl: '/api/pipeline/contacts',
-
-  parseResponse: (json) => json as PipelineContact[],
-
-  queryLocal: async () => {
-    const results = await offlineDb.pipeline_contacts.toArray();
-    return results.sort((a, b) =>
-      a.contact_type.localeCompare(b.contact_type) || a.name.localeCompare(b.name)
-    );
-  },
-
-  mutate: {
-    create: async (data) => {
-      const id = uuid();
-      const item: PipelineContact = {
-        id,
-        name: data.name as string,
-        company: (data.company as string) ?? null,
-        role: (data.role as string) ?? null,
-        email: (data.email as string) ?? null,
-        phone: (data.phone as string) ?? null,
-        how_you_know: (data.how_you_know as string) ?? null,
-        contact_type: (data.contact_type as string) || 'strategic',
-        engagement_type: (data.engagement_type as string) ?? null,
-        start_date: (data.start_date as string) ?? null,
-        date_range: (data.date_range as string) ?? null,
-        last_contact: (data.last_contact as string) ?? null,
-        notes: (data.notes as string) ?? null,
-        created_at: nowLocal(),
-      };
-      await offlineDb.pipeline_contacts.put(item);
-      await enqueue('POST', '/api/pipeline', { id, entity_type: 'contact', ...data });
-      return item;
-    },
-
-    update: async (data) => {
-      const { id, ...updates } = data;
-      const existing = await offlineDb.pipeline_contacts.get(id);
-      const baseUpdatedAt = existing?.updated_at;
-      updates.updated_at = nowLocal();
-      await offlineDb.pipeline_contacts.update(id, updates);
-      await enqueue('PATCH', '/api/pipeline', { id, entity_type: 'contact', ...updates, _base_updated_at: baseUpdatedAt });
-    },
-
-    remove: async (id) => {
-      await offlineDb.pipeline_contacts.delete(id);
-      await enqueue('DELETE', `/api/pipeline?id=${id}&type=contact`, null);
-    },
-  },
-};
-
-// ---- Pipeline Warm Leads ----
-
-export const pipelineWarmLeadsStore: StoreConfig<PipelineWarmLead> = {
-  table: 'pipeline_warm_leads',
-
-  fetchUrl: '/api/pipeline/warm-leads',
-
-  parseResponse: (json) => json as PipelineWarmLead[],
-
-  queryLocal: async () => {
-    return offlineDb.pipeline_warm_leads
-      .reverse()
-      .sortBy('added_at');
-  },
-
-  mutate: {
-    create: async (data) => {
-      const id = uuid();
-      const item: PipelineWarmLead = {
-        id,
-        name: data.name as string,
-        company: (data.company as string) ?? null,
-        interest: (data.interest as string) ?? null,
-        source: (data.source as string) ?? null,
-        added_at: nowLocal(),
-        notes: (data.notes as string) ?? null,
-      };
-      await offlineDb.pipeline_warm_leads.put(item);
-      await enqueue('POST', '/api/pipeline', { id, entity_type: 'warm_lead', ...data });
-      return item;
-    },
-
-    update: async (data) => {
-      const { id, ...updates } = data;
-      const existing = await offlineDb.pipeline_warm_leads.get(id);
-      const baseUpdatedAt = existing?.updated_at;
-      updates.updated_at = nowLocal();
-      await offlineDb.pipeline_warm_leads.update(id, updates);
-      await enqueue('PATCH', '/api/pipeline', { id, entity_type: 'warm_lead', ...updates, _base_updated_at: baseUpdatedAt });
-    },
-
-    remove: async (id) => {
-      await offlineDb.pipeline_warm_leads.delete(id);
-      await enqueue('DELETE', `/api/pipeline?id=${id}&type=warm_lead`, null);
-    },
-  },
-};
-
 // ---- Projects ----
 
 export const projectsStore: StoreConfig<Project> = {
@@ -467,7 +302,7 @@ export const dailyNotesStore: StoreConfig<DailyNote> = {
         reflection_fell_short: null,
         reflection_noticed: null,
         reflection_grateful: null,
-        top3_revenue: null,
+        top3_first: null,
         top3_second: null,
         top3_third: null,
         notes: null,
@@ -519,21 +354,13 @@ export const routineBlocksStore: StoreConfig<RoutineBlock> = {
         .sortBy('sort_order');
     }
     // Default: figure out today's routine type
+    // Will be replaced by week patterns in Phase 3
     const now = new Date();
     const day = now.getDay();
     let routineType: string;
     if (day === 0) routineType = 'sunday';
     else if (day === 6) routineType = 'saturday';
-    else {
-      // Auto-calculate girls week: reference Monday March 16, 2026 = non-girls week, alternating
-      const ref = new Date(2026, 2, 16).getTime();
-      const d = new Date(now);
-      const dayOff = d.getDay() === 0 ? -6 : 1 - d.getDay();
-      d.setDate(d.getDate() + dayOff);
-      d.setHours(0, 0, 0, 0);
-      const weeksDiff = Math.round((d.getTime() - ref) / (7 * 24 * 60 * 60 * 1000));
-      routineType = weeksDiff % 2 !== 0 ? 'girls_week' : 'non_girls_week';
-    }
+    else routineType = 'non_girls_week'; // temporary default until week patterns
     return offlineDb.routine_blocks
       .where('routine_type').equals(routineType)
       .sortBy('sort_order');
@@ -618,6 +445,164 @@ export const referenceDocsStore: StoreConfig<ReferenceDoc> = {
     remove: async (id) => {
       await offlineDb.reference_docs.delete(id);
       await enqueue('DELETE', `/api/reference?id=${id}`, null);
+    },
+  },
+};
+
+// ---- Disciplines ----
+
+export const disciplinesStore: StoreConfig<Discipline> = {
+  table: 'disciplines',
+
+  fetchUrl: '/api/disciplines',
+
+  parseResponse: (json) => json as Discipline[],
+
+  queryLocal: async (params) => {
+    let results = await offlineDb.disciplines.toArray();
+    if (!params?.include_inactive) {
+      results = results.filter(d => d.is_active === 1);
+    }
+    if (params?.type) {
+      results = results.filter(d => d.type === params.type);
+    }
+    return results.sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+  },
+
+  mutate: {
+    create: async (data) => {
+      const id = uuid();
+      const now = nowLocal();
+      const item: Discipline = {
+        id,
+        name: data.name as string,
+        type: (data.type as 'discipline' | 'value') || 'discipline',
+        description: (data.description as string) ?? null,
+        frequency: (data.frequency as string) || 'daily',
+        time_of_day: (data.time_of_day as 'morning' | 'shutdown') || 'morning',
+        is_active: 1,
+        sort_order: (data.sort_order as number) || 0,
+        created_at: now,
+        updated_at: now,
+      };
+      await offlineDb.disciplines.put(item);
+      await enqueue('POST', '/api/disciplines', { id, ...data });
+      return item;
+    },
+
+    update: async (data) => {
+      const { id, ...updates } = data;
+      updates.updated_at = nowLocal();
+      await offlineDb.disciplines.update(id, updates);
+      await enqueue('PATCH', '/api/disciplines', { ...data, updated_at: updates.updated_at });
+    },
+
+    remove: async (id) => {
+      await offlineDb.disciplines.delete(id);
+      await enqueue('DELETE', `/api/disciplines?id=${id}`, null);
+    },
+  },
+};
+
+// ---- Discipline Logs ----
+
+export const disciplineLogsStore: StoreConfig<DisciplineLog> = {
+  table: 'discipline_logs',
+
+  fetchUrl: (params) => {
+    const sp = new URLSearchParams(params);
+    return `/api/disciplines/logs?${sp.toString()}`;
+  },
+
+  parseResponse: (json) => json as DisciplineLog[],
+
+  queryLocal: async (params) => {
+    let results = await offlineDb.discipline_logs.toArray();
+    if (params?.date) {
+      results = results.filter(l => l.date === params.date);
+    }
+    if (params?.discipline_id) {
+      results = results.filter(l => l.discipline_id === params.discipline_id);
+    }
+    return results.sort((a, b) => b.date.localeCompare(a.date));
+  },
+
+  mutate: {
+    create: async (data) => {
+      const id = uuid();
+      const item: DisciplineLog = {
+        id,
+        discipline_id: data.discipline_id as string,
+        date: data.date as string,
+        completed: (data.completed as number) || 0,
+        notes: (data.notes as string) ?? null,
+        created_at: nowLocal(),
+      };
+      await offlineDb.discipline_logs.put(item);
+      await enqueue('POST', '/api/disciplines/logs', { id, ...data });
+      return item;
+    },
+
+    update: async (data) => {
+      const { id, ...updates } = data;
+      await offlineDb.discipline_logs.update(id, updates);
+      await enqueue('PATCH', '/api/disciplines/logs', data);
+    },
+
+    remove: async (id) => {
+      await offlineDb.discipline_logs.delete(id);
+      await enqueue('DELETE', `/api/disciplines/logs?id=${id}`, null);
+    },
+  },
+};
+
+// ---- Context Lists ----
+
+export const contextListsStore: StoreConfig<ContextList> = {
+  table: 'context_lists',
+
+  fetchUrl: '/api/context-lists',
+
+  parseResponse: (json) => json as ContextList[],
+
+  queryLocal: async (params) => {
+    let results = await offlineDb.context_lists.toArray();
+    if (!params?.include_inactive) {
+      results = results.filter(c => c.is_active === 1);
+    }
+    return results.sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+  },
+
+  mutate: {
+    create: async (data) => {
+      const id = uuid();
+      const now = nowLocal();
+      const item: ContextList = {
+        id,
+        name: data.name as string,
+        key: data.key as string,
+        color: (data.color as string) ?? null,
+        icon: (data.icon as string) ?? null,
+        sort_order: (data.sort_order as number) || 0,
+        is_active: 1,
+        created_at: now,
+        updated_at: now,
+      };
+      await offlineDb.context_lists.put(item);
+      await enqueue('POST', '/api/context-lists', { id, ...data });
+      return item;
+    },
+
+    update: async (data) => {
+      const { id, ...updates } = data;
+      updates.updated_at = nowLocal();
+      await offlineDb.context_lists.update(id, updates);
+      await enqueue('PATCH', '/api/context-lists', { ...data, updated_at: updates.updated_at });
+    },
+
+    remove: async (id) => {
+      await offlineDb.context_lists.delete(id);
+      await enqueue('DELETE', `/api/context-lists?id=${id}`, null);
     },
   },
 };

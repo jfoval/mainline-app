@@ -7,9 +7,9 @@ import {
   CheckSquare,
   FolderKanban,
   Calendar,
+  CalendarDays,
   Target,
   BookOpen,
-  BarChart3,
   Clock,
   Menu,
   X,
@@ -18,7 +18,6 @@ import {
   Sun,
   Moon,
   Compass,
-  FileText,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -29,8 +28,8 @@ const navItems = [
   { href: '/inbox', label: 'Inbox', icon: Inbox },
   { href: '/actions', label: 'Next Actions', icon: CheckSquare },
   { href: '/projects', label: 'Projects', icon: FolderKanban },
-  { href: '/pipeline', label: 'Pipeline', icon: BarChart3 },
-  { href: '/clients', label: 'Clients', icon: FileText },
+  { href: '/ideal-calendar', label: 'Ideal Calendar', icon: CalendarDays },
+  { href: '/disciplines', label: 'Disciplines', icon: Compass },
   { href: '/horizons', label: 'Horizons', icon: Target },
   { href: '/reference', label: 'Reference', icon: BookOpen },
   { href: '/review', label: 'Review', icon: Calendar },
@@ -68,7 +67,7 @@ export default function Sidebar() {
         }`}
       >
         <div className="p-6 border-b border-white/10">
-          <h1 className="text-xl font-bold">Foval GTD</h1>
+          <h1 className="text-xl font-bold">Mainline</h1>
         </div>
 
         <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
