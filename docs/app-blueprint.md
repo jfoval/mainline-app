@@ -1,8 +1,8 @@
 # Mainline App Blueprint
 ## Personal Productivity System Powered by GTD
 
-**Last updated:** 2026-03-27
-**Status:** Production-ready. Deployed on Vercel. 14+ pages, ~33 API routes. Offline-first PWA with conflict detection, rate limiting, fetch timeouts, dashboard caching, service worker cache versioning. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. All server-side time logic uses Central Time via `nowCentral()` helper.
+**Last updated:** 2026-03-28
+**Status:** Production-ready. Deployed on Vercel. 14+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min), rate limiting, fetch timeouts, dashboard caching, service worker v9. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. All server-side time logic uses Central Time via `nowCentral()` helper. Settings API has key allowlist for security. Migration system at v010.
 
 ---
 
@@ -52,13 +52,12 @@ A self-deployed personal GTD productivity app. Each customer gets their own inst
 4. **Important:** Commits must have author email `johnfoval@gmail.com` (matching GitHub account) or Vercel Hobby tier blocks the deploy. Git config is set in the repo (`git config user.email`), but if commits come from a new machine or tool, verify the email matches.
 
 ### How to Run Locally
-- `npm run dev` (requires `.env.local` with all 5 env vars)
+- `npm run dev` (requires `.env.local` with DATABASE_URL, JWT_SECRET, AUTH_PASSWORD_HASH, optional ANTHROPIC_API_KEY)
 - Connects to the same Neon database as production
 
 ### Useful Scripts
 - `node scripts/hash-password.mjs "new-password"` — generate bcrypt hash for AUTH_PASSWORD_HASH
-- `node scripts/setup-schema.mjs` — create all tables on a fresh Neon database
-- `node scripts/migrate-data.mjs` — one-time SQLite → Postgres data migration (requires better-sqlite3)
+- Schema creation and migrations run automatically on app startup via `ensureDb()` → `runMigrations()`
 
 ---
 
@@ -151,17 +150,18 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 - **Per-table store configs** — queryLocal, fetchUrl, create/update/remove (`src/lib/offline/stores.ts`)
 - **React hook `useOfflineStore()`** — replaces useState+useEffect+fetch
 - **SyncStatus pill** — red "Offline" / orange "Syncing X..." in bottom-right corner
-- **Service worker** — caches app shell + key pages, versioned cache for deploy cache busting
+- **Service worker v9** — caches app shell + key pages, versioned cache for deploy cache busting
 - **Initial sync** — first visit hydrates all priority tables from server (30s timeout per fetch)
+- **Incremental sync** — refreshes all data every 5 minutes while online
+- **Reconnect sync** — listens for `online` event and syncs immediately on reconnect
 
-### Tables mirrored in IndexedDB (9)
-`next_actions`, `inbox_items`, `list_items`, `pipeline_deals`, `pipeline_contacts`, `pipeline_warm_leads`, `projects`, `daily_notes`, `routine_blocks`
+### Tables mirrored in IndexedDB (11)
+`next_actions`, `inbox_items`, `list_items`, `projects`, `daily_notes`, `routine_blocks`, `reference_docs`, `disciplines`, `discipline_logs`, `context_lists`, `daily_blocks`
 
 ### What works offline on mobile
-- View and check off next actions (all 7 context lists)
+- View and check off next actions (all context lists)
 - Capture to inbox (text + voice via Web Speech API)
 - View reference lists
-- View contacts/pipeline before meetings
 - Create new actions, inbox items, list items, projects
 
 ### What only works online (by design)
@@ -175,7 +175,8 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 
 ### Migration System
 - `src/lib/migrations/runner.ts` — embedded SQL migrations (Postgres dialect), `schema_version` table tracks applied versions
-- 4 migrations applied: baseline tables, updated_at columns, backup_log, client_notes + deal history
+- 10 migrations applied: baseline through daily_blocks, disciplines, context_lists, updated_at backfill
+- Note: Neon HTTP driver is stateless — each `sql.query()` is an independent request. DDL auto-commits in Postgres. No cross-query transactions.
 
 ### Database Durability
 - Neon Postgres handles backups, point-in-time recovery, and high availability
