@@ -2,7 +2,7 @@
 ## Personal Productivity System
 
 **Last updated:** 2026-03-28
-**Status:** Production-ready. Deployed on Vercel. 18+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v10. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. All server-side time logic uses Central Time via `nowCentral()` helper. Settings API has key allowlist for security. Migration system at v010.
+**Status:** Production-ready. Deployed on Vercel. 18+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v10. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v011.
 
 ---
 
@@ -105,7 +105,7 @@ A self-deployed personal productivity app. Each customer gets their own instance
 - **Recovery** (`/recovery`) — AI-powered "get back on track" guided re-engagement
 
 ### Settings & System
-- **Settings** (`/settings`) — AI connection test, appearance (dark/light mode), notifications toggle, JSON data export + import, logout
+- **Settings** (`/settings`) — AI connection test, appearance (dark/light mode), timezone picker, notifications toggle, JSON data export + import, version check, logout
 - **Sync Conflicts** (`/conflicts`) — side-by-side conflict resolution for offline sync
 - **Setup** (`/setup`) — first-run wizard for password + database initialization
 - **Login** (`/login`) — password auth with rate limiting (no sidebar shown)
@@ -120,11 +120,10 @@ A self-deployed personal productivity app. Each customer gets their own instance
 - **Brain dump mode** — guided initial system population
 - **Test suite** — automated tests
 - **Custom domain** — optional, Vercel supports it
-- **Deploy to Vercel button** — one-click deploy for customers
 
 ---
 
-## Timezone Handling (Central Time)
+## Timezone Handling
 
 All server-side date/time logic uses a configurable timezone via the `nowCentral()` helper in `src/lib/api-helpers.ts`. This is critical because Vercel servers run in UTC — without this, routine blocks, daily notes, and schedule detection would be hours off.
 
@@ -209,6 +208,12 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 - Server PATCH routes check `_base_updated_at` → 409 on conflict
 - `/conflicts` page for side-by-side resolution
 
+### Session Security
+- Password change (via setup) stores `jwt_issued_after` timestamp in settings
+- Proxy middleware checks every JWT's `iat` against this — stale sessions are rejected
+- Settings GET endpoint hides `auth_password_hash`, `jwt_issued_after`, `jwt_secret`; API key is masked
+- Service worker cache cleared on logout (prevents back-button access to authenticated pages)
+
 ---
 
 ## Daily Workflow
@@ -281,10 +286,6 @@ Slot 1 of the daily Top 3 is always picked from the highest applicable level.
 ## Project Categories
 
 nurik, personal, home, family, lsu, dj, music, health, finance
-
-## Deal Stages
-
-discovery → proposal_sent → negotiating → verbal_yes → closed_won → closed_lost
 
 ## Context Lists
 

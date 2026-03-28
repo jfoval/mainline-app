@@ -2,6 +2,29 @@
 
 All notable changes to Mainline will be documented here.
 
+## [0.2.0] - 2026-03-28
+
+### Fixed
+- DailyBlock type and store not exported from offline layer
+- Horizons page function hoisting bug (useCallback refactor)
+- Unused import in actions API route
+- Dead script reference in package.json
+- Export filename changed from "gtd-export" to "mainline-export"
+
+### Security
+- Settings GET endpoint now hides password hash, JWT secret, and masks API key
+- Session invalidation on password change (jwt_issued_after)
+- Service worker cache cleared on logout
+
+### Added
+- Configurable timezone (TIMEZONE env var or Settings page picker)
+- Timezone picker in Settings with common IANA zones
+
+### Changed
+- Removed all GTD/personal branding from app UI, AI prompts, and documentation
+- Dropped 12 unused legacy database tables (migration 011)
+- Blueprint and README updated for all changes
+
 ## [0.1.0] - 2026-03-28
 
 ### Added
