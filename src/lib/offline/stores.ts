@@ -2,7 +2,7 @@ import { offlineDb } from './db';
 import type {
   InboxItem, NextAction, ListItem,
   Project, DailyNote, RoutineBlock, ReferenceDoc,
-  Discipline, DisciplineLog, ContextList,
+  Discipline, DisciplineLog, ContextList, DailyBlock,
 } from './db';
 import { enqueue } from './sync-queue';
 import { v4 as uuid } from 'uuid';
@@ -603,6 +603,67 @@ export const contextListsStore: StoreConfig<ContextList> = {
     remove: async (id) => {
       await offlineDb.context_lists.delete(id);
       await enqueue('DELETE', `/api/context-lists?id=${id}`, null);
+    },
+  },
+};
+
+// ---- Daily Blocks ----
+
+export const dailyBlocksStore: StoreConfig<DailyBlock> = {
+  table: 'daily_blocks',
+
+  fetchUrl: (params) => {
+    if (params?.date) return `/api/daily-blocks?date=${params.date}`;
+    return '/api/daily-blocks';
+  },
+
+  parseResponse: (json) => {
+    const obj = json as Record<string, unknown>;
+    if (obj.blocks) return obj.blocks as DailyBlock[];
+    if (Array.isArray(json)) return json as DailyBlock[];
+    return [];
+  },
+
+  queryLocal: async (params) => {
+    if (params?.date) {
+      return offlineDb.daily_blocks
+        .where('date').equals(params.date)
+        .sortBy('start_time');
+    }
+    return offlineDb.daily_blocks.toArray();
+  },
+
+  mutate: {
+    create: async (data) => {
+      const id = uuid();
+      const now = nowLocal();
+      const item: DailyBlock = {
+        id,
+        date: data.date as string,
+        start_time: data.start_time as string,
+        end_time: data.end_time as string,
+        label: data.label as string,
+        description: (data.description as string) ?? null,
+        is_non_negotiable: (data.is_non_negotiable as number) || 0,
+        source_block_id: null,
+        created_at: now,
+        updated_at: now,
+      };
+      await offlineDb.daily_blocks.put(item);
+      await enqueue('POST', '/api/daily-blocks', { id, ...data });
+      return item;
+    },
+
+    update: async (data) => {
+      const { id, ...updates } = data;
+      updates.updated_at = nowLocal();
+      await offlineDb.daily_blocks.update(id, updates);
+      await enqueue('PATCH', '/api/daily-blocks', { ...data, updated_at: updates.updated_at });
+    },
+
+    remove: async (id) => {
+      await offlineDb.daily_blocks.delete(id);
+      await enqueue('DELETE', `/api/daily-blocks?id=${id}`, null);
     },
   },
 };

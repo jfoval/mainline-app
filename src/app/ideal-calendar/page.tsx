@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { TIME_OPTIONS, formatTime } from '@/lib/time-utils';
 import {
   Plus, Trash2, Save, Calendar, ChevronDown, ChevronRight,
   RotateCcw, Edit3, X, Check, Copy,
@@ -38,19 +39,7 @@ interface Rotation {
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DAY_ABBREVS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-const TIME_OPTIONS: string[] = [];
-for (let h = 0; h < 24; h++) {
-  for (let m = 0; m < 60; m += 15) {
-    TIME_OPTIONS.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
-  }
-}
-
-function formatTime(t: string): string {
-  const [h, m] = t.split(':').map(Number);
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${h12}:${String(m).padStart(2, '0')} ${ampm}`;
-}
+// TIME_OPTIONS and formatTime imported from @/lib/time-utils
 
 // ── Component ──────────────────────────────────────────────────
 export default function IdealCalendarPage() {

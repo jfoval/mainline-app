@@ -419,4 +419,23 @@ const embeddedMigrations: { version: number; name: string; statements: string[] 
       `CREATE INDEX IF NOT EXISTS idx_cl_key ON context_lists(key)`,
     ],
   },
+  {
+    version: 9,
+    name: '009_daily_blocks',
+    statements: [
+      `CREATE TABLE IF NOT EXISTS daily_blocks (
+        id TEXT PRIMARY KEY,
+        date TEXT NOT NULL,
+        start_time TEXT NOT NULL,
+        end_time TEXT NOT NULL,
+        label TEXT NOT NULL,
+        description TEXT,
+        is_non_negotiable INTEGER DEFAULT 0,
+        source_block_id TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_daily_blocks_date ON daily_blocks(date)`,
+    ],
+  },
 ];

@@ -8,8 +8,10 @@ import {
   Mic, MicOff, Check
 } from 'lucide-react';
 import Link from 'next/link';
+import DailyCalendar from '@/components/DailyCalendar';
 
 interface DashboardData {
+  date: string;
   day_name: string;
   pattern_name: string | null;
   current_time: string;
@@ -82,7 +84,6 @@ export default function Dashboard() {
 
     const recognition = new SpeechRecognitionCtor();
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    // iOS Safari doesn't support continuous mode well — speech ends after a pause
     recognition.continuous = !isMobile;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
@@ -108,16 +109,13 @@ export default function Dashboard() {
           interim += event.results[i][0].transcript;
         }
       }
-      // Save both final and interim — iOS may never mark results as final
       transcriptRef.current = finalTranscript || interim;
       setInterimText(finalTranscript || interim);
     };
 
     recognition.onerror = (event: { error: string }) => {
       console.error('Speech recognition error:', event.error);
-      // "no-speech" just means silence — not fatal
       if (event.error === 'no-speech') return;
-      // "not-allowed" means permission denied
       if (event.error === 'not-allowed') {
         alert('Microphone or Speech Recognition permission denied. Check System Settings > Privacy & Security > Speech Recognition, and make sure Safari has access.');
       }
@@ -142,7 +140,6 @@ export default function Dashboard() {
           setCaptureStatus('saved');
           setInterimText('');
           setTimeout(() => setCaptureStatus('idle'), 2000);
-          // Re-fetch dashboard to get accurate inbox count
           fetch('/api/dashboard')
             .then(r => r.ok ? r.json() : null)
             .then((d: DashboardData | null) => { if (d) { setData(d); cacheDashboard(d); } });
@@ -168,7 +165,6 @@ export default function Dashboard() {
         cacheDashboard(d);
       })
       .catch(() => {
-        // Try to show cached data
         const cached = getCachedDashboard();
         if (cached) {
           setData(cached.data);
@@ -180,18 +176,16 @@ export default function Dashboard() {
   }, []);
 
   if (error) return (
-    <div className="max-w-5xl mx-auto p-6 text-center">
+    <div className="max-w-6xl mx-auto p-6 text-center">
       <p className="text-danger font-medium">Failed to load dashboard.</p>
       <button onClick={() => { setError(false); fetch('/api/dashboard').then(r => r.json()).then((d: DashboardData) => { setData(d); cacheDashboard(d); }).catch(() => setError(true)); }} className="mt-3 px-4 py-2 rounded-lg bg-primary text-white text-sm">Retry</button>
     </div>
   );
 
-  if (!data) return <div className="max-w-5xl mx-auto p-6">Loading...</div>;
-
-  const currentBlockIndex = data.blocks.findIndex(b => b.id === data.current_block?.id);
+  if (!data) return <div className="max-w-6xl mx-auto p-6">Loading...</div>;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       {/* Stale cache banner */}
       {staleCache && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between">
@@ -279,6 +273,46 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Now / Up Next */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-card rounded-xl p-5 border-2 border-primary">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock size={18} className="text-primary" />
+            <h2 className="font-semibold text-primary">Now</h2>
+          </div>
+          {data.current_block ? (
+            <>
+              <p className="text-xl font-bold">{data.current_block.label}</p>
+              <p className="text-sm text-muted mt-1">
+                {data.current_block.start_time} - {data.current_block.end_time}
+              </p>
+              {data.current_block.description && (
+                <p className="text-sm mt-2 text-foreground/70">{data.current_block.description}</p>
+              )}
+            </>
+          ) : (
+            <p className="text-xl font-bold">Free time</p>
+          )}
+        </div>
+
+        <div className="bg-card rounded-xl p-5 border border-border">
+          <div className="flex items-center gap-2 mb-2">
+            <ArrowRight size={18} className="text-muted" />
+            <h2 className="font-semibold text-muted">Up Next</h2>
+          </div>
+          {data.next_block ? (
+            <>
+              <p className="text-lg font-bold">{data.next_block.label}</p>
+              <p className="text-sm text-muted mt-1">
+                {data.next_block.start_time} - {data.next_block.end_time}
+              </p>
+            </>
+          ) : (
+            <p className="text-lg font-bold text-muted">Nothing scheduled</p>
+          )}
+        </div>
+      </div>
+
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Link href="/inbox" className="bg-card rounded-xl p-4 border border-border hover:border-primary transition-colors">
@@ -330,52 +364,6 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {/* Now / Up Next */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-card rounded-xl p-5 border-2 border-primary">
-          <div className="flex items-center gap-2 mb-2">
-            <Clock size={18} className="text-primary" />
-            <h2 className="font-semibold text-primary">Now</h2>
-          </div>
-          {data.current_block ? (
-            <>
-              <p className="text-xl font-bold">{data.current_block.label}</p>
-              <p className="text-sm text-muted mt-1">
-                {data.current_block.start_time} - {data.current_block.end_time}
-              </p>
-              {data.current_block.description && (
-                <p className="text-sm mt-2 text-foreground/70">{data.current_block.description}</p>
-              )}
-              {data.current_block.is_non_negotiable === 1 && (
-                <span className="inline-block mt-2 px-2 py-0.5 rounded text-xs bg-primary/10 text-primary font-medium">Non-negotiable</span>
-              )}
-            </>
-          ) : (
-            <p className="text-xl font-bold">Sleep</p>
-          )}
-        </div>
-
-        <div className="bg-card rounded-xl p-5 border border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <ArrowRight size={18} className="text-muted" />
-            <h2 className="font-semibold text-muted">Up Next</h2>
-          </div>
-          {data.next_block ? (
-            <>
-              <p className="text-lg font-bold">{data.next_block.label}</p>
-              <p className="text-sm text-muted mt-1">
-                {data.next_block.start_time} - {data.next_block.end_time}
-              </p>
-              {data.next_block.description && (
-                <p className="text-sm mt-2 text-foreground/70">{data.next_block.description}</p>
-              )}
-            </>
-          ) : (
-            <p className="text-lg font-bold text-muted">{data.current_block ? 'Nothing scheduled' : 'Sleep'}</p>
-          )}
-        </div>
-      </div>
-
       {/* Today's Top 3 */}
       {data.daily_note && (data.daily_note.top3_first || data.daily_note.top3_second || data.daily_note.top3_third) ? (
         <div className="bg-card rounded-xl p-5 border border-border">
@@ -422,9 +410,9 @@ export default function Dashboard() {
         </Link>
       )}
 
-      {/* Context List Summary */}
+      {/* Next Actions */}
       <div className="bg-card rounded-xl p-5 border border-border">
-        <h2 className="font-semibold mb-4">Context Lists ({data.total_actions} total)</h2>
+        <h2 className="font-semibold mb-4">Next Actions ({data.total_actions} total)</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {Object.entries(data.action_counts).map(([key, count]) => (
             <Link
@@ -439,43 +427,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Today's Schedule */}
-      <div className="bg-card rounded-xl p-5 border border-border">
-        <h2 className="font-semibold mb-4">Full Schedule</h2>
-        <div className="space-y-1">
-          {data.blocks.map((block, i) => {
-            const isCurrent = i === currentBlockIndex;
-            const isPast = i < currentBlockIndex;
-
-            return (
-              <div
-                key={block.id}
-                className={`flex items-start gap-3 px-3 py-2 rounded-lg transition-colors ${
-                  isCurrent
-                    ? 'bg-primary/10 border border-primary/30'
-                    : isPast
-                      ? 'opacity-40'
-                      : ''
-                }`}
-              >
-                <span className="text-xs text-muted w-24 shrink-0 pt-0.5">
-                  {block.start_time} - {block.end_time}
-                </span>
-                <div>
-                  <p className={`text-sm font-medium ${block.is_non_negotiable ? 'text-primary' : ''}`}>
-                    {block.label}
-                    {block.is_non_negotiable ? ' *' : ''}
-                  </p>
-                  {block.description && (
-                    <p className="text-xs text-muted mt-0.5">{block.description}</p>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      {/* Daily Calendar */}
+      <DailyCalendar date={data.date} />
     </div>
   );
 }
-

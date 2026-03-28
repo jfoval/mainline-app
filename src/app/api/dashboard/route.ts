@@ -2,41 +2,38 @@ import { NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
 import { nowCentral } from '@/lib/api-helpers';
+import { getMonday, resolvePatternId } from '@/lib/pattern-resolver';
+import { v4 as uuid } from 'uuid';
 
-/** Get the Monday of a given week */
-function getMonday(date: Date): string {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+/** Ensure daily_blocks exist for the given date, hydrating from ideal calendar if needed */
+async function ensureDailyBlocks(date: string, dayOfWeek: number) {
+  let blocks = await sql`SELECT * FROM daily_blocks WHERE date = ${date} ORDER BY start_time`;
 
-/** Resolve which pattern applies for a given week */
-async function resolvePatternId(weekStart: string): Promise<string | null> {
-  // 1. Explicit assignment
-  const explicit = await sql`SELECT pattern_id FROM week_schedule WHERE week_start = ${weekStart}`;
-  if (explicit.length > 0) return explicit[0].pattern_id as string;
+  if (blocks.length === 0) {
+    // Hydrate from ideal calendar
+    const weekStart = getMonday(new Date(date + 'T12:00:00'));
+    const patternId = await resolvePatternId(weekStart);
 
-  // 2. Active rotation
-  const rotationRows = await sql`SELECT * FROM week_pattern_rotation WHERE is_active = 1 LIMIT 1`;
-  if (rotationRows.length > 0) {
-    const rotation = rotationRows[0] as { pattern_ids: string; start_date: string };
-    try {
-      const patternIds = JSON.parse(rotation.pattern_ids) as string[];
-      if (patternIds.length > 0) {
-        const startDate = new Date(rotation.start_date + 'T12:00:00');
-        const weekDate = new Date(weekStart + 'T12:00:00');
-        const weeksDiff = Math.round((weekDate.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
-        const index = ((weeksDiff % patternIds.length) + patternIds.length) % patternIds.length;
-        return patternIds[index];
+    if (patternId) {
+      const templateBlocks = await sql`
+        SELECT * FROM week_pattern_blocks
+        WHERE pattern_id = ${patternId} AND day_of_week = ${dayOfWeek}
+        ORDER BY start_time, sort_order
+      `;
+
+      for (const tb of templateBlocks) {
+        const id = uuid();
+        await sql`
+          INSERT INTO daily_blocks (id, date, start_time, end_time, label, description, is_non_negotiable, source_block_id)
+          VALUES (${id}, ${date}, ${tb.start_time}, ${tb.end_time}, ${tb.label}, ${tb.description || null}, ${tb.is_non_negotiable || 0}, ${tb.id})
+        `;
       }
-    } catch { /* invalid JSON */ }
+
+      blocks = await sql`SELECT * FROM daily_blocks WHERE date = ${date} ORDER BY start_time`;
+    }
   }
 
-  // 3. First pattern
-  const firstPattern = await sql`SELECT id FROM week_patterns ORDER BY sort_order, name LIMIT 1`;
-  return firstPattern.length > 0 ? firstPattern[0].id as string : null;
+  return blocks;
 }
 
 export async function GET() {
@@ -46,33 +43,21 @@ export async function GET() {
     const ct = nowCentral();
     const dayName = ct.weekday;
     const timeStr = ct.timeStr;
+    const today = ct.dateStr;
 
-    // Try week patterns first
+    // Get daily blocks (hydrates from ideal calendar if needed)
+    const blocks = await ensureDailyBlocks(today, ct.dayOfWeek) as Array<{
+      id: string; start_time: string; end_time: string; label: string;
+      description: string; is_non_negotiable: number;
+    }>;
+
+    // Get pattern name for display
     const weekStart = getMonday(ct.date);
     const patternId = await resolvePatternId(weekStart);
-
-    let blocks: Array<{ id: string; start_time: string; end_time: string; label: string; description: string; is_non_negotiable: number }> = [];
     let patternName: string | null = null;
-
     if (patternId) {
-      // Use week pattern blocks for today
       const patternRows = await sql`SELECT name FROM week_patterns WHERE id = ${patternId}`;
       patternName = patternRows.length > 0 ? patternRows[0].name as string : null;
-
-      blocks = await sql`
-        SELECT * FROM week_pattern_blocks
-        WHERE pattern_id = ${patternId} AND day_of_week = ${ct.dayOfWeek}
-        ORDER BY start_time, sort_order
-      ` as typeof blocks;
-    } else {
-      // Fallback to legacy routine_blocks if no week patterns exist yet
-      let routineType = 'non_girls_week';
-      if (ct.dayOfWeek === 0) routineType = 'sunday';
-      else if (ct.dayOfWeek === 6) routineType = 'saturday';
-
-      blocks = await sql`
-        SELECT * FROM routine_blocks WHERE routine_type = ${routineType} ORDER BY sort_order
-      ` as typeof blocks;
     }
 
     const currentBlock = blocks.find(b => timeStr >= b.start_time && timeStr < b.end_time) || null;
@@ -105,7 +90,6 @@ export async function GET() {
       }
     }
 
-    const today = ct.dateStr;
     const dailyNoteRows = await sql`SELECT * FROM daily_notes WHERE date = ${today}`;
     const dailyNote = dailyNoteRows[0] as {
       top3_first: string | null;
@@ -139,6 +123,7 @@ export async function GET() {
     }
 
     return NextResponse.json({
+      date: today,
       day_name: dayName,
       pattern_name: patternName,
       current_time: timeStr,

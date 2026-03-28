@@ -2,9 +2,9 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "gtd-dev",
+      "name": "mainline-dev",
       "runtimeExecutable": "/opt/homebrew/bin/node",
-      "runtimeArgs": ["/Users/johnfoval/Desktop/Nurik/gtd-app/node_modules/.bin/next", "dev", "--port", "3000"],
+      "runtimeArgs": ["/Users/johnfoval/Desktop/Mainline/app/node_modules/.bin/next", "dev", "--port", "3000"],
       "port": 3000
     }
   ]
