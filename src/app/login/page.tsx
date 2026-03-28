@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -65,7 +66,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold">Mainline</h1>
+          <Image src="/branding/logo-with-name-light.png" alt="Mainline" width={220} height={60} className="mx-auto mb-2" priority />
           <p className="text-sm text-muted mt-1">Enter your password to continue</p>
         </div>
 

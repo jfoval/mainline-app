@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -67,7 +68,10 @@ export default function Sidebar() {
         }`}
       >
         <div className="p-6 border-b border-white/10">
-          <h1 className="text-xl font-bold">Mainline</h1>
+          <Link href="/" className="flex items-center gap-3">
+            <Image src="/branding/logo.png" alt="Mainline" width={32} height={32} className="rounded" />
+            <h1 className="text-xl font-bold">Mainline</h1>
+          </Link>
         </div>
 
         <nav className="p-4 space-y-1 flex-1 overflow-y-auto">

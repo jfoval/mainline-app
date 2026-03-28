@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { ChevronRight, Check, Loader2, Lock, User, Key } from 'lucide-react';
 
 export default function SetupPage() {
@@ -85,7 +86,7 @@ export default function SetupPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Welcome to Mainline</h1>
+          <Image src="/branding/logo-with-name-light.png" alt="Mainline" width={260} height={70} className="mx-auto mb-4" priority />
           <p className="text-muted mt-2">Let&apos;s get your personal GTD system set up.</p>
         </div>
 
