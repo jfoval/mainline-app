@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Key, LogOut, Database, Download, Upload, Sun, Moon, Palette } from 'lucide-react';
+import { Key, LogOut, Database, Download, Upload, Sun, Moon, Palette, Bell, BellOff } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 
 export default function SettingsPage() {
@@ -13,6 +13,11 @@ export default function SettingsPage() {
   const [importResult, setImportResult] = useState<string | null>(null);
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  useEffect(() => {
+    setNotificationsEnabled(localStorage.getItem('mainline-notifications') === 'true');
+  }, []);
 
   async function testConnection() {
     setTesting(true);
@@ -134,6 +139,47 @@ export default function SettingsPage() {
           </button>
         </div>
       </div>
+
+      {/* Notifications */}
+      {'Notification' in globalThis && (
+        <div className="bg-card rounded-xl border border-border p-6 mt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Bell size={20} className="text-primary" />
+            <h2 className="text-lg font-semibold">Notifications</h2>
+          </div>
+          <p className="text-sm text-muted mb-4">
+            Get reminded when your inbox is overflowing or projects are stalled. Quiet hours: 9pm-7am.
+          </p>
+          <button
+            onClick={async () => {
+              if (notificationsEnabled) {
+                localStorage.setItem('mainline-notifications', 'false');
+                setNotificationsEnabled(false);
+              } else {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                  localStorage.setItem('mainline-notifications', 'true');
+                  setNotificationsEnabled(true);
+                  // Persist to server
+                  fetch('/api/settings', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notification_enabled: 'true' }),
+                  }).catch(() => {});
+                }
+              }
+            }}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm transition-colors ${
+              notificationsEnabled
+                ? 'border-primary bg-primary/10 text-primary font-medium'
+                : 'border-border hover:bg-primary/5'
+            }`}
+          >
+            {notificationsEnabled ? <Bell size={16} /> : <BellOff size={16} />}
+            {notificationsEnabled ? 'Notifications On' : 'Enable Notifications'}
+          </button>
+        </div>
+      )}
 
       {/* Database */}
       <div className="bg-card rounded-xl border border-border p-6 mt-6">

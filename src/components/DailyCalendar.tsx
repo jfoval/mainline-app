@@ -1,8 +1,11 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Plus, Trash2, X, Check, Edit3 } from 'lucide-react';
+import { Plus, Trash2, X, Check, Edit3, GripVertical } from 'lucide-react';
 import { TIME_OPTIONS, formatTime, timeToMinutes } from '@/lib/time-utils';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface DailyBlock {
   id: string;
@@ -125,6 +128,36 @@ export default function DailyCalendar({ date }: { date: string }) {
     setShowAddForm(false);
   };
 
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const draggedBlock = blocks.find(b => b.id === active.id);
+    const targetBlock = blocks.find(b => b.id === over.id);
+    if (!draggedBlock || !targetBlock) return;
+
+    // Swap time slots
+    try {
+      await Promise.all([
+        fetch('/api/daily-blocks', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: draggedBlock.id, start_time: targetBlock.start_time, end_time: targetBlock.end_time }),
+        }),
+        fetch('/api/daily-blocks', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: targetBlock.id, start_time: draggedBlock.start_time, end_time: draggedBlock.end_time }),
+        }),
+      ]);
+      loadBlocks();
+    } catch (err) {
+      console.error('Failed to swap blocks:', err);
+    }
+  }
+
   const currentMins = currentTime ? timeToMinutes(currentTime) : -1;
 
   if (loading) return <div className="bg-card rounded-xl border border-border p-6 text-center text-muted">Loading calendar...</div>;
@@ -161,6 +194,8 @@ export default function DailyCalendar({ date }: { date: string }) {
       )}
 
       {/* Block list */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={blocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
       <div className="divide-y divide-border/50">
         {blocks.length === 0 && !showAddForm && (
           <div className="px-5 py-8 text-center text-muted text-sm">
@@ -168,7 +203,9 @@ export default function DailyCalendar({ date }: { date: string }) {
           </div>
         )}
 
-        {blocks.map(block => {
+        {blocks.map(block => (
+          <SortableBlock key={block.id} id={block.id}>
+          {(dragHandleProps) => {
           const startMins = timeToMinutes(block.start_time);
           const endMins = timeToMinutes(block.end_time);
           const isPast = endMins <= currentMins;
@@ -178,7 +215,6 @@ export default function DailyCalendar({ date }: { date: string }) {
 
           return (
             <div
-              key={block.id}
               ref={isCurrent ? currentBlockRef : undefined}
               className={`px-5 py-3 transition-colors group ${
                 isCurrent
@@ -200,7 +236,11 @@ export default function DailyCalendar({ date }: { date: string }) {
                   />
                 </div>
               ) : (
-                <div className="flex items-start gap-4 cursor-pointer" onClick={() => startEdit(block)}>
+                <div className="flex items-start gap-3 cursor-pointer" onClick={() => startEdit(block)}>
+                  {/* Drag handle */}
+                  <button {...dragHandleProps} className="mt-2 cursor-grab active:cursor-grabbing text-muted/30 hover:text-muted touch-none" onClick={e => e.stopPropagation()}>
+                    <GripVertical size={14} />
+                  </button>
                   {/* Time column */}
                   <div className="w-28 shrink-0 pt-0.5">
                     <p className={`text-sm font-medium ${isCurrent ? 'text-primary' : 'text-muted'}`}>
@@ -241,8 +281,24 @@ export default function DailyCalendar({ date }: { date: string }) {
               )}
             </div>
           );
-        })}
+          }}
+          </SortableBlock>
+        ))}
       </div>
+        </SortableContext>
+      </DndContext>
+    </div>
+  );
+}
+
+// ── Sortable Block Wrapper ──────────────────────────────
+function SortableBlock({ id, children }: { id: string; children: (dragHandleProps: Record<string, unknown>) => React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children({ ...attributes, ...listeners })}
     </div>
   );
 }

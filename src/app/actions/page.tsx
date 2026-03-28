@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Plus, Check, Trash2, Search } from 'lucide-react';
+import { Plus, Check, Trash2, Search, GripVertical } from 'lucide-react';
 import { Suspense } from 'react';
 import { useOfflineStore, nextActionsStore } from '@/lib/offline';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface ContextItem {
   key: string;
@@ -27,6 +30,45 @@ const COLOR_MAP: Record<string, string> = {
 
 function getColorClasses(color: string | null): string {
   return COLOR_MAP[color || 'gray'] || 'bg-gray-100 text-gray-700';
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function SortableActionItem({ action, onComplete, onDelete }: { action: any; onComplete: (id: string) => void; onDelete: (id: string) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: action.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+
+  return (
+    <div ref={setNodeRef} style={style} className="flex items-start gap-2 p-4 rounded-xl bg-card border border-border group hover:border-primary/30 transition-colors">
+      <button {...attributes} {...listeners} className="mt-1 cursor-grab active:cursor-grabbing text-muted/40 hover:text-muted touch-none">
+        <GripVertical size={14} />
+      </button>
+      <button
+        onClick={() => onComplete(action.id)}
+        className="mt-0.5 w-5 h-5 rounded border-2 border-muted/40 hover:border-success hover:bg-success/10 transition-colors flex-shrink-0 flex items-center justify-center"
+      >
+        <Check size={12} className="text-transparent group-hover:text-success/50" />
+      </button>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm">{action.content}</p>
+        <div className="flex flex-wrap gap-2 mt-1">
+          {action.project_title && <span className="text-xs text-primary">{action.project_title}</span>}
+          {action.waiting_on_person && (
+            <span className="text-xs text-muted">
+              Waiting on: {action.waiting_on_person}{action.waiting_since && ` (since ${action.waiting_since})`}
+            </span>
+          )}
+          {action.agenda_person && <span className="text-xs text-muted">For: {action.agenda_person}</span>}
+          <span className="text-xs text-muted">Added: {new Date(action.added_at).toLocaleDateString()}</span>
+        </div>
+      </div>
+      <button
+        onClick={() => onDelete(action.id)}
+        className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-danger/10 text-danger transition-all"
+      >
+        <Trash2 size={14} />
+      </button>
+    </div>
+  );
 }
 
 function ActionsContent() {
@@ -108,6 +150,28 @@ function ActionsContent() {
 
   async function deleteAction(id: string) {
     await remove(id);
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = filteredActions.findIndex(a => a.id === active.id);
+    const newIndex = filteredActions.findIndex(a => a.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(filteredActions, oldIndex, newIndex);
+    // Update sort_order for all affected items
+    for (let i = 0; i < reordered.length; i++) {
+      if (reordered[i].sort_order !== i) {
+        await update({ id: reordered[i].id, sort_order: i });
+      }
+    }
   }
 
   const contextInfo = contexts.find(c => c.key === activeContext) || { key: activeContext, name: activeContext, color: 'gray' };
@@ -243,59 +307,35 @@ function ActionsContent() {
             </>
           )}
         </div>
+      ) : viewMode === 'active' ? (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={filteredActions.map(a => a.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {filteredActions.map(action => (
+                <SortableActionItem key={action.id} action={action} onComplete={completeAction} onDelete={deleteAction} />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       ) : (
         <div className="space-y-2">
           {filteredActions.map(action => (
             <div
               key={action.id}
-              className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border group hover:border-primary/30 transition-colors"
+              className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border"
             >
-              {viewMode === 'active' ? (
-                <button
-                  onClick={() => completeAction(action.id)}
-                  className="mt-0.5 w-5 h-5 rounded border-2 border-muted/40 hover:border-success hover:bg-success/10 transition-colors flex-shrink-0 flex items-center justify-center"
-                >
-                  <Check size={12} className="text-transparent group-hover:text-success/50" />
-                </button>
-              ) : (
-                <div className="mt-0.5 w-5 h-5 rounded bg-success/20 flex-shrink-0 flex items-center justify-center">
-                  <Check size={12} className="text-success" />
-                </div>
-              )}
+              <div className="mt-0.5 w-5 h-5 rounded bg-success/20 flex-shrink-0 flex items-center justify-center">
+                <Check size={12} className="text-success" />
+              </div>
               <div className="flex-1 min-w-0">
-                <p className={`text-sm ${viewMode === 'completed' ? 'text-muted line-through' : ''}`}>{action.content}</p>
+                <p className="text-sm text-muted line-through">{action.content}</p>
                 <div className="flex flex-wrap gap-2 mt-1">
-                  {action.project_title && (
-                    <span className="text-xs text-primary">
-                      {action.project_title}
-                    </span>
-                  )}
-                  {action.waiting_on_person && (
-                    <span className="text-xs text-muted">
-                      Waiting on: {action.waiting_on_person}
-                      {action.waiting_since && ` (since ${action.waiting_since})`}
-                    </span>
-                  )}
-                  {action.agenda_person && (
-                    <span className="text-xs text-muted">
-                      For: {action.agenda_person}
-                    </span>
-                  )}
+                  {action.project_title && <span className="text-xs text-primary">{action.project_title}</span>}
                   <span className="text-xs text-muted">
-                    {viewMode === 'completed' && action.completed_at
-                      ? `Completed: ${new Date(action.completed_at).toLocaleDateString()}`
-                      : `Added: ${new Date(action.added_at).toLocaleDateString()}`}
+                    {action.completed_at ? `Completed: ${new Date(action.completed_at).toLocaleDateString()}` : `Added: ${new Date(action.added_at).toLocaleDateString()}`}
                   </span>
                 </div>
               </div>
-              {viewMode === 'active' && (
-                <button
-                  onClick={() => deleteAction(action.id)}
-                  className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-danger/10 text-danger transition-all"
-                >
-                  <Trash2 size={14} />
-                </button>
-              )}
             </div>
           ))}
         </div>
