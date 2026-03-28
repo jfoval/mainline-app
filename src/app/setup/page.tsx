@@ -86,7 +86,7 @@ export default function SetupPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <img src="/branding/logo-with-name-light.svg" alt="Mainline" className="mx-auto mb-4 h-44" />
+          <img src="/branding/logo-horizontal-dark.svg" alt="Mainline" className="mx-auto mb-4 h-12" />
           <p className="text-muted mt-2">Let&apos;s get your personal GTD system set up.</p>
         </div>
 
