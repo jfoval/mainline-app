@@ -2,7 +2,7 @@
 ## Personal Productivity System Powered by GTD
 
 **Last updated:** 2026-03-28
-**Status:** Production-ready. Deployed on Vercel. 18+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v10. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. All server-side time logic uses Central Time via `nowCentral()` helper. Settings API has key allowlist for security. Migration system at v010.
+**Status:** Production-ready. Deployed on Vercel. 18+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v10. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. All server-side time logic uses Central Time via `nowCentral()` helper. Settings API has key allowlist for security. Migration system at v010.
 
 ---
 
@@ -166,6 +166,7 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 - **Sync queue hardening** — exponential backoff (2s-30s), 5 retries, smart 404 handling
 - **Dark mode** — CSS variable overrides on `html.dark`, persisted to localStorage + settings API, flash-prevention inline script
 - **Local notifications** — Notification API for inbox overflow and stalled projects (quiet hours 9pm-7am, 30-min interval)
+- **Update notifications** — checks upstream GitHub repo for newer versions (24h client cache, 1h server cache), shows indigo banner with "How to Update" modal guiding users through GitHub fork sync. Settings → About shows current version + manual check button. Version injected at build time via `NEXT_PUBLIC_APP_VERSION` from package.json.
 
 ### Tables mirrored in IndexedDB (11)
 `next_actions`, `inbox_items`, `list_items`, `projects`, `daily_notes`, `routine_blocks`, `reference_docs`, `disciplines`, `discipline_logs`, `context_lists`, `daily_blocks`

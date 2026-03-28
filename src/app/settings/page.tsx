@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Key, LogOut, Database, Download, Upload, Sun, Moon, Palette, Bell, BellOff, ExternalLink } from 'lucide-react';
+import { Key, LogOut, Database, Download, Upload, Sun, Moon, Palette, Bell, BellOff, ExternalLink, Info, RefreshCw } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
+import { APP_VERSION } from '@/lib/version';
 
 export default function SettingsPage() {
   const [testing, setTesting] = useState(false);
@@ -18,6 +19,8 @@ export default function SettingsPage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState<string | null>(null);
 
   useEffect(() => {
     setNotificationsEnabled(localStorage.getItem('mainline-notifications') === 'true');
@@ -336,6 +339,57 @@ export default function SettingsPage() {
         >
           Sign Out
         </button>
+      </div>
+
+      {/* About */}
+      <div className="bg-card rounded-xl border border-border p-6 mt-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Info size={20} className="text-primary" />
+          <h2 className="text-lg font-semibold">About</h2>
+        </div>
+        <p className="text-sm text-muted mb-4">
+          Mainline v{APP_VERSION}
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={async () => {
+              setCheckingUpdate(true);
+              setUpdateStatus(null);
+              localStorage.removeItem('mainline-update-check');
+              try {
+                const res = await fetch('/api/version');
+                const data = await res.json();
+                if (data.updateAvailable) {
+                  setUpdateStatus(`Version ${data.latest} is available! Look for the update banner at the top of any page.`);
+                } else {
+                  setUpdateStatus('You\'re on the latest version.');
+                }
+              } catch {
+                setUpdateStatus('Could not check for updates. Try again later.');
+              }
+              setCheckingUpdate(false);
+            }}
+            disabled={checkingUpdate}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-sm hover:bg-primary/5 disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={checkingUpdate ? 'animate-spin' : ''} />
+            {checkingUpdate ? 'Checking...' : 'Check for Updates'}
+          </button>
+          <a
+            href="https://github.com/jfoval/mainline-app/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-sm text-primary hover:underline"
+          >
+            <ExternalLink size={14} />
+            Release Notes
+          </a>
+        </div>
+        {updateStatus && (
+          <p className={`text-sm mt-3 ${updateStatus.includes('available') ? 'text-indigo-600 dark:text-indigo-400' : 'text-green-600'}`}>
+            {updateStatus}
+          </p>
+        )}
       </div>
     </div>
   );

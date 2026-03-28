@@ -1,6 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import UpdateChecker from '@/components/UpdateChecker';
 
 const AUTH_PAGES = ['/login', '/setup'];
 
@@ -14,6 +15,7 @@ export default function MainContent({ children }: { children: React.ReactNode })
 
   return (
     <main className="md:ml-64 min-h-screen p-6 pt-16 md:pt-6">
+      <UpdateChecker />
       {children}
     </main>
   );

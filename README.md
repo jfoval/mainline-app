@@ -70,6 +70,17 @@ The AI assistant uses Claude by Anthropic. To enable it:
 
 Typical cost: a few dollars per month with regular use. You control the spend — there's no subscription.
 
+## Staying Up to Date
+
+Mainline will notify you in-app when a new version is available. To update:
+
+1. Open the link to the Mainline repo on GitHub
+2. Navigate to your fork (GitHub shows a link at the top)
+3. Click **"Sync fork"** → **"Update branch"**
+4. Vercel automatically rebuilds — refresh after about a minute
+
+You can also check manually in **Settings → About → Check for Updates**.
+
 ## Local Development
 
 ```bash
