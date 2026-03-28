@@ -2,7 +2,7 @@
 ## Personal Productivity System Powered by GTD
 
 **Last updated:** 2026-03-28
-**Status:** Production-ready. Deployed on Vercel. 14+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min), rate limiting, fetch timeouts, dashboard caching, service worker v9. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. All server-side time logic uses Central Time via `nowCentral()` helper. Settings API has key allowlist for security. Migration system at v010.
+**Status:** Production-ready. Deployed on Vercel. 18+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v10. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. All server-side time logic uses Central Time via `nowCentral()` helper. Settings API has key allowlist for security. Migration system at v010.
 
 ---
 
@@ -12,7 +12,7 @@ A self-deployed personal GTD productivity app. Each customer gets their own inst
 
 **Tech:** Next.js 16, TypeScript, Tailwind v4, Neon Postgres (`@neondatabase/serverless`), Claude API (Opus), PWA
 **Location:** `/Users/johnfoval/Desktop/Mainline/app/`
-**GitHub:** `https://github.com/jfoval/mainline-app` (private, repo rename pending)
+**GitHub:** `https://github.com/jfoval/mainline-app` (private)
 **Live:** Deployed on Vercel (auto-deploys on push to `main`)
 **Database:** Neon Postgres (free tier, US East 1)
 
@@ -34,7 +34,7 @@ A self-deployed personal GTD productivity app. Each customer gets their own inst
 ### Authentication
 - Simple password auth (single user — John only)
 - `src/middleware.ts` — checks JWT cookie on every request, redirects to `/login` if missing
-- Login: `POST /api/auth/login` — validates email + bcrypt password hash, sets HTTP-only JWT cookie (7-day expiry)
+- Login: `POST /api/auth/login` — validates bcrypt password hash, sets HTTP-only JWT cookie (7-day expiry), rate limiting with exponential backoff after 3 failed attempts
 - Logout: `POST /api/auth/logout` — clears cookie
 - Login page: `/login` — email + password form
 - Uses `jose` library for JWT, `bcryptjs` for password hashing
@@ -75,29 +75,39 @@ A self-deployed personal GTD productivity app. Each customer gets their own inst
 
 ---
 
-## What's Built (14 pages, 32+ API routes)
+## What's Built (18+ pages, ~30 API routes)
 
 ### Daily Workflows
-- **Morning Process** (`/process`) — 5-step guided flow: reflection → inbox (with physical desk reminder) → revenue focus (pipeline + warm leads + stalled project alerts) → top 3 → ready
-- **Shutdown** (`/shutdown`) — 3-step: capture sweep → write tomorrow → complete (shows Top 3 reflection)
-- **Dashboard** (`/`) — routine blocks, stats, revenue focus, schedule, Top 3. Caches offline with stale-data banner. Girls week auto-detected.
+- **Morning Process** (`/process`) — 5-step guided flow: reflection → inbox (with physical desk reminder) → top 3 → disciplines → ready
+- **Shutdown** (`/shutdown`) — 4-step: capture sweep → disciplines check-in → write tomorrow → day complete (celebration screen with summary)
+- **Dashboard** (`/`) — mini timeline of today's schedule, Now/Up Next blocks, stats, Top 3, disciplines, next actions by context, daily calendar. Caches offline with stale-data banner. Voice capture. Refresh button with spinner.
 
 ### Core GTD
-- **Inbox** (`/inbox`) — text + voice capture (Web Speech API)
-- **Inbox Processing** (`/inbox/process`) — GTD decision tree, one item at a time, AI-assisted routing with concrete action enforcement. Quick-route buttons: trash, someday/maybe, reference, wish list, reading, movie, show, album, travel, discuss with Haley.
-- **Next Actions** (`/actions`) — 7 context lists (@work, @errands, @home, @waiting_for, @agendas, @haley, @prayers)
+- **Inbox** (`/inbox`) — text + voice capture (Web Speech API). Search filter for 5+ items.
+- **Inbox Processing** (`/inbox/process`) — GTD decision tree, one item at a time, AI-assisted routing. Keyboard shortcuts (Y/N/D, 1-8 for contexts, T/S/R, Esc). Undo last routing decision. Quick-route: trash, someday/maybe, reference, wish list, reading, movie, show, album, travel.
+- **Next Actions** (`/actions`) — user-configurable context lists. Active/Completed toggle. Search filter. Drag-to-reorder via @dnd-kit.
 - **Projects** (`/projects`, `/projects/[id]`) — CRUD with categories, Active/Someday-Maybe toggle, stalled project detection
+
+### Schedule System
+- **Ideal Calendar** (`/ideal-calendar`) — week pattern editor with bi-weekly rotation (e.g., Girls Week / Non-Girls Week). Create named patterns with blocks per day.
+- **Daily Calendar** (on dashboard) — auto-hydrated from ideal calendar. Per-day edits. Drag-to-reorder blocks (swaps time slots).
+- **Disciplines** (`/disciplines`) — daily habit/value tracking with streaks and completion percentages
 
 ### Life System
 - **Horizons** (`/horizons`) — purpose, vision, goals, areas of focus, growth intentions
 - **Reference/Lists** (`/reference`) — wish list (3 tiers), reading (3 statuses), movies, shows, albums, travel
 
 ### Reviews & AI
-- **Weekly Review** (`/review`) — 8 guided steps with live system data and per-step notes (persisted on completion)
-- **Monthly Review** (`/review`) — 12 steps (weekly 8 + goals check, thinking docs, systems check, personal pulse)
+- **Weekly Review** (`/review`) — 7 guided steps with live system data and per-step notes. Tracks last completion date, shows overdue warning if >8 days.
+- **Monthly Review** (`/review`) — 11 steps (weekly 7 + goals check, thinking docs, systems check, personal pulse). Overdue warning if >35 days.
 - **AI Assistant** (`/ai`) — 3 tabs: morning briefing, prioritize day, ask Claude (all Opus)
-- **Recovery** (`/recovery`) — AI-powered "get back on track" guided re-engagement with validated app links
-- **Settings** (`/settings`) — AI connection test, JSON data export, logout
+- **Recovery** (`/recovery`) — AI-powered "get back on track" guided re-engagement
+
+### Settings & System
+- **Settings** (`/settings`) — AI connection test, appearance (dark/light mode), notifications toggle, JSON data export + import, logout
+- **Sync Conflicts** (`/conflicts`) — side-by-side conflict resolution for offline sync
+- **Setup** (`/setup`) — first-run wizard for password + database initialization
+- **Login** (`/login`) — password auth with rate limiting (no sidebar shown)
 
 ---
 
@@ -105,13 +115,11 @@ A self-deployed personal GTD productivity app. Each customer gets their own inst
 
 - **Gmail integration** — email scanning/triage within the app
 - **Google Calendar integration** — event display, prep prompts
-- **Push notifications** — block transitions, inbox alerts
 - **One-on-one rotation tracking** — which kid gets 1:1 time
 - **Brain dump mode** — guided initial system population
-- **Reference docs** — SOPs, brand guide, consulting rates
-- **Signs of drifting alerts** — 10+ inbox items, 3+ days no usage
 - **Test suite** — automated tests
 - **Custom domain** — optional, Vercel supports it
+- **Deploy to Vercel button** — one-click deploy for customers
 
 ---
 
@@ -150,10 +158,14 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 - **Per-table store configs** — queryLocal, fetchUrl, create/update/remove (`src/lib/offline/stores.ts`)
 - **React hook `useOfflineStore()`** — replaces useState+useEffect+fetch
 - **SyncStatus pill** — red "Offline" / orange "Syncing X..." in bottom-right corner
-- **Service worker v9** — caches app shell + key pages, versioned cache for deploy cache busting
+- **Service worker v10** — caches app shell + key pages, versioned cache for deploy cache busting, notification click handler
 - **Initial sync** — first visit hydrates all priority tables from server (30s timeout per fetch)
 - **Incremental sync** — refreshes all data every 5 minutes while online
 - **Reconnect sync** — listens for `online` event and syncs immediately on reconnect
+- **Tab focus sync** — refreshes data when user returns to the tab (`visibilitychange`)
+- **Sync queue hardening** — exponential backoff (2s-30s), 5 retries, smart 404 handling
+- **Dark mode** — CSS variable overrides on `html.dark`, persisted to localStorage + settings API, flash-prevention inline script
+- **Local notifications** — Notification API for inbox overflow and stalled projects (quiet hours 9pm-7am, 30-min interval)
 
 ### Tables mirrored in IndexedDB (11)
 `next_actions`, `inbox_items`, `list_items`, `projects`, `daily_notes`, `routine_blocks`, `reference_docs`, `disciplines`, `discipline_logs`, `context_lists`, `daily_blocks`
@@ -181,7 +193,7 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 ### Database Durability
 - Neon Postgres handles backups, point-in-time recovery, and high availability
 - JSON export available: POST `/api/backup` returns full database dump
-- No more local file-based backups (was SQLite-specific)
+- JSON import available: POST `/api/backup/restore` — truncates + re-inserts in FK-safe order
 
 ### API Hardening
 - `buildUpdate()` whitelists fields per table, generates Postgres `$1, $2, ...` parameterized queries
