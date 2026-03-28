@@ -35,8 +35,8 @@ const navItems = [
   { href: '/horizons', label: 'Horizons', icon: Target },
   { href: '/reference', label: 'Reference', icon: BookOpen },
   { href: '/review', label: 'Review', icon: Calendar },
-  { href: '/recovery', label: 'Recovery', icon: LifeBuoy },
   { href: '/ai', label: 'AI Assistant', icon: Bot },
+  { href: '/recovery', label: 'Recovery', icon: LifeBuoy },
   { href: '/conflicts', label: 'Sync Conflicts', icon: GitMerge },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
