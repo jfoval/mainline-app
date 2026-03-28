@@ -1,5 +1,5 @@
 # Mainline App Blueprint
-## Personal Productivity System Powered by GTD
+## Personal Productivity System
 
 **Last updated:** 2026-03-28
 **Status:** Production-ready. Deployed on Vercel. 18+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v10. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. All server-side time logic uses Central Time via `nowCentral()` helper. Settings API has key allowlist for security. Migration system at v010.
@@ -8,7 +8,7 @@
 
 ## What This Is
 
-A self-deployed personal GTD productivity app. Each customer gets their own instance on Vercel + Neon. Single-user, offline-first, AI-powered.
+A self-deployed personal productivity app. Each customer gets their own instance on Vercel + Neon. Single-user, offline-first, AI-powered.
 
 **Tech:** Next.js 16, TypeScript, Tailwind v4, Neon Postgres (`@neondatabase/serverless`), Claude API (Opus), PWA
 **Location:** `/Users/johnfoval/Desktop/Mainline/app/`
@@ -32,7 +32,7 @@ A self-deployed personal GTD productivity app. Each customer gets their own inst
 - JSON export still available via POST `/api/backup`
 
 ### Authentication
-- Simple password auth (single user — John only)
+- Simple password auth (single user per instance)
 - `src/proxy.ts` — checks JWT cookie on every request, redirects to `/login` if missing
 - Login: `POST /api/auth/login` — validates bcrypt password hash, sets HTTP-only JWT cookie (7-day expiry), rate limiting with exponential backoff after 3 failed attempts
 - Logout: `POST /api/auth/logout` — clears cookie
@@ -83,9 +83,9 @@ A self-deployed personal GTD productivity app. Each customer gets their own inst
 - **Shutdown** (`/shutdown`) — 4-step: capture sweep → disciplines check-in → write tomorrow → day complete (celebration screen with summary)
 - **Dashboard** (`/`) — mini timeline of today's schedule, Now/Up Next blocks, stats, Top 3, disciplines, next actions by context, daily calendar. Caches offline with stale-data banner. Voice capture. Refresh button with spinner.
 
-### Core GTD
+### Core Productivity
 - **Inbox** (`/inbox`) — text + voice capture (Web Speech API). Search filter for 5+ items.
-- **Inbox Processing** (`/inbox/process`) — GTD decision tree, one item at a time, AI-assisted routing. Keyboard shortcuts (Y/N/D, 1-8 for contexts, T/S/R, Esc). Undo last routing decision. Quick-route: trash, someday/maybe, reference, wish list, reading, movie, show, album, travel.
+- **Inbox Processing** (`/inbox/process`) — decision tree, one item at a time, AI-assisted routing. Keyboard shortcuts (Y/N/D, 1-8 for contexts, T/S/R, Esc). Undo last routing decision. Quick-route: trash, someday/maybe, reference, wish list, reading, movie, show, album, travel.
 - **Next Actions** (`/actions`) — user-configurable context lists. Active/Completed toggle. Search filter. Drag-to-reorder via @dnd-kit.
 - **Projects** (`/projects`, `/projects/[id]`) — CRUD with categories, Active/Someday-Maybe toggle, stalled project detection
 
@@ -215,7 +215,7 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 
 ### Morning (7:30-8:00) — Morning Process page
 1. Check yesterday's "Tomorrow." Answer 4 reflection questions.
-2. Process inbox — every item through GTD decision tree. Also check physical desk inbox.
+2. Process inbox — every item through decision tree. Also check physical desk inbox.
 3. Revenue focus — app shows pipeline + warm leads. Pick highest-leverage revenue move.
 4. Pick Top 3 — slot 1 = revenue focus. Slots 2-3 = other priorities.
 5. Ready to work — summary of Top 3, context action counts.

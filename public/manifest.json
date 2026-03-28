@@ -1,7 +1,7 @@
 {
   "name": "Mainline",
   "short_name": "Mainline",
-  "description": "Personal productivity system powered by GTD",
+  "description": "Personal productivity system — capture, organize, act",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

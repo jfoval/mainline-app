@@ -88,7 +88,7 @@ export default function SetupPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <img src="/branding/logo-horizontal-dark.svg" alt="Mainline" className="mx-auto mb-4 h-12" />
-          <p className="text-muted mt-2">Let&apos;s get your personal GTD system set up.</p>
+          <p className="text-muted mt-2">Let&apos;s get your productivity system set up.</p>
         </div>
 
         {/* Progress */}
@@ -177,7 +177,7 @@ export default function SetupPage() {
                 onChange={e => setDisplayName(e.target.value)}
                 autoFocus
                 className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
-                placeholder="e.g., John"
+                placeholder="Your name"
               />
             </div>
 

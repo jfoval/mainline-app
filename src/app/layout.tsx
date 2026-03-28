@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Mainline",
-  description: "Personal productivity system powered by GTD",
+  description: "Personal productivity system — capture, organize, act",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

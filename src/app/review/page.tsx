@@ -538,7 +538,7 @@ function StepContent({ stepId, data }: { stepId: string; data: ReviewData }) {
         <div className="space-y-3 text-sm">
           <p>Pick 1-2 areas to review this month. What is working, what is friction, what could improve?</p>
           <div className="grid grid-cols-2 gap-2">
-            {['Work delivery process', 'GTD system', 'Home organization', 'Financial systems',
+            {['Work delivery process', 'Productivity system', 'Home organization', 'Financial systems',
               'Family routines', 'Daily routines', 'Tools & workflow', 'Communication systems',
             ].map(area => (
               <div key={area} className="flex items-center gap-2 p-2 rounded-lg bg-background">

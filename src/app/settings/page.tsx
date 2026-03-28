@@ -113,7 +113,7 @@ export default function SettingsPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-2">Settings</h1>
-      <p className="text-sm text-muted mb-8">Configure your GTD system.</p>
+      <p className="text-sm text-muted mb-8">Configure your productivity system.</p>
 
       {/* Claude API Key */}
       <div className="bg-card rounded-xl border border-border p-6 mb-6">
@@ -185,11 +185,11 @@ export default function SettingsPage() {
         <p className="text-sm text-muted mb-4">With your API key connected, you get:</p>
         <div className="space-y-3">
           {[
-            { title: 'Smart Inbox Processing', desc: 'AI suggests how to route each inbox item through the GTD decision tree.' },
+            { title: 'Smart Inbox Processing', desc: 'AI suggests how to route each inbox item through the decision tree.' },
             { title: 'Morning Briefing', desc: 'Daily summary of what needs attention, stalled projects, revenue focus.' },
             { title: 'Day Prioritization', desc: 'AI applies your Revenue Priority Stack to recommend Top 3 tasks.' },
             { title: 'Recovery Workflow', desc: 'AI-guided re-engagement when you fall off the system.' },
-            { title: 'GTD Assistant', desc: 'Ask questions about your system, get advice on processing, planning.' },
+            { title: 'Productivity Assistant', desc: 'Ask questions about your system, get advice on priorities and planning.' },
           ].map(feature => (
             <div key={feature.title} className="flex gap-3">
               <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />

@@ -68,7 +68,7 @@ export default function HorizonsPage() {
     <div className="max-w-4xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Horizons of Focus</h1>
-        <p className="text-sm text-muted mt-1">GTD altitude map — from your purpose down to daily ground-level actions.</p>
+        <p className="text-sm text-muted mt-1">Your altitude map — from purpose down to daily ground-level actions.</p>
       </div>
 
       <div className="space-y-6">

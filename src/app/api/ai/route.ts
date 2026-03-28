@@ -120,9 +120,9 @@ async function processInboxItem(apiKey: string, data: { content: string }) {
   const contextRows = await sql`SELECT DISTINCT context FROM next_actions WHERE status = 'active' ORDER BY context` as Array<{ context: string }>;
   const contextList = contextRows.map(c => `@${c.context}`).join(', ');
 
-  const system = `You are a GTD (Getting Things Done) processing assistant.
+  const system = `You are an inbox processing assistant for a personal productivity system.
 
-Your job is to help route inbox items through the GTD decision tree:
+Your job is to help route inbox items through the decision tree:
 1. Is it actionable? If no: trash, someday/maybe, or reference.
 2. If actionable: Is it a 2-minute task? If yes, do it now.
 3. If longer: What context list? (${contextList || '@work, @errands, @home, @waiting_for, @agendas'})
@@ -180,7 +180,7 @@ Stalled projects: ${stalledProjects.map(p => p.title).join(', ') || 'None'}
 Stale waiting-for: ${waitingStale.map(w => `${w.content} (${w.waiting_on_person})`).join('; ') || 'None'}
 Top 3 from daily note: ${dailyNote ? [dailyNote.top3_first, dailyNote.top3_second, dailyNote.top3_third].filter(Boolean).join(', ') : 'Not set yet'}`;
 
-  const system = `You are a GTD assistant. Generate a concise morning briefing. Be direct, warm but professional. Focus on:
+  const system = `You are a productivity assistant. Generate a concise morning briefing. Be direct, warm but professional. Focus on:
 1. What needs attention today
 2. Any alerts (stalled projects, stale waiting-for, full inbox)
 3. Recommended focus areas
@@ -198,7 +198,7 @@ async function prioritizeDay(apiKey: string) {
 
   const context = `@work actions:\n${workActions.map(a => `- ${a.content}${a.project_title ? ` (${a.project_title})` : ''}`).join('\n') || 'None'}`;
 
-  const system = `You are a GTD assistant. Help the user prioritize their day by recommending their Top 3 tasks from their @work list.
+  const system = `You are a productivity assistant. Help the user prioritize their day by recommending their Top 3 tasks from their @work list.
 
 Consider:
 - Urgency and deadlines
@@ -227,13 +227,13 @@ async function askAssistant(apiKey: string, data: { question: string; context?: 
   const projectCount = Number(projectCountResult[0].count);
   const actionCount = Number(actionCountResult[0].count);
 
-  const system = `You are a GTD assistant built into a personal productivity app. You have context about the user's system:
+  const system = `You are a productivity assistant built into a personal productivity app. You have context about the user's system:
 - ${inboxCount} inbox items pending
 - ${projectCount} active projects
 - ${actionCount} active next actions
 ${data.context || ''}
 
-Be concise, practical, and direct. You know the GTD methodology deeply.`;
+Be concise, practical, and direct. You understand capture-organize-act methodology deeply.`;
 
   const response = await callClaude(apiKey, system, data.question);
   return { response };
@@ -270,7 +270,7 @@ async function recoveryWorkflow(apiKey: string) {
 - Days since last daily note: ${daysSinceNote}
 - Days since last weekly review: ${daysSinceReview}`;
 
-  const system = `You are a GTD recovery assistant. The user has been away from their system and needs help getting back on track. Be warm but direct.
+  const system = `You are a productivity recovery assistant. The user has been away from their system and needs help getting back on track. Be warm but direct.
 
 Generate a prioritized recovery plan based on the current system state. Focus on what matters most first.
 

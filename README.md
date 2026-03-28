@@ -1,6 +1,6 @@
 # Mainline
 
-A personal productivity system powered by GTD (Getting Things Done). Deploy your own instance — your data stays on your server.
+A personal productivity system built on capture, organize, act. Deploy your own instance — your data stays on your server.
 
 ## What You Get
 
@@ -11,7 +11,7 @@ A personal productivity system powered by GTD (Getting Things Done). Deploy your
 - **Projects** — multi-step outcomes with linked actions and stalled project alerts
 - **Ideal Calendar** — multi-week pattern rotation (e.g., alternating A/B week schedules)
 - **Disciplines & Values** — track daily habits and aspirational values with streaks and stats
-- **Weekly Review** — guided GTD review process
+- **Weekly Review** — guided review process
 - **AI Assistant** — powered by Claude (bring your own Anthropic API key, optional)
 - **Offline-first** — works without internet, syncs when back online
 - **PWA** — install on your phone's home screen

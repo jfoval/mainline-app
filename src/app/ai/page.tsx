@@ -81,7 +81,7 @@ export default function AIPage() {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Sparkles size={24} className="text-primary" /> AI Assistant
           </h1>
-          <p className="text-sm text-muted mt-1">Powered by Claude. Your GTD copilot.</p>
+          <p className="text-sm text-muted mt-1">Powered by Claude. Your productivity copilot.</p>
         </div>
       </div>
 
@@ -210,14 +210,14 @@ export default function AIPage() {
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <Bot size={20} /> Ask Claude
             </h2>
-            <p className="text-xs text-muted">Your GTD assistant. Knows your projects, actions, and system.</p>
+            <p className="text-xs text-muted">Your productivity assistant. Knows your projects, actions, and system.</p>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {chatHistory.length === 0 && (
               <div className="text-center text-muted text-sm py-8">
                 <Bot size={32} className="mx-auto mb-3 opacity-30" />
-                <p>Ask me anything about your GTD system.</p>
+                <p>Ask me anything about your productivity system.</p>
                 <div className="mt-4 space-y-2">
                   {[
                     'What should I focus on today?',
@@ -259,7 +259,7 @@ export default function AIPage() {
             <input
               value={chatInput}
               onChange={e => setChatInput(e.target.value)}
-              placeholder="Ask your GTD assistant..."
+              placeholder="Ask your productivity assistant..."
               className="flex-1 px-4 py-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
             />
             <button
