@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import {
   Inbox, CheckSquare, FolderKanban, Clock, AlertTriangle,
   Users, ArrowRight,
-  Mic, MicOff, Check
+  Mic, MicOff, Check, RefreshCw
 } from 'lucide-react';
 import Link from 'next/link';
 import DailyCalendar from '@/components/DailyCalendar';
@@ -56,17 +56,13 @@ export default function Dashboard() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef('');
-  const [displayDate, setDisplayDate] = useState('');
-  const [greeting, setGreeting] = useState('');
-
-  useEffect(() => {
-    const now = new Date();
-    setDisplayDate(format(now, 'EEEE, MMMM d, yyyy'));
-    const hour = now.getHours();
-    if (hour < 12) setGreeting('morning');
-    else if (hour < 17) setGreeting('afternoon');
-    else setGreeting('evening');
-  }, []);
+  const [displayDate] = useState(() => format(new Date(), 'EEEE, MMMM d, yyyy'));
+  const [greeting] = useState(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'morning';
+    if (hour < 17) return 'afternoon';
+    return 'evening';
+  });
 
   const toggleVoiceCapture = useCallback(() => {
     if (isRecording && recognitionRef.current) {
@@ -115,7 +111,10 @@ export default function Dashboard() {
 
     recognition.onerror = (event: { error: string }) => {
       console.error('Speech recognition error:', event.error);
-      if (event.error === 'no-speech') return;
+      if (event.error === 'no-speech') {
+        clearTimeout(timeout);
+        return;
+      }
       if (event.error === 'not-allowed') {
         alert('Microphone or Speech Recognition permission denied. Check System Settings > Privacy & Security > Speech Recognition, and make sure Safari has access.');
       }
@@ -209,7 +208,18 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{greeting ? `Good ${greeting}` : 'Dashboard'}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{greeting ? `Good ${greeting}` : 'Dashboard'}</h1>
+            <button
+              onClick={() => {
+                fetch('/api/dashboard').then(r => { if (r.ok) return r.json(); throw new Error(); }).then(d => { setData(d); cacheDashboard(d); }).catch(() => {});
+              }}
+              className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-primary/5 transition-colors"
+              title="Refresh dashboard"
+            >
+              <RefreshCw size={16} />
+            </button>
+          </div>
           <p className="text-muted mt-1">{displayDate}</p>
           {data.pattern_name && (
             <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 mt-2">
@@ -333,8 +343,8 @@ export default function Dashboard() {
               <CheckSquare size={20} className="text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{data.action_counts.work || 0}</p>
-              <p className="text-xs text-muted">@Work</p>
+              <p className="text-2xl font-bold">{data.total_actions}</p>
+              <p className="text-xs text-muted">Actions</p>
             </div>
           </div>
         </Link>

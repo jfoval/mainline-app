@@ -67,6 +67,10 @@ export default function DailyCalendar({ date }: { date: string }) {
   // Add block
   const handleAdd = async () => {
     if (!newBlock.label.trim()) return;
+    if (newBlock.end_time <= newBlock.start_time) {
+      alert('End time must be after start time');
+      return;
+    }
     try {
       const res = await fetch('/api/daily-blocks', {
         method: 'POST',
@@ -84,6 +88,10 @@ export default function DailyCalendar({ date }: { date: string }) {
   // Update block
   const handleUpdate = async () => {
     if (!editingId || !editBlock.label.trim()) return;
+    if (editBlock.end_time <= editBlock.start_time) {
+      alert('End time must be after start time');
+      return;
+    }
     try {
       const res = await fetch('/api/daily-blocks', {
         method: 'PATCH',
@@ -177,7 +185,7 @@ export default function DailyCalendar({ date }: { date: string }) {
                   ? 'bg-primary/8 border-l-4 border-l-primary'
                   : isPast
                     ? 'opacity-50'
-                    : 'hover:bg-gray-50'
+                    : 'hover:bg-primary/5 active:bg-primary/10'
               } ${block.is_non_negotiable && !isCurrent ? 'border-l-4 border-l-primary/40' : ''}`}
             >
               {isEditing ? (

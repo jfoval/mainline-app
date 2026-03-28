@@ -325,6 +325,7 @@ export const dailyNotesStore: StoreConfig<DailyNote> = {
 
     remove: async (id) => {
       await offlineDb.daily_notes.delete(id);
+      await enqueue('DELETE', `/api/daily-notes?id=${id}`, null);
     },
   },
 };
@@ -370,6 +371,7 @@ export const routineBlocksStore: StoreConfig<RoutineBlock> = {
     create: async (data) => {
       const item = data as unknown as RoutineBlock;
       await offlineDb.routine_blocks.put(item);
+      await enqueue('POST', '/api/routine', data);
       return item;
     },
 
@@ -381,6 +383,7 @@ export const routineBlocksStore: StoreConfig<RoutineBlock> = {
 
     remove: async (id) => {
       await offlineDb.routine_blocks.delete(id);
+      await enqueue('DELETE', `/api/routine?id=${id}`, null);
     },
   },
 };

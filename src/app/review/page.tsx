@@ -512,8 +512,8 @@ function StepContent({ stepId, data }: { stepId: string; data: ReviewData }) {
     case 'pulse':
       return (
         <div className="space-y-3 text-sm">
-          <p className="font-medium">How are you doing as a husband, father, and person?</p>
-          <p className="text-muted text-xs">Not a formal review. Just a moment to ask whether the business is crowding out the other callings. If it is, that is a signal to revisit priorities, not to add more tasks.</p>
+          <p className="font-medium">How are you doing as a whole person?</p>
+          <p className="text-muted text-xs">Not a formal review. Just a moment to ask whether work is crowding out the other things that matter. If it is, that is a signal to revisit priorities, not to add more tasks.</p>
           <div className="space-y-2">
             {['Am I spending time on what I say matters?', 'Is anything obviously out of balance?', 'What needs more of me right now?'].map(q => (
               <div key={q} className="p-2 rounded-lg bg-background">

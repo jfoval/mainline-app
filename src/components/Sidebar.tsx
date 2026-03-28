@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -95,7 +94,6 @@ export default function Sidebar() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/10" />
       </aside>
     </>
   );

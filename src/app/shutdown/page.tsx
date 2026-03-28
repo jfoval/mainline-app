@@ -63,7 +63,6 @@ export default function ShutdownPage() {
   // Data
   const [dailyNote, setDailyNote] = useState<DailyNote | null>(null);
   const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
-  const [shutdownDisciplines, setShutdownDisciplines] = useState<ShutdownDiscipline[]>([]);
   const [allDisciplines, setAllDisciplines] = useState<ShutdownDiscipline[]>([]);
   const [disciplineLogs, setDisciplineLogs] = useState<ShutdownDisciplineLog[]>([]);
 
@@ -104,7 +103,6 @@ export default function ShutdownPage() {
         const discData = await discRes.json();
         if (Array.isArray(discData)) {
           setAllDisciplines(discData);
-          setShutdownDisciplines(discData.filter((d: { time_of_day: string }) => d.time_of_day === 'shutdown'));
         }
         const dlData = await discLogsRes.json();
         if (Array.isArray(dlData)) {

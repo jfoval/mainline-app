@@ -88,26 +88,36 @@ export default function ProcessPage() {
   }, []);
 
   async function fetchData() {
-    const [inboxRes, projectsRes, ctxRes] = await Promise.all([
-      fetch('/api/inbox'),
-      fetch('/api/projects'),
-      fetch('/api/context-lists'),
-    ]);
-    const inboxData = await inboxRes.json();
-    const projectsData = await projectsRes.json();
-    setItems(inboxData);
-    setProjects(projectsData);
+    try {
+      const [inboxRes, projectsRes, ctxRes] = await Promise.all([
+        fetch('/api/inbox'),
+        fetch('/api/projects'),
+        fetch('/api/context-lists'),
+      ]);
 
-    const ctxData = await ctxRes.json();
-    if (Array.isArray(ctxData) && ctxData.length > 0) {
-      setContexts(ctxData.map((c: { key: string; name: string }) => ({
-        key: c.key,
-        label: `@${c.name}`,
-      })));
-    }
+      if (!inboxRes.ok || !projectsRes.ok) {
+        setStep('error' as typeof step);
+        return;
+      }
 
-    if (inboxData.length === 0) {
-      setStep('done');
+      const inboxData = await inboxRes.json();
+      const projectsData = await projectsRes.json();
+      setItems(inboxData);
+      setProjects(projectsData);
+
+      const ctxData = await ctxRes.json();
+      if (Array.isArray(ctxData) && ctxData.length > 0) {
+        setContexts(ctxData.map((c: { key: string; name: string }) => ({
+          key: c.key,
+          label: `@${c.name}`,
+        })));
+      }
+
+      if (inboxData.length === 0) {
+        setStep('done');
+      }
+    } catch {
+      setStep('error' as typeof step);
     }
   }
 
@@ -199,7 +209,6 @@ export default function ProcessPage() {
       }
       case 'trash':
       case 'do_now':
-      case 'thinking':
         // These just mark the item as processed
         break;
     }

@@ -4,8 +4,8 @@ import { exportAsJson } from '@/lib/backup';
 
 export async function GET() {
   try {
-    ensureDb();
-    const data = exportAsJson();
+    await ensureDb();
+    const data = await exportAsJson();
     return NextResponse.json(data);
   } catch (err) {
     console.error('GET /api/backup/export error:', err);

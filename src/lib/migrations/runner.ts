@@ -14,17 +14,23 @@ export async function runMigrations() {
   const rows = await sql`SELECT version FROM schema_version`;
   const applied = new Set(rows.map(r => Number(r.version)));
 
-  // Run each pending migration in order
+  // Run each pending migration in order, wrapped in a transaction
   for (const m of embeddedMigrations) {
     if (applied.has(m.version)) continue;
 
-    // Execute migration SQL statements one at a time
-    for (const stmt of m.statements) {
-      await sql.query(stmt);
+    try {
+      await sql.query('BEGIN');
+      for (const stmt of m.statements) {
+        await sql.query(stmt);
+      }
+      await sql`INSERT INTO schema_version (version, name) VALUES (${m.version}, ${m.name})`;
+      await sql.query('COMMIT');
+      console.log(`[migrations] Applied: ${m.name}`);
+    } catch (err) {
+      await sql.query('ROLLBACK');
+      console.error(`[migrations] Failed: ${m.name}`, err);
+      throw err;
     }
-    await sql`INSERT INTO schema_version (version, name) VALUES (${m.version}, ${m.name})`;
-
-    console.log(`[migrations] Applied: ${m.name}`);
   }
 }
 
@@ -436,6 +442,23 @@ const embeddedMigrations: { version: number; name: string; statements: string[] 
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       )`,
       `CREATE INDEX IF NOT EXISTS idx_daily_blocks_date ON daily_blocks(date)`,
+    ],
+  },
+  {
+    version: 10,
+    name: '010_fix_updated_at',
+    statements: [
+      // Add updated_at to recurring_tasks
+      `ALTER TABLE recurring_tasks ADD COLUMN IF NOT EXISTS updated_at TEXT DEFAULT ''`,
+      // Backfill empty updated_at values across all tables
+      `UPDATE inbox_items SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
+      `UPDATE next_actions SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
+      `UPDATE projects SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
+      `UPDATE daily_notes SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
+      `UPDATE list_items SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
+      `UPDATE reference_docs SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
+      `UPDATE horizons SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
+      `UPDATE recurring_tasks SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
     ],
   },
 ];

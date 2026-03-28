@@ -434,7 +434,7 @@ export default function MorningProcessPage() {
               className="px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-hover disabled:opacity-50 flex items-center gap-2 font-medium transition-colors"
             >
               {saving ? <Loader2 size={16} className="animate-spin" /> : <ChevronRight size={16} />}
-              Save Top 3 &amp; Finish
+              Save Top 3 &amp; Continue
             </button>
           </div>
         );

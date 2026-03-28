@@ -26,7 +26,7 @@ interface NextAction {
   completed_at: string | null;
 }
 
-const CONTEXTS = [
+const DEFAULT_CONTEXTS = [
   { key: 'work', label: '@Work' },
   { key: 'errands', label: '@Errands' },
   { key: 'home', label: '@Home' },
@@ -49,13 +49,20 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [showAdd, setShowAdd] = useState(false);
   const [newAction, setNewAction] = useState('');
   const [newContext, setNewContext] = useState('work');
+  const [contexts, setContexts] = useState(DEFAULT_CONTEXTS);
 
   useEffect(() => {
     fetchProject();
+    fetch('/api/context-lists').then(r => r.ok ? r.json() : []).then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        setContexts(data.map((c: { key: string; name: string }) => ({ key: c.key, label: `@${c.name}` })));
+      }
+    }).catch(() => {});
   }, [id]);
 
   async function fetchProject() {
     const res = await fetch(`/api/projects/${id}`);
+    if (!res.ok) return;
     const data = await res.json();
     setProject(data.project);
     setActions(data.actions);
@@ -238,7 +245,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   onChange={e => setNewContext(e.target.value)}
                   className="px-2 py-1.5 rounded-lg border border-border bg-card text-xs"
                 >
-                  {CONTEXTS.map(ctx => (
+                  {contexts.map(ctx => (
                     <option key={ctx.key} value={ctx.key}>{ctx.label}</option>
                   ))}
                 </select>
@@ -264,7 +271,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm">{action.content}</p>
-                    <span className="text-xs text-muted">{CONTEXTS.find(c => c.key === action.context)?.label}</span>
+                    <span className="text-xs text-muted">{contexts.find(c => c.key === action.context)?.label}</span>
                   </div>
                   <button
                     onClick={() => deleteAction(action.id)}

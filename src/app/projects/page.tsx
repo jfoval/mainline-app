@@ -29,7 +29,7 @@ export default function ProjectsPage() {
       title: newTitle.trim(),
       category: newCategory,
       purpose: newPurpose.trim(),
-      status: viewStatus,
+      status: 'active',
     });
     setNewTitle('');
     setNewPurpose('');

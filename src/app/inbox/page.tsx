@@ -84,7 +84,10 @@ export default function InboxPage() {
 
     recognition.onerror = (event: { error: string }) => {
       console.error('Speech recognition error:', event.error);
-      if (event.error === 'no-speech') return;
+      if (event.error === 'no-speech') {
+        clearTimeout(timeout);
+        return;
+      }
       if (event.error === 'not-allowed') {
         alert('Microphone or Speech Recognition permission denied. Check System Settings > Privacy & Security > Speech Recognition, and make sure Safari has access.');
       }

@@ -92,9 +92,9 @@ async function getDisciplineStats(disciplineId: string, today: string) {
     streak,
     week_completed: weekDone,
     week_total: weekTotal,
-    week_rate: weekTotal > 0 ? Math.round((weekDone / 7) * 100) : 0,
+    week_rate: weekTotal > 0 ? Math.round((weekDone / weekTotal) * 100) : 0,
     month_completed: monthDone,
     month_total: monthTotal,
-    month_rate: monthTotal > 0 ? Math.round((monthDone / 30) * 100) : 0,
+    month_rate: monthTotal > 0 ? Math.round((monthDone / monthTotal) * 100) : 0,
   };
 }

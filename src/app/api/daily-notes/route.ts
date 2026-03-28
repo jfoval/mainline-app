@@ -17,6 +17,9 @@ export async function GET(req: NextRequest) {
     const date = searchParams.get('date');
 
     if (date) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        return NextResponse.json({ error: 'date must be in YYYY-MM-DD format' }, { status: 400 });
+      }
       let rows = await sql`SELECT * FROM daily_notes WHERE date = ${date}`;
       if (rows.length === 0) {
         const id = uuid();
@@ -39,6 +42,10 @@ export async function PATCH(req: NextRequest) {
     await ensureDb();
     const body = await req.json();
     const { id, _base_updated_at, ...rawUpdates } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
 
     rawUpdates.updated_at = nowLocal();
 

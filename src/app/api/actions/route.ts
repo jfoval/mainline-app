@@ -85,6 +85,10 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json();
     const { id, _base_updated_at, ...rawUpdates } = body;
 
+    if (!id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
     if (rawUpdates.status === 'completed') {
       rawUpdates.completed_at = nowLocal();
     }
@@ -118,10 +122,11 @@ export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
-    if (id) {
-      await sql`DELETE FROM next_actions WHERE id = ${id}`;
+    if (!id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
+    await sql`DELETE FROM next_actions WHERE id = ${id}`;
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('DELETE /api/actions error:', err);

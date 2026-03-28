@@ -18,6 +18,11 @@ export async function resolveKeepClient(conflictId: number): Promise<boolean> {
   const { _base_updated_at, ...data } = clientVersion as Record<string, unknown>;
   void _base_updated_at; // suppress unused
 
+  // Set a fresh timestamp so the server records the correct update time
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  data.updated_at = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
   try {
     // Determine the URL from the table name
     const url = urlForTable(conflict.table, data);
@@ -46,6 +51,13 @@ export async function resolveKeepServer(conflictId: number): Promise<boolean> {
 
   try {
     // Update the local IndexedDB with server version
+    // Check that the table exists in Dexie before attempting to write
+    const knownTables = offlineDb.tables.map(t => t.name);
+    if (!knownTables.includes(table)) {
+      console.warn(`[conflicts] Unknown table "${table}" — removing conflict without updating local store`);
+      await offlineDb.conflicts.delete(conflictId);
+      return true;
+    }
     const dexieTable = offlineDb.table(table);
     await dexieTable.put({ ...serverVersion, id: recordId });
     await offlineDb.conflicts.delete(conflictId);

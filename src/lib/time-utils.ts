@@ -19,10 +19,3 @@ export function timeToMinutes(t: string): number {
   const [h, m] = t.split(':').map(Number);
   return h * 60 + m;
 }
-
-/** Convert minutes since midnight to "HH:MM" */
-export function minutesToTime(mins: number): string {
-  const h = Math.floor(mins / 60) % 24;
-  const m = mins % 60;
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-}

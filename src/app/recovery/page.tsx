@@ -54,37 +54,37 @@ const SEVERITY_LABELS: Record<string, string> = {
 };
 
 export default function RecoveryPage() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [started, setStarted] = useState(false);
   const [result, setResult] = useState<RecoveryResult | null>(null);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    async function fetchRecovery() {
-      try {
-        const res = await fetch('/api/ai', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'recovery' }),
-        });
-        if (!res.ok) {
-          setError(true);
-          return;
-        }
-        const data = await res.json();
-        // Validate the shape
-        if (data.severity && Array.isArray(data.steps)) {
-          setResult(data);
-        } else {
-          setError(true);
-        }
-      } catch {
+  async function fetchRecovery() {
+    setStarted(true);
+    setLoading(true);
+    setError(false);
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'recovery' }),
+      });
+      if (!res.ok) {
         setError(true);
-      } finally {
-        setLoading(false);
+        return;
       }
+      const data = await res.json();
+      if (data.severity && Array.isArray(data.steps)) {
+        setResult(data);
+      } else {
+        setError(true);
+      }
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
     }
-    fetchRecovery();
-  }, []);
+  }
 
   const steps = error ? FALLBACK_STEPS : result?.steps || [];
   const severity = result?.severity;
@@ -102,7 +102,18 @@ export default function RecoveryPage() {
         </div>
       </div>
 
-      {loading ? (
+      {!started ? (
+        <div className="flex flex-col items-center justify-center min-h-[300px] gap-4">
+          <p className="text-sm text-muted">Analyze your system state and get a personalized recovery plan.</p>
+          <button
+            onClick={fetchRecovery}
+            className="px-6 py-3 rounded-xl bg-primary text-white hover:bg-primary/90 font-medium transition-colors flex items-center gap-2"
+          >
+            <Compass size={18} />
+            Get Recovery Plan
+          </button>
+        </div>
+      ) : loading ? (
         <div className="flex flex-col items-center justify-center min-h-[300px] gap-3">
           <Loader2 size={28} className="animate-spin text-primary" />
           <p className="text-sm text-muted">Analyzing your system...</p>

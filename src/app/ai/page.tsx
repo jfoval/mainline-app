@@ -8,8 +8,9 @@ type Tab = 'briefing' | 'prioritize' | 'chat';
 
 export default function AIPage() {
   const [tab, setTab] = useState<Tab>('briefing');
-  const [loading, setLoading] = useState(false);
+  const [loadingTab, setLoadingTab] = useState<Tab | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const loading = loadingTab === tab;
 
   // Briefing state
   const [briefing, setBriefing] = useState<string | null>(null);
@@ -22,7 +23,7 @@ export default function AIPage() {
   const [chatHistory, setChatHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
 
   async function callAI(action: string, data?: Record<string, string>) {
-    setLoading(true);
+    setLoadingTab(tab);
     setError(null);
     try {
       const res = await fetch('/api/ai', {
@@ -40,7 +41,7 @@ export default function AIPage() {
       setError('Failed to connect to AI.');
       return null;
     } finally {
-      setLoading(false);
+      setLoadingTab(null);
     }
   }
 
@@ -54,16 +55,19 @@ export default function AIPage() {
     if (result) setPriorities(result);
   }
 
-  async function sendChat(e: React.FormEvent) {
-    e.preventDefault();
-    if (!chatInput.trim()) return;
-    const question = chatInput.trim();
+  async function sendChatMessage(question: string) {
+    if (!question.trim()) return;
     setChatInput('');
-    setChatHistory(prev => [...prev, { role: 'user', content: question }]);
-    const result = await callAI('ask', { question });
+    setChatHistory(prev => [...prev, { role: 'user', content: question.trim() }]);
+    const result = await callAI('ask', { question: question.trim() });
     if (result) {
       setChatHistory(prev => [...prev, { role: 'assistant', content: result.response }]);
     }
+  }
+
+  async function sendChat(e: React.FormEvent) {
+    e.preventDefault();
+    await sendChatMessage(chatInput);
   }
 
   return (
@@ -218,7 +222,7 @@ export default function AIPage() {
                   ].map(q => (
                     <button
                       key={q}
-                      onClick={() => { setChatInput(q); }}
+                      onClick={() => { sendChatMessage(q); }}
                       className="block mx-auto text-xs text-primary hover:underline"
                     >
                       "{q}"

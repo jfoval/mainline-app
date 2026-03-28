@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -42,6 +41,7 @@ export default function LoginPage() {
 
       if (!res.ok) {
         setError(data.error || 'Login failed');
+        setPassword('');
         setLoading(false);
         return;
       }

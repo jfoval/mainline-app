@@ -49,8 +49,9 @@ export async function PATCH(req: NextRequest) {
     if (!id) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
-    if (!status) {
-      return NextResponse.json({ error: 'status is required' }, { status: 400 });
+    const VALID_STATUSES = ['pending', 'processed', 'deleted'];
+    if (!status || !VALID_STATUSES.includes(status)) {
+      return NextResponse.json({ error: `status must be one of: ${VALID_STATUSES.join(', ')}` }, { status: 400 });
     }
 
     if (_base_updated_at) {
@@ -61,9 +62,15 @@ export async function PATCH(req: NextRequest) {
     }
 
     const now = nowLocal();
-    await sql`
-      UPDATE inbox_items SET status = ${status}, processed_at = ${now}, updated_at = ${now} WHERE id = ${id}
-    `;
+    if (status === 'processed') {
+      await sql`
+        UPDATE inbox_items SET status = ${status}, processed_at = ${now}, updated_at = ${now} WHERE id = ${id}
+      `;
+    } else {
+      await sql`
+        UPDATE inbox_items SET status = ${status}, updated_at = ${now} WHERE id = ${id}
+      `;
+    }
 
     const rows = await sql`SELECT * FROM inbox_items WHERE id = ${id}`;
     return NextResponse.json(rows[0]);
@@ -79,10 +86,11 @@ export async function DELETE(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
-    if (id) {
-      await sql`DELETE FROM inbox_items WHERE id = ${id}`;
+    if (!id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
+    await sql`DELETE FROM inbox_items WHERE id = ${id}`;
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('DELETE /api/inbox error:', err);

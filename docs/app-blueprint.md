@@ -2,7 +2,7 @@
 ## Personal Productivity System Powered by GTD
 
 **Last updated:** 2026-03-27
-**Status:** Production-ready. Deployed on Vercel. 13 pages, ~31 API routes. Offline-first PWA with conflict detection, rate limiting, fetch timeouts, dashboard caching, service worker cache versioning. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. All server-side time logic uses Central Time via `nowCentral()` helper.
+**Status:** Production-ready. Deployed on Vercel. 14+ pages, ~33 API routes. Offline-first PWA with conflict detection, rate limiting, fetch timeouts, dashboard caching, service worker cache versioning. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. All server-side time logic uses Central Time via `nowCentral()` helper.
 
 ---
 
@@ -12,7 +12,7 @@ A self-deployed personal GTD productivity app. Each customer gets their own inst
 
 **Tech:** Next.js 16, TypeScript, Tailwind v4, Neon Postgres (`@neondatabase/serverless`), Claude API (Opus), PWA
 **Location:** `/Users/johnfoval/Desktop/Mainline/app/`
-**GitHub:** `https://github.com/jfoval/gad-app` (private)
+**GitHub:** `https://github.com/jfoval/mainline-app` (private, repo rename pending)
 **Live:** Deployed on Vercel (auto-deploys on push to `main`)
 **Database:** Neon Postgres (free tier, US East 1)
 
@@ -39,12 +39,11 @@ A self-deployed personal GTD productivity app. Each customer gets their own inst
 - Login page: `/login` — email + password form
 - Uses `jose` library for JWT, `bcryptjs` for password hashing
 
-### Environment Variables (5, set in Vercel + `.env.local`)
+### Environment Variables (4, set in Vercel + `.env.local`)
 - `DATABASE_URL` — Neon Postgres connection string
-- `ANTHROPIC_API_KEY` — Claude API key (was previously stored in DB settings table)
-- `AUTH_EMAIL` — Login email (johnfoval@gmail.com)
-- `AUTH_PASSWORD_HASH` — bcrypt hash of login password
+- `AUTH_PASSWORD_HASH` — bcrypt hash of login password (or set via first-run setup wizard)
 - `JWT_SECRET` — 64-char hex string for signing JWTs
+- `ANTHROPIC_API_KEY` — (optional) Claude API key, can also be set in app Settings
 
 ### How to Deploy Changes
 1. Edit code locally
@@ -89,10 +88,6 @@ A self-deployed personal GTD productivity app. Each customer gets their own inst
 - **Inbox Processing** (`/inbox/process`) — GTD decision tree, one item at a time, AI-assisted routing with concrete action enforcement. Quick-route buttons: trash, someday/maybe, reference, wish list, reading, movie, show, album, travel, discuss with Haley.
 - **Next Actions** (`/actions`) — 7 context lists (@work, @errands, @home, @waiting_for, @agendas, @haley, @prayers)
 - **Projects** (`/projects`, `/projects/[id]`) — CRUD with categories, Active/Someday-Maybe toggle, stalled project detection
-
-### Business
-- **Pipeline/CRM** (`/pipeline`) — 4 tabs: deals (6 stages), warm leads, contacts (4 types), closed deals (win/loss history)
-- **Client Notes** (`/clients`) — per-client running record with date headers, AI-powered note analysis, responsive mobile layout
 
 ### Life System
 - **Horizons** (`/horizons`) — purpose, vision, goals, areas of focus, growth intentions

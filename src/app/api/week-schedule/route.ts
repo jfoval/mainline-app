@@ -3,42 +3,7 @@ import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
 import { v4 as uuid } from 'uuid';
 import { nowCentral } from '@/lib/api-helpers';
-
-/** Get the Monday of a given week */
-function getMonday(date: Date): string {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
-
-/** Resolve which pattern applies for a given week start date */
-async function resolvePattern(weekStart: string): Promise<string | null> {
-  // 1. Check explicit assignment
-  const explicit = await sql`SELECT pattern_id FROM week_schedule WHERE week_start = ${weekStart}`;
-  if (explicit.length > 0) return explicit[0].pattern_id as string;
-
-  // 2. Check rotation
-  const rotationRows = await sql`SELECT * FROM week_pattern_rotation WHERE is_active = 1 LIMIT 1`;
-  if (rotationRows.length > 0) {
-    const rotation = rotationRows[0] as { pattern_ids: string; start_date: string };
-    try {
-      const patternIds = JSON.parse(rotation.pattern_ids) as string[];
-      if (patternIds.length > 0) {
-        const startDate = new Date(rotation.start_date + 'T12:00:00');
-        const weekDate = new Date(weekStart + 'T12:00:00');
-        const weeksDiff = Math.round((weekDate.getTime() - startDate.getTime()) / (7 * 24 * 60 * 60 * 1000));
-        const index = ((weeksDiff % patternIds.length) + patternIds.length) % patternIds.length;
-        return patternIds[index];
-      }
-    } catch { /* invalid JSON */ }
-  }
-
-  // 3. Fall back to first pattern
-  const firstPattern = await sql`SELECT id FROM week_patterns ORDER BY sort_order, name LIMIT 1`;
-  return firstPattern.length > 0 ? firstPattern[0].id as string : null;
-}
+import { getMonday, resolvePatternId } from '@/lib/pattern-resolver';
 
 export async function GET(req: NextRequest) {
   try {
@@ -49,7 +14,7 @@ export async function GET(req: NextRequest) {
     if (searchParams.get('current') === 'true') {
       const ct = nowCentral();
       const weekStart = getMonday(ct.date);
-      const patternId = await resolvePattern(weekStart);
+      const patternId = await resolvePatternId(weekStart);
 
       if (!patternId) {
         return NextResponse.json({ pattern: null, blocks: [], week_start: weekStart });

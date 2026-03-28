@@ -3,17 +3,22 @@ import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
 import { nowCentral } from '@/lib/api-helpers';
 
-// Cache the API key lookup to avoid hitting DB on every request
+// Cache the API key lookup with a 60-second TTL
 let cachedApiKey: string | null | undefined = undefined;
+let cacheTimestamp = 0;
+const CACHE_TTL_MS = 60_000;
 
 async function getApiKey(): Promise<string | null> {
-  if (cachedApiKey !== undefined) return cachedApiKey;
+  if (cachedApiKey !== undefined && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
+    return cachedApiKey;
+  }
 
   // Check settings table first
   try {
     const row = await sql`SELECT value FROM settings WHERE key = 'anthropic_api_key'`;
     if (row.length > 0 && row[0].value) {
       cachedApiKey = row[0].value as string;
+      cacheTimestamp = Date.now();
       return cachedApiKey;
     }
   } catch {
@@ -22,6 +27,7 @@ async function getApiKey(): Promise<string | null> {
 
   // Fall back to env var
   cachedApiKey = process.env.ANTHROPIC_API_KEY || null;
+  cacheTimestamp = Date.now();
   return cachedApiKey;
 }
 

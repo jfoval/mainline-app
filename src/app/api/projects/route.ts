@@ -71,6 +71,10 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json();
     const { id, _base_updated_at, ...rawUpdates } = body;
 
+    if (!id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
     rawUpdates.updated_at = nowLocal();
     if (rawUpdates.status === 'completed' || rawUpdates.status === 'archived') {
       rawUpdates.completed_at = rawUpdates.updated_at;
@@ -94,6 +98,27 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json(rows[0]);
   } catch (err) {
     console.error('PATCH /api/projects error:', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    await ensureDb();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
+    // Unlink actions from this project before deleting
+    await sql`UPDATE next_actions SET project_id = NULL WHERE project_id = ${id}`;
+    await sql`DELETE FROM projects WHERE id = ${id}`;
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    console.error('DELETE /api/projects error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -66,13 +66,13 @@ export default function ConflictsPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-6">
-      <h1 className="text-2xl font-bold text-white mb-2">Sync Conflicts</h1>
-      <p className="text-slate-400 mb-6">
+      <h1 className="text-2xl font-bold text-foreground mb-2">Sync Conflicts</h1>
+      <p className="text-muted mb-6">
         These items were edited on both your phone and Mac before syncing. Pick which version to keep.
       </p>
 
       {conflicts.length === 0 ? (
-        <div className="text-center py-12 text-slate-500">
+        <div className="text-center py-12 text-muted">
           No conflicts. Everything is in sync.
         </div>
       ) : (
@@ -83,31 +83,31 @@ export default function ConflictsPage() {
             const label = TABLE_LABELS[conflict.table] || conflict.table;
 
             return (
-              <div key={conflict.conflictId} className="bg-slate-800 rounded-lg border border-slate-700">
+              <div key={conflict.conflictId} className="bg-card rounded-lg border border-border">
                 <button
                   onClick={() => setExpanded(isExpanded ? null : conflict.conflictId!)}
                   className="w-full flex items-center justify-between p-4 text-left"
                 >
                   <div>
                     <span className="text-xs font-medium text-orange-400 uppercase">{label}</span>
-                    <div className="text-white font-medium">{getRecordTitle(conflict)}</div>
-                    <div className="text-xs text-slate-400 mt-0.5">
+                    <div className="text-foreground font-medium">{getRecordTitle(conflict)}</div>
+                    <div className="text-xs text-muted mt-0.5">
                       {diffs.length} field(s) differ &middot; Detected {formatDate(conflict.detectedAt)}
                     </div>
                   </div>
-                  <span className="text-slate-400 text-xl">{isExpanded ? '−' : '+'}</span>
+                  <span className="text-muted text-xl">{isExpanded ? '−' : '+'}</span>
                 </button>
 
                 {isExpanded && (
-                  <div className="px-4 pb-4 border-t border-slate-700">
+                  <div className="px-4 pb-4 border-t border-border">
                     <div className="grid grid-cols-2 gap-4 mt-4">
                       <div>
                         <h3 className="text-sm font-medium text-blue-400 mb-2">This Device</h3>
                         <div className="space-y-1">
                           {diffs.map(field => (
                             <div key={field} className="text-xs">
-                              <span className="text-slate-400">{field}:</span>{' '}
-                              <span className="text-white">
+                              <span className="text-muted">{field}:</span>{' '}
+                              <span className="text-foreground">
                                 {String(conflict.clientVersion[field] ?? '(empty)')}
                               </span>
                             </div>
@@ -119,8 +119,8 @@ export default function ConflictsPage() {
                         <div className="space-y-1">
                           {diffs.map(field => (
                             <div key={field} className="text-xs">
-                              <span className="text-slate-400">{field}:</span>{' '}
-                              <span className="text-white">
+                              <span className="text-muted">{field}:</span>{' '}
+                              <span className="text-foreground">
                                 {String(conflict.serverVersion[field] ?? '(empty)')}
                               </span>
                             </div>
@@ -133,14 +133,14 @@ export default function ConflictsPage() {
                       <button
                         onClick={() => handleResolve(conflict.conflictId!, 'client')}
                         disabled={resolving === conflict.conflictId}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm py-2 px-3 rounded-lg disabled:opacity-50"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-foreground text-sm py-2 px-3 rounded-lg disabled:opacity-50"
                       >
                         Keep This Device
                       </button>
                       <button
                         onClick={() => handleResolve(conflict.conflictId!, 'server')}
                         disabled={resolving === conflict.conflictId}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm py-2 px-3 rounded-lg disabled:opacity-50"
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-foreground text-sm py-2 px-3 rounded-lg disabled:opacity-50"
                       >
                         Keep Server
                       </button>
