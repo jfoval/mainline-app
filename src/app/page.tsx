@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import DailyCalendar from '@/components/DailyCalendar';
+import { formatTime, timeToMinutes } from '@/lib/time-utils';
 
 interface DashboardData {
   date: string;
@@ -298,7 +299,16 @@ export default function Dashboard() {
             <>
               <p className="text-xl font-bold">{data.current_block.label}</p>
               <p className="text-sm text-muted mt-1">
-                {data.current_block.start_time} - {data.current_block.end_time}
+                {formatTime(data.current_block.start_time)} – {formatTime(data.current_block.end_time)}
+                {' · '}
+                {(() => {
+                  const remaining = timeToMinutes(data.current_block.end_time) - timeToMinutes(data.current_time);
+                  if (remaining <= 0) return 'ending';
+                  if (remaining < 60) return `${remaining}m left`;
+                  const h = Math.floor(remaining / 60);
+                  const m = remaining % 60;
+                  return m > 0 ? `${h}h ${m}m left` : `${h}h left`;
+                })()}
               </p>
               {data.current_block.description && (
                 <p className="text-sm mt-2 text-foreground/70">{data.current_block.description}</p>
@@ -318,7 +328,7 @@ export default function Dashboard() {
             <>
               <p className="text-lg font-bold">{data.next_block.label}</p>
               <p className="text-sm text-muted mt-1">
-                {data.next_block.start_time} - {data.next_block.end_time}
+                {formatTime(data.next_block.start_time)} – ends {formatTime(data.next_block.end_time)}
               </p>
             </>
           ) : (
