@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Key, LogOut, Database, Download, Upload, Sun, Moon, Palette, Bell, BellOff } from 'lucide-react';
+import { Key, LogOut, Database, Download, Upload, Sun, Moon, Palette, Bell, BellOff, ExternalLink } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 
 export default function SettingsPage() {
@@ -11,12 +11,23 @@ export default function SettingsPage() {
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState('');
+  const [apiKeyHasValue, setApiKeyHasValue] = useState(false);
+  const [savingApiKey, setSavingApiKey] = useState(false);
+  const [apiKeySaveResult, setApiKeySaveResult] = useState<string | null>(null);
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
   useEffect(() => {
     setNotificationsEnabled(localStorage.getItem('mainline-notifications') === 'true');
+    // Check if an API key is already saved
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(data => {
+        if (data.anthropic_api_key) setApiKeyHasValue(true);
+      })
+      .catch(() => {});
   }, []);
 
   async function testConnection() {
@@ -38,6 +49,29 @@ export default function SettingsPage() {
       setTestResult('Error: Could not reach the AI API.');
     }
     setTesting(false);
+  }
+
+  async function saveApiKey() {
+    if (!apiKey.trim()) return;
+    setSavingApiKey(true);
+    setApiKeySaveResult(null);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ anthropic_api_key: apiKey.trim() }),
+      });
+      if (res.ok) {
+        setApiKeyHasValue(true);
+        setApiKey('');
+        setApiKeySaveResult('API key saved.');
+      } else {
+        setApiKeySaveResult('Error: Could not save key.');
+      }
+    } catch {
+      setApiKeySaveResult('Error: Could not save key.');
+    }
+    setSavingApiKey(false);
   }
 
   async function exportData() {
@@ -69,27 +103,67 @@ export default function SettingsPage() {
       <h1 className="text-2xl font-bold mb-2">Settings</h1>
       <p className="text-sm text-muted mb-8">Configure your GTD system.</p>
 
-      {/* Claude API Key Status */}
+      {/* Claude API Key */}
       <div className="bg-card rounded-xl border border-border p-6 mb-6">
-        <div className="flex items-center gap-2 mb-4">
+        <div className="flex items-center gap-2 mb-1">
           <Key size={20} className="text-primary" />
           <h2 className="text-lg font-semibold">Claude API Key</h2>
         </div>
         <p className="text-sm text-muted mb-4">
-          API key is configured via environment variable (ANTHROPIC_API_KEY).
+          {apiKeyHasValue ? 'An API key is saved. Enter a new one below to replace it.' : 'Add your Anthropic API key to enable AI features.'}
         </p>
 
-        <button
-          onClick={testConnection}
-          disabled={testing}
-          className="px-3 py-1.5 rounded-lg border border-border text-sm hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {testing ? 'Testing...' : 'Test Connection'}
-        </button>
-        {testResult && (
-          <p className={`text-sm mt-2 ${testResult.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
-            {testResult}
+        <div className="flex gap-2 mb-3">
+          <input
+            type="password"
+            value={apiKey}
+            onChange={e => { setApiKey(e.target.value); setApiKeySaveResult(null); }}
+            placeholder={apiKeyHasValue ? 'sk-ant-... (enter new key to replace)' : 'sk-ant-...'}
+            className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          <button
+            onClick={saveApiKey}
+            disabled={savingApiKey || !apiKey.trim()}
+            className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {savingApiKey ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <a
+            href="https://console.anthropic.com/settings/keys"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            <ExternalLink size={12} />
+            Get an API key at console.anthropic.com
+          </a>
+          <span className="text-xs text-muted">~$2–5/month with regular use</span>
+        </div>
+
+        {apiKeySaveResult && (
+          <p className={`text-sm mt-3 ${apiKeySaveResult.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
+            {apiKeySaveResult}
           </p>
+        )}
+
+        {apiKeyHasValue && (
+          <div className="mt-4 pt-4 border-t border-border">
+            <button
+              onClick={testConnection}
+              disabled={testing}
+              className="px-3 py-1.5 rounded-lg border border-border text-sm hover:bg-primary/5 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {testing ? 'Testing...' : 'Test Connection'}
+            </button>
+            {testResult && (
+              <p className={`text-sm mt-2 ${testResult.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
+                {testResult}
+              </p>
+            )}
+          </div>
         )}
       </div>
 

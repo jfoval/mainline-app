@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronRight, Check, Loader2, Lock, User, Key } from 'lucide-react';
+import { ChevronRight, Check, Loader2, Lock, User, Key, ExternalLink } from 'lucide-react';
 
 export default function SetupPage() {
   const router = useRouter();
@@ -16,6 +16,8 @@ export default function SetupPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [apiKey, setApiKey] = useState('');
+  const [testingKey, setTestingKey] = useState(false);
+  const [keyTestResult, setKeyTestResult] = useState<string | null>(null);
 
   // Check if already configured
   useEffect(() => {
@@ -204,28 +206,68 @@ export default function SetupPage() {
                 <Key size={20} className="text-violet-500" />
               </div>
               <div>
-                <h2 className="font-semibold text-foreground">AI Assistant (Optional)</h2>
-                <p className="text-xs text-muted">Add your Anthropic API key to enable AI features. You can add this later in Settings.</p>
+                <h2 className="font-semibold text-foreground">AI Assistant</h2>
+                <p className="text-xs text-muted">Optional — you can skip this and add it later in Settings.</p>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-muted mb-1">Anthropic API Key</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-muted">Anthropic API Key</label>
+                <a
+                  href="https://console.anthropic.com/settings/keys"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs text-primary hover:underline"
+                >
+                  <ExternalLink size={11} />
+                  Get a key
+                </a>
+              </div>
               <input
                 type="password"
                 value={apiKey}
-                onChange={e => setApiKey(e.target.value)}
+                onChange={e => { setApiKey(e.target.value); setKeyTestResult(null); }}
                 autoFocus
                 className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
                 placeholder="sk-ant-..."
               />
               <p className="text-xs text-muted mt-1">
-                Get one at{' '}
-                <a href="https://console.anthropic.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">
-                  console.anthropic.com
-                </a>
+                Enables smart inbox processing, morning briefing, day prioritization, and more. Typical cost: ~$2–5/month.
               </p>
             </div>
+
+            {apiKey.trim() && (
+              <div>
+                <button
+                  onClick={async () => {
+                    setTestingKey(true);
+                    setKeyTestResult(null);
+                    try {
+                      const res = await fetch('/api/setup/test-key', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ api_key: apiKey.trim() }),
+                      });
+                      const data = await res.json();
+                      setKeyTestResult(data.error ? `Error: ${data.error}` : 'Connected! Key is valid.');
+                    } catch {
+                      setKeyTestResult('Error: Could not reach the API.');
+                    }
+                    setTestingKey(false);
+                  }}
+                  disabled={testingKey}
+                  className="px-3 py-1.5 rounded-lg border border-border text-sm hover:bg-primary/5 disabled:opacity-50"
+                >
+                  {testingKey ? 'Testing...' : 'Test Key'}
+                </button>
+                {keyTestResult && (
+                  <p className={`text-sm mt-2 ${keyTestResult.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
+                    {keyTestResult}
+                  </p>
+                )}
+              </div>
+            )}
 
             {error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -242,7 +284,7 @@ export default function SetupPage() {
                 className="flex-1 py-2.5 rounded-lg bg-primary text-white hover:bg-primary-hover font-medium disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {saving ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                {saving ? 'Setting up...' : 'Complete Setup'}
+                {saving ? 'Setting up...' : apiKey.trim() ? 'Complete Setup' : 'Skip & Complete Setup'}
               </button>
             </div>
           </div>

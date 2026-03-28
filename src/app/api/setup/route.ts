@@ -3,6 +3,7 @@ import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
+import { getJwtSecret } from '@/lib/jwt-secret';
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,11 +46,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Auto-login: create JWT and set cookie
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      return NextResponse.json({ error: 'JWT_SECRET not configured in environment' }, { status: 500 });
-    }
-
+    const jwtSecret = await getJwtSecret();
     const secret = new TextEncoder().encode(jwtSecret);
     const token = await new SignJWT({ user: 'owner' })
       .setProtectedHeader({ alg: 'HS256' })

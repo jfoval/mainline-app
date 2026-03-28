@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
+import { getJwtSecret } from '@/lib/jwt-secret';
 
 const PUBLIC_PATHS = [
   '/login',
@@ -7,6 +8,7 @@ const PUBLIC_PATHS = [
   '/api/auth/login',
   '/api/auth/logout',
   '/api/setup',
+  '/api/setup/test-key',
   '/_next',
   '/manifest.json',
   '/sw.js',
@@ -19,7 +21,7 @@ function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some(p => pathname.startsWith(p));
 }
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Allow public paths
@@ -40,7 +42,8 @@ export async function middleware(req: NextRequest) {
 
   // Verify JWT
   try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+    const jwtSecret = await getJwtSecret();
+    const secret = new TextEncoder().encode(jwtSecret);
     await jwtVerify(token, secret);
     return NextResponse.next();
   } catch {

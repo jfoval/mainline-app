@@ -12,60 +12,52 @@ A personal productivity system powered by GTD (Getting Things Done). Deploy your
 - **Ideal Calendar** — multi-week pattern rotation (e.g., alternating A/B week schedules)
 - **Disciplines & Values** — track daily habits and aspirational values with streaks and stats
 - **Weekly Review** — guided GTD review process
-- **AI Assistant** — powered by Claude (bring your own Anthropic API key)
+- **AI Assistant** — powered by Claude (bring your own Anthropic API key, optional)
 - **Offline-first** — works without internet, syncs when back online
 - **PWA** — install on your phone's home screen
 
 ## Deploy Your Own Instance
 
-### Prerequisites
+### One-click deploy
 
-You'll need free accounts on three services:
-1. **GitHub** — to get the code
-2. **Vercel** — to host the app
-3. **Neon** — for the database
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fjfoval%2Fmainline-app&env=DATABASE_URL&envDescription=Neon%20Postgres%20connection%20string%20(free%20at%20neon.tech)&envLink=https%3A%2F%2Fneon.tech)
 
-### Step 1: Get the Code
+This button forks the repo, asks for one value, and deploys. **Before clicking**, get your database connection string:
 
-Fork this repository to your own GitHub account (click the **Fork** button at the top right).
-
-### Step 2: Create a Neon Database
-
-1. Go to [neon.tech](https://neon.tech) and sign up (free tier works fine)
+1. Go to [neon.tech](https://neon.tech) and sign up (free)
 2. Create a new project (any name, pick a region near you)
-3. Copy the **connection string** — it looks like `postgresql://neondb_owner:abc123@ep-cool-name-123.us-east-2.aws.neon.tech/neondb?sslmode=require`
+3. Copy the **connection string** — it looks like `postgresql://neondb_owner:abc123@ep-cool-name.us-east-2.aws.neon.tech/neondb?sslmode=require`
 
-### Step 3: Initialize the Database
+Then click the button above, paste the connection string when asked, and deploy.
 
-Run this one-time command to set up your database tables:
+### After deploying
 
-```bash
-DATABASE_URL="your-connection-string-here" node scripts/setup-schema.mjs
-```
+Visit your new Vercel URL and complete the setup wizard:
+- Set your password
+- Enter your name (optional)
+- Add an Anthropic API key for AI features (optional — can also add later in Settings)
 
-You can run this from your local machine (requires Node.js) or from any environment with Node installed.
+That's it. Everything else — database tables, security keys — is handled automatically on first launch.
 
-### Step 4: Deploy to Vercel
+---
 
-1. Go to [vercel.com](https://vercel.com) and sign up (free tier works)
-2. Click **Add New Project** and import your forked repo
-3. In the **Environment Variables** section, add:
+### Manual setup (alternative)
+
+If you prefer to deploy manually:
+
+1. Fork this repository to your GitHub account
+2. Create a Neon database at [neon.tech](https://neon.tech) and copy the connection string
+3. Deploy to [Vercel](https://vercel.com) and set one environment variable:
 
 | Variable | Value |
 |----------|-------|
-| `DATABASE_URL` | Your Neon connection string from Step 2 |
-| `JWT_SECRET` | A random string (64+ characters). Generate one at [generate-secret.vercel.app](https://generate-secret.vercel.app/64) |
+| `DATABASE_URL` | Your Neon connection string |
 
-4. Click **Deploy**
+4. Visit your deployed URL and complete the setup wizard
 
-### Step 5: Complete Setup
+> **JWT_SECRET is optional** — if not provided, a secure secret is generated automatically on first launch and stored in your database.
 
-1. Visit your new Vercel URL (e.g., `your-app.vercel.app`)
-2. You'll be guided through a setup wizard:
-   - Set your password
-   - Enter your name (optional)
-   - Add an Anthropic API key for AI features (optional, can add later in Settings)
-3. Done! You're logged in and ready to use Mainline.
+---
 
 ## AI Features (Optional)
 
@@ -73,9 +65,10 @@ The AI assistant uses Claude by Anthropic. To enable it:
 
 1. Get an API key at [console.anthropic.com](https://console.anthropic.com)
 2. Either:
-   - Add it during setup, OR
-   - Add it later in Settings, OR
-   - Set `ANTHROPIC_API_KEY` as an environment variable in Vercel
+   - Add it during the setup wizard, OR
+   - Add it later in **Settings → Claude API Key**
+
+Typical cost: a few dollars per month with regular use. You control the spend — there's no subscription.
 
 ## Local Development
 
@@ -98,5 +91,5 @@ Open [http://localhost:3000](http://localhost:3000).
 - **Tailwind CSS v4**
 - **Neon Postgres** (serverless)
 - **Dexie.js** (IndexedDB for offline support)
-- **Claude API** (AI features)
+- **Claude API** (AI features, optional)
 - **PWA** (installable, works offline)

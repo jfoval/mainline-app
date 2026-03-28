@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
 import sql from '@/lib/db';
+import { getJwtSecret } from '@/lib/jwt-secret';
 
 // Simple rate limiting via cookie-based attempt tracking
 function getRateLimitInfo(req: NextRequest): { attempts: number; lockedUntil: number } {
@@ -25,11 +26,6 @@ export async function POST(req: NextRequest) {
     if (rateLimit.lockedUntil > Date.now()) {
       const secondsLeft = Math.ceil((rateLimit.lockedUntil - Date.now()) / 1000);
       return NextResponse.json({ error: `Too many attempts. Try again in ${secondsLeft} seconds.` }, { status: 429 });
-    }
-
-    const jwtSecret = process.env.JWT_SECRET;
-    if (!jwtSecret) {
-      return NextResponse.json({ error: 'JWT_SECRET not configured' }, { status: 500 });
     }
 
     // Try settings table first, then fall back to env vars
@@ -68,6 +64,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create JWT
+    const jwtSecret = await getJwtSecret();
     const secret = new TextEncoder().encode(jwtSecret);
     const token = await new SignJWT({ user: 'owner' })
       .setProtectedHeader({ alg: 'HS256' })
