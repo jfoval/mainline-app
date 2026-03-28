@@ -31,8 +31,7 @@ export default function MiniTimeline({ blocks, currentTime }: MiniTimelineProps)
   }
 
   return (
-    <div className="bg-card rounded-xl border border-border p-4">
-      <h3 className="text-xs font-medium text-muted mb-3 uppercase tracking-wide">Today&apos;s Schedule</h3>
+    <div>
       <div className="relative h-8 bg-background rounded-lg overflow-hidden">
         {/* Hour grid lines */}
         {hours.map(({ hour, pct }) => (

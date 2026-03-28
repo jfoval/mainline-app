@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Plus, Trash2, X, Check, Edit3, GripVertical } from 'lucide-react';
 import { TIME_OPTIONS, formatTime, timeToMinutes } from '@/lib/time-utils';
+import MiniTimeline from '@/components/MiniTimeline';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -179,6 +180,13 @@ export default function DailyCalendar({ date }: { date: string }) {
           Add Block
         </button>
       </div>
+
+      {/* Mini Timeline */}
+      {blocks.length > 0 && currentTime && (
+        <div className="px-5 pt-4 pb-2 border-b border-border">
+          <MiniTimeline blocks={blocks} currentTime={currentTime} />
+        </div>
+      )}
 
       {/* Add form */}
       {showAddForm && (

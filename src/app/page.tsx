@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import DailyCalendar from '@/components/DailyCalendar';
-import MiniTimeline from '@/components/MiniTimeline';
 
 interface DashboardData {
   date: string;
@@ -286,11 +285,6 @@ export default function Dashboard() {
             </Link>
           )}
         </div>
-      )}
-
-      {/* Mini Timeline */}
-      {data.blocks.length > 0 && (
-        <MiniTimeline blocks={data.blocks} currentTime={data.current_time} />
       )}
 
       {/* Now / Up Next */}
