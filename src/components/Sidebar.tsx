@@ -67,10 +67,9 @@ export default function Sidebar() {
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="p-6 border-b border-white/10">
+        <div className="px-4 py-4 border-b border-white/10">
           <Link href="/" className="flex items-center gap-3">
-            <Image src="/branding/logo.png" alt="Mainline" width={32} height={32} className="rounded" />
-            <h1 className="text-xl font-bold">Mainline</h1>
+            <img src="/branding/logo-sidebar.svg" alt="Mainline" className="h-10" />
           </Link>
         </div>
 

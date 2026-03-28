@@ -66,7 +66,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <Image src="/branding/logo-with-name-light.png" alt="Mainline" width={220} height={60} className="mx-auto mb-2" priority />
+          <img src="/branding/logo-with-name-light.svg" alt="Mainline" className="mx-auto mb-2 h-40" />
           <p className="text-sm text-muted mt-1">Enter your password to continue</p>
         </div>
 
