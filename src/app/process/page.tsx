@@ -202,7 +202,7 @@ export default function MorningProcessPage() {
   // ── Loading state ────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="animate-spin text-primary" size={36} />
       </div>
     );

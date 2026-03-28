@@ -14,20 +14,21 @@ export async function runMigrations() {
   const rows = await sql`SELECT version FROM schema_version`;
   const applied = new Set(rows.map(r => Number(r.version)));
 
-  // Run each pending migration in order, wrapped in a transaction
+  // Run each pending migration in order
+  // Note: Neon's HTTP driver is stateless, so BEGIN/COMMIT across separate
+  // sql.query() calls don't share a connection. DDL statements (CREATE TABLE,
+  // ALTER TABLE) are auto-committed by Postgres anyway. We run statements
+  // sequentially and record the version at the end.
   for (const m of embeddedMigrations) {
     if (applied.has(m.version)) continue;
 
     try {
-      await sql.query('BEGIN');
       for (const stmt of m.statements) {
         await sql.query(stmt);
       }
       await sql`INSERT INTO schema_version (version, name) VALUES (${m.version}, ${m.name})`;
-      await sql.query('COMMIT');
       console.log(`[migrations] Applied: ${m.name}`);
     } catch (err) {
-      await sql.query('ROLLBACK');
       console.error(`[migrations] Failed: ${m.name}`, err);
       throw err;
     }
@@ -448,17 +449,17 @@ const embeddedMigrations: { version: number; name: string; statements: string[] 
     version: 10,
     name: '010_fix_updated_at',
     statements: [
-      // Add updated_at to recurring_tasks
+      // Add updated_at to recurring_tasks (TEXT column matching app convention)
       `ALTER TABLE recurring_tasks ADD COLUMN IF NOT EXISTS updated_at TEXT DEFAULT ''`,
-      // Backfill empty updated_at values across all tables
-      `UPDATE inbox_items SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
-      `UPDATE next_actions SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
-      `UPDATE projects SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
-      `UPDATE daily_notes SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
-      `UPDATE list_items SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
-      `UPDATE reference_docs SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
-      `UPDATE horizons SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
-      `UPDATE recurring_tasks SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
+      // Backfill empty updated_at values on TEXT-typed columns only
+      // (reference_docs and horizons have TIMESTAMP NOT NULL DEFAULT NOW() — no backfill needed)
+      // Use AT TIME ZONE to produce Central Time strings matching nowLocal() format
+      `UPDATE inbox_items SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
+      `UPDATE next_actions SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
+      `UPDATE projects SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
+      `UPDATE daily_notes SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
+      `UPDATE list_items SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
+      `UPDATE recurring_tasks SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
     ],
   },
 ];

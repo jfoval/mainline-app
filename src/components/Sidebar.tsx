@@ -18,6 +18,7 @@ import {
   Sun,
   Moon,
   Compass,
+  LifeBuoy,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -33,7 +34,7 @@ const navItems = [
   { href: '/horizons', label: 'Horizons', icon: Target },
   { href: '/reference', label: 'Reference', icon: BookOpen },
   { href: '/review', label: 'Review', icon: Calendar },
-  { href: '/recovery', label: 'Recovery', icon: Compass },
+  { href: '/recovery', label: 'Recovery', icon: LifeBuoy },
   { href: '/ai', label: 'AI Assistant', icon: Bot },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];

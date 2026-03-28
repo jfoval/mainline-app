@@ -45,6 +45,10 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json();
     const { id, _base_updated_at, ...rawUpdates } = body;
 
+    if (!id) {
+      return NextResponse.json({ error: 'id is required' }, { status: 400 });
+    }
+
     if (_base_updated_at) {
       const current = await sql`SELECT * FROM recurring_tasks WHERE id = ${id}`;
       if (current[0] && current[0].updated_at && (current[0].updated_at as string) > _base_updated_at) {

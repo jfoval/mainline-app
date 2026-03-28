@@ -359,7 +359,7 @@ function StepContent({ stepId, data }: { stepId: string; data: ReviewData }) {
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(data.action_counts).map(([ctx, count]) => (
               <Link key={ctx} href={`/actions?context=${ctx}`} className="flex items-center justify-between p-2 rounded-lg bg-background hover:bg-primary/5 text-sm">
-                <span>@{ctx.replace('_', '-')}</span>
+                <span>@{ctx.replace(/_/g, ' ')}</span>
                 <span className={`font-medium ${count === 0 ? 'text-muted' : ''}`}>{count}</span>
               </Link>
             ))}

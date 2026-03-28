@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
-import { nowCentral, validateRequired } from '@/lib/api-helpers';
+import { nowCentral, nowLocal, validateRequired } from '@/lib/api-helpers';
 import { getMonday, resolvePatternId } from '@/lib/pattern-resolver';
 import { v4 as uuid } from 'uuid';
 
@@ -130,7 +130,9 @@ export async function PATCH(req: NextRequest) {
 
     if (sets.length === 0) return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
 
-    sets.push(`updated_at = NOW()`);
+    sets.push(`updated_at = $${idx}`);
+    vals.push(nowLocal());
+    idx++;
     vals.push(body.id);
 
     await sql.query(

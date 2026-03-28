@@ -52,11 +52,6 @@ export async function POST(req: NextRequest) {
     const missing = validateRequired(body, ['content', 'context']);
     if (missing) return NextResponse.json({ error: missing }, { status: 400 });
 
-    // Context is user-defined — just ensure it's a non-empty string
-    if (!body.context || typeof body.context !== 'string') {
-      return NextResponse.json({ error: 'context is required' }, { status: 400 });
-    }
-
     const {
       content,
       context,

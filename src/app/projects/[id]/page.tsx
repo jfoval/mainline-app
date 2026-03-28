@@ -42,6 +42,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const router = useRouter();
   const [project, setProject] = useState<Project | null>(null);
   const [actions, setActions] = useState<NextAction[]>([]);
+  const [actionsLoaded, setActionsLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -66,25 +67,32 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     const data = await res.json();
     setProject(data.project);
     setActions(data.actions);
+    setActionsLoaded(true);
   }
 
   async function saveProject() {
     if (!project) return;
     setSaving(true);
-    await fetch(`/api/projects/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: project.title,
-        purpose: project.purpose,
-        key_milestones: project.key_milestones,
-        planning_steps: project.planning_steps,
-        notes: project.notes,
-      }),
-    });
-    setSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    try {
+      const res = await fetch(`/api/projects/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: project.title,
+          purpose: project.purpose,
+          key_milestones: project.key_milestones,
+          planning_steps: project.planning_steps,
+          notes: project.notes,
+        }),
+      });
+      if (!res.ok) throw new Error('Save failed');
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      alert('Failed to save project. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function addAction(e: React.FormEvent) {
@@ -169,7 +177,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* Stalled Warning */}
-      {activeActions.length === 0 && (
+      {actionsLoaded && activeActions.length === 0 && (
         <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 mb-6">
           <AlertTriangle size={20} className="text-red-600" />
           <div>

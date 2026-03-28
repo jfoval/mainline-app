@@ -130,11 +130,14 @@ export const inboxStore: StoreConfig<InboxItem> = {
 
     update: async (data) => {
       const { id, ...updates } = data;
+      const existing = await offlineDb.inbox_items.get(id);
+      const baseUpdatedAt = existing?.updated_at;
       if (updates.status === 'processed') {
         updates.processed_at = nowLocal();
       }
+      updates.updated_at = nowLocal();
       await offlineDb.inbox_items.update(id, updates);
-      await enqueue('PATCH', '/api/inbox', data);
+      await enqueue('PATCH', '/api/inbox', { ...data, updated_at: updates.updated_at, _base_updated_at: baseUpdatedAt });
     },
 
     remove: async (id) => {
@@ -369,9 +372,19 @@ export const routineBlocksStore: StoreConfig<RoutineBlock> = {
 
   mutate: {
     create: async (data) => {
-      const item = data as unknown as RoutineBlock;
+      const id = (data.id as string) || uuid();
+      const item: RoutineBlock = {
+        id,
+        routine_type: (data.routine_type as string) || 'weekday',
+        start_time: data.start_time as string,
+        end_time: data.end_time as string,
+        label: data.label as string,
+        description: (data.description as string) ?? null,
+        is_non_negotiable: (data.is_non_negotiable as number) || 0,
+        sort_order: (data.sort_order as number) || 0,
+      };
       await offlineDb.routine_blocks.put(item);
-      await enqueue('POST', '/api/routine', data);
+      await enqueue('POST', '/api/routine', { id, ...data });
       return item;
     },
 

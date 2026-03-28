@@ -8,9 +8,10 @@ type Tab = 'briefing' | 'prioritize' | 'chat';
 
 export default function AIPage() {
   const [tab, setTab] = useState<Tab>('briefing');
-  const [loadingTab, setLoadingTab] = useState<Tab | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const loading = loadingTab === tab;
+  const [briefingLoading, setBriefingLoading] = useState(false);
+  const [prioritizeLoading, setPrioritizeLoading] = useState(false);
+  const [chatLoading, setChatLoading] = useState(false);
 
   // Briefing state
   const [briefing, setBriefing] = useState<string | null>(null);
@@ -22,8 +23,11 @@ export default function AIPage() {
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
 
-  async function callAI(action: string, data?: Record<string, string>) {
-    setLoadingTab(tab);
+  // Derived loading state for current tab
+  const loading = tab === 'briefing' ? briefingLoading : tab === 'prioritize' ? prioritizeLoading : chatLoading;
+
+  async function callAI(action: string, setLoading: (v: boolean) => void, data?: Record<string, string>) {
+    setLoading(true);
     setError(null);
     try {
       const res = await fetch('/api/ai', {
@@ -41,17 +45,17 @@ export default function AIPage() {
       setError('Failed to connect to AI.');
       return null;
     } finally {
-      setLoadingTab(null);
+      setLoading(false);
     }
   }
 
   async function getMorningBriefing() {
-    const result = await callAI('morning_briefing');
+    const result = await callAI('morning_briefing', setBriefingLoading);
     if (result) setBriefing(result.briefing);
   }
 
   async function getPriorities() {
-    const result = await callAI('prioritize');
+    const result = await callAI('prioritize', setPrioritizeLoading);
     if (result) setPriorities(result);
   }
 
@@ -59,7 +63,7 @@ export default function AIPage() {
     if (!question.trim()) return;
     setChatInput('');
     setChatHistory(prev => [...prev, { role: 'user', content: question.trim() }]);
-    const result = await callAI('ask', { question: question.trim() });
+    const result = await callAI('ask', setChatLoading, { question: question.trim() });
     if (result) {
       setChatHistory(prev => [...prev, { role: 'assistant', content: result.response }]);
     }
@@ -242,7 +246,7 @@ export default function AIPage() {
                 </div>
               </div>
             ))}
-            {loading && (
+            {chatLoading && (
               <div className="flex justify-start">
                 <div className="px-4 py-2.5 rounded-xl bg-background border border-border rounded-bl-sm">
                   <Loader2 size={16} className="animate-spin text-muted" />

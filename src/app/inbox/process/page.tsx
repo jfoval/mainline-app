@@ -58,7 +58,7 @@ export default function ProcessPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [contexts, setContexts] = useState<ContextItem[]>(FALLBACK_CONTEXTS);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [step, setStep] = useState<'actionable' | 'route_action' | 'route_non_action' | 'route_reference' | 'create_project' | 'done'>('actionable');
+  const [step, setStep] = useState<'actionable' | 'route_action' | 'route_non_action' | 'route_reference' | 'create_project' | 'done' | 'error'>('actionable');
 
   // Form state for routing
   const [selectedContext, setSelectedContext] = useState('work');
@@ -96,7 +96,7 @@ export default function ProcessPage() {
       ]);
 
       if (!inboxRes.ok || !projectsRes.ok) {
-        setStep('error' as typeof step);
+        setStep('error');
         return;
       }
 
@@ -117,7 +117,7 @@ export default function ProcessPage() {
         setStep('done');
       }
     } catch {
-      setStep('error' as typeof step);
+      setStep('error');
     }
   }
 
@@ -259,6 +259,22 @@ export default function ProcessPage() {
       if (data.result) setAiSuggestion(data.result);
     } catch { /* ignore */ }
     setAiLoading(false);
+  }
+
+  if (step === 'error') {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-20">
+        <div className="text-5xl mb-4">&#9888;</div>
+        <h1 className="text-2xl font-bold mb-2">Something went wrong</h1>
+        <p className="text-muted mb-8">Could not load your inbox. Check your connection and try again.</p>
+        <button
+          onClick={() => { setStep('actionable'); fetchData(); }}
+          className="px-6 py-3 rounded-xl bg-primary text-white hover:bg-primary-hover transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
   if (step === 'done') {

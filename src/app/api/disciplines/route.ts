@@ -75,22 +75,20 @@ export async function PATCH(req: NextRequest) {
   try {
     await ensureDb();
     const body = await req.json();
-    if (!body.id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+    const { id, ...rawUpdates } = body;
+    if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
-    const upd = buildUpdate(body, ALLOWED_PATCH_FIELDS);
+    rawUpdates.updated_at = nowLocal();
+    const upd = buildUpdate(rawUpdates, [...ALLOWED_PATCH_FIELDS, 'updated_at']);
     if (!upd) return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
 
-    const now = nowLocal();
-    upd.fields += `, updated_at = $${upd.paramOffset + 1}`;
-    upd.values.push(now);
-
     await sql.query(
-      `UPDATE disciplines SET ${upd.fields} WHERE id = $${upd.paramOffset + 2}`,
-      [...upd.values, body.id]
+      `UPDATE disciplines SET ${upd.fields} WHERE id = $${upd.paramOffset + 1}`,
+      [...upd.values, id]
     );
 
-    const rows = await sql`SELECT * FROM disciplines WHERE id = ${body.id}`;
-    return NextResponse.json(rows[0] || { id: body.id });
+    const rows = await sql`SELECT * FROM disciplines WHERE id = ${id}`;
+    return NextResponse.json(rows[0] || { id });
   } catch (err) {
     console.error('PATCH /api/disciplines error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
