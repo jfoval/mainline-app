@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Save, Check } from 'lucide-react';
 
 interface Horizon {
@@ -43,16 +43,16 @@ export default function HorizonsPage() {
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState<Record<string, boolean>>({});
 
-  useEffect(() => { fetchHorizons(); }, []);
-
-  async function fetchHorizons() {
+  const fetchHorizons = useCallback(async () => {
     const res = await fetch('/api/horizons');
     const data: Horizon[] = await res.json();
     setHorizons(data);
     const initial: Record<string, string> = {};
     data.forEach(h => { initial[h.id] = h.content; });
     setEdits(initial);
-  }
+  }, []);
+
+  useEffect(() => { fetchHorizons(); }, [fetchHorizons]);
 
   async function saveHorizon(id: string) {
     await fetch('/api/horizons', {

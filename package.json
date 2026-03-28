@@ -7,7 +7,6 @@
     "build": "next build",
     "start": "next start -H 0.0.0.0",
     "serve": "next build && next start -H 0.0.0.0",
-    "migrate-data": "node scripts/migrate-data.mjs",
     "lint": "eslint"
   },
   "dependencies": {

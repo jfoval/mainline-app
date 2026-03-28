@@ -58,12 +58,29 @@ export function validateEnum(
   return null;
 }
 
-/** Get current date/time parts in America/Chicago (Central Time).
+/** Configured timezone. Defaults to America/Chicago (Central Time).
+ *  Override via TIMEZONE env var or the 'timezone' setting in the database. */
+let _cachedTimezone: string | null = null;
+
+export function getTimezone(): string {
+  if (_cachedTimezone) return _cachedTimezone;
+  // Env var takes priority, then fall back to default
+  _cachedTimezone = process.env.TIMEZONE || 'America/Chicago';
+  return _cachedTimezone;
+}
+
+/** Set the timezone at runtime (called after reading from settings DB) */
+export function setTimezone(tz: string): void {
+  _cachedTimezone = tz;
+}
+
+/** Get current date/time parts in the configured timezone.
  *  Works correctly on Vercel where new Date() returns UTC. */
 export function nowCentral() {
+  const tz = getTimezone();
   const now = new Date();
   const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Chicago',
+    timeZone: tz,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

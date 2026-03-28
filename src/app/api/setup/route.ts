@@ -31,6 +31,13 @@ export async function POST(req: NextRequest) {
       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
     `;
 
+    // Invalidate any existing sessions by setting jwt_issued_after to now
+    const issuedAfter = String(Math.floor(Date.now() / 1000));
+    await sql`
+      INSERT INTO settings (key, value) VALUES ('jwt_issued_after', ${issuedAfter})
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+    `;
+
     if (display_name) {
       await sql`
         INSERT INTO settings (key, value) VALUES ('display_name', ${display_name})

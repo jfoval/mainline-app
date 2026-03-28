@@ -44,7 +44,22 @@ export async function proxy(req: NextRequest) {
   try {
     const jwtSecret = await getJwtSecret();
     const secret = new TextEncoder().encode(jwtSecret);
-    await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, secret);
+
+    // Check if token was issued before a password change (session invalidation)
+    if (payload.iat) {
+      const { checkSessionValidity } = await import('@/lib/session-validity');
+      const isValid = await checkSessionValidity(payload.iat);
+      if (!isValid) {
+        if (pathname.startsWith('/api/')) {
+          return NextResponse.json({ error: 'Session expired — please log in again' }, { status: 401 });
+        }
+        const response = NextResponse.redirect(new URL('/login', req.url));
+        response.cookies.delete('mainline-auth');
+        return response;
+      }
+    }
+
     return NextResponse.next();
   } catch {
     // Invalid/expired token

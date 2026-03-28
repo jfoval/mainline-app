@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Key, LogOut, Database, Download, Upload, Sun, Moon, Palette, Bell, BellOff, ExternalLink, Info, RefreshCw } from 'lucide-react';
+import { Key, LogOut, Database, Download, Upload, Sun, Moon, Palette, Bell, BellOff, ExternalLink, Info, RefreshCw, Clock } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { APP_VERSION } from '@/lib/version';
 
@@ -21,14 +21,19 @@ export default function SettingsPage() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
+  const [timezone, setTimezone] = useState('');
+  const [savingTimezone, setSavingTimezone] = useState(false);
+  const [timezoneSaved, setTimezoneSaved] = useState(false);
 
   useEffect(() => {
     setNotificationsEnabled(localStorage.getItem('mainline-notifications') === 'true');
-    // Check if an API key is already saved
+    // Load settings
     fetch('/api/settings')
       .then(r => r.json())
       .then(data => {
-        if (data.anthropic_api_key) setApiKeyHasValue(true);
+        if (data.anthropic_api_key === 'configured') setApiKeyHasValue(true);
+        if (data.timezone) setTimezone(data.timezone);
+        else setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
       })
       .catch(() => {});
   }, []);
@@ -96,6 +101,10 @@ export default function SettingsPage() {
   }
 
   async function handleLogout() {
+    // Tell service worker to clear cached pages before logging out
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'LOGOUT' });
+    }
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
     router.refresh();
@@ -213,6 +222,55 @@ export default function SettingsPage() {
           >
             <Moon size={16} />
             Dark
+          </button>
+        </div>
+      </div>
+
+      {/* Timezone */}
+      <div className="bg-card rounded-xl border border-border p-6 mt-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Clock size={20} className="text-primary" />
+          <h2 className="text-lg font-semibold">Timezone</h2>
+        </div>
+        <p className="text-sm text-muted mb-4">
+          Used for daily schedules, timestamps, and routine detection. Defaults to your browser timezone.
+        </p>
+        <div className="flex gap-2">
+          <select
+            value={timezone}
+            onChange={e => { setTimezone(e.target.value); setTimezoneSaved(false); }}
+            className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+          >
+            {[
+              'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles',
+              'America/Anchorage', 'Pacific/Honolulu', 'America/Phoenix',
+              'America/Toronto', 'America/Vancouver',
+              'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Amsterdam',
+              'Asia/Tokyo', 'Asia/Shanghai', 'Asia/Kolkata', 'Asia/Dubai',
+              'Australia/Sydney', 'Australia/Perth',
+              'Pacific/Auckland',
+            ].map(tz => (
+              <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
+            ))}
+          </select>
+          <button
+            onClick={async () => {
+              setSavingTimezone(true);
+              try {
+                await fetch('/api/settings', {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ timezone }),
+                });
+                setTimezoneSaved(true);
+                setTimeout(() => setTimezoneSaved(false), 3000);
+              } catch { /* ignore */ }
+              setSavingTimezone(false);
+            }}
+            disabled={savingTimezone}
+            className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-hover disabled:opacity-50"
+          >
+            {timezoneSaved ? 'Saved!' : savingTimezone ? 'Saving...' : 'Save'}
           </button>
         </div>
       </div>

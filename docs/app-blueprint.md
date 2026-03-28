@@ -12,7 +12,7 @@ A self-deployed personal GTD productivity app. Each customer gets their own inst
 
 **Tech:** Next.js 16, TypeScript, Tailwind v4, Neon Postgres (`@neondatabase/serverless`), Claude API (Opus), PWA
 **Location:** `/Users/johnfoval/Desktop/Mainline/app/`
-**GitHub:** `https://github.com/jfoval/mainline-app` (private)
+**GitHub:** `https://github.com/jfoval/mainline-app` (public)
 **Live:** Deployed on Vercel (auto-deploys on push to `main`)
 **Database:** Neon Postgres (free tier, US East 1)
 
@@ -33,17 +33,18 @@ A self-deployed personal GTD productivity app. Each customer gets their own inst
 
 ### Authentication
 - Simple password auth (single user — John only)
-- `src/middleware.ts` — checks JWT cookie on every request, redirects to `/login` if missing
+- `src/proxy.ts` — checks JWT cookie on every request, redirects to `/login` if missing
 - Login: `POST /api/auth/login` — validates bcrypt password hash, sets HTTP-only JWT cookie (7-day expiry), rate limiting with exponential backoff after 3 failed attempts
 - Logout: `POST /api/auth/logout` — clears cookie
 - Login page: `/login` — email + password form
 - Uses `jose` library for JWT, `bcryptjs` for password hashing
 
-### Environment Variables (4, set in Vercel + `.env.local`)
+### Environment Variables (5, set in Vercel + `.env.local`)
 - `DATABASE_URL` — Neon Postgres connection string
 - `AUTH_PASSWORD_HASH` — bcrypt hash of login password (or set via first-run setup wizard)
 - `JWT_SECRET` — 64-char hex string for signing JWTs
 - `ANTHROPIC_API_KEY` — (optional) Claude API key, can also be set in app Settings
+- `TIMEZONE` — (optional) IANA timezone, defaults to `America/Chicago`, can also be set in app Settings
 
 ### How to Deploy Changes
 1. Edit code locally
@@ -125,9 +126,10 @@ A self-deployed personal GTD productivity app. Each customer gets their own inst
 
 ## Timezone Handling (Central Time)
 
-All server-side date/time logic uses **America/Chicago (Central Time)** via the `nowCentral()` helper in `src/lib/api-helpers.ts`. This is critical because Vercel servers run in UTC — without this, routine blocks, daily notes, and schedule detection would be 5-6 hours off.
+All server-side date/time logic uses a configurable timezone via the `nowCentral()` helper in `src/lib/api-helpers.ts`. This is critical because Vercel servers run in UTC — without this, routine blocks, daily notes, and schedule detection would be hours off.
 
-- **Helper:** `nowCentral()` uses `Intl.DateTimeFormat` with `timeZone: 'America/Chicago'` — no external libraries needed
+- **Timezone config:** Reads from `TIMEZONE` env var → `timezone` setting in DB → defaults to `America/Chicago`. Set in Settings page or `.env.local`.
+- **Helper:** `nowCentral()` uses `Intl.DateTimeFormat` with the configured timezone — no external libraries needed
 - **Returns:** `timeStr` (HH:MM), `dateStr` (YYYY-MM-DD), `dayOfWeek`, `weekday`, `timestamp`, and a `date` object for girls-week calc
 - **`nowLocal()`** calls `nowCentral().timestamp` for all `updated_at` fields
 - **Used by:** All API routes that depend on current time (routine, dashboard, ai, review, recurring-tasks)
@@ -188,7 +190,7 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 
 ### Migration System
 - `src/lib/migrations/runner.ts` — embedded SQL migrations (Postgres dialect), `schema_version` table tracks applied versions
-- 10 migrations applied: baseline through daily_blocks, disciplines, context_lists, updated_at backfill
+- 11 migrations applied: baseline through daily_blocks, disciplines, context_lists, updated_at backfill, legacy table cleanup
 - Note: Neon HTTP driver is stateless — each `sql.query()` is an independent request. DDL auto-commits in Postgres. No cross-query transactions.
 
 ### Database Durability

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
 import { v4 as uuid } from 'uuid';
-import { buildUpdate, nowLocal, validateRequired, validateEnum } from '@/lib/api-helpers';
+import { buildUpdate, nowLocal, validateRequired } from '@/lib/api-helpers';
 
 // Context validation removed — users can define their own context lists (Phase 5)
 // Any non-empty string is valid as a context

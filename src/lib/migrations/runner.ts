@@ -462,4 +462,24 @@ const embeddedMigrations: { version: number; name: string; statements: string[] 
       `UPDATE recurring_tasks SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
     ],
   },
+  {
+    version: 11,
+    name: '011_drop_legacy_tables',
+    statements: [
+      // Drop legacy tables that have no UI or API routes.
+      // Data is preserved in JSON backups if ever needed.
+      `DROP TABLE IF EXISTS pipeline_warm_leads`,
+      `DROP TABLE IF EXISTS pipeline_contacts`,
+      `DROP TABLE IF EXISTS client_notes`,
+      `DROP TABLE IF EXISTS pipeline_deals`,
+      `DROP TABLE IF EXISTS offerings`,
+      `DROP TABLE IF EXISTS thinking_docs`,
+      `DROP TABLE IF EXISTS learning_profiles`,
+      `DROP TABLE IF EXISTS faith_journal`,
+      `DROP TABLE IF EXISTS health_log`,
+      `DROP TABLE IF EXISTS business_health_log`,
+      `DROP TABLE IF EXISTS decisions_log`,
+      `DROP TABLE IF EXISTS family_meetings`,
+    ],
+  },
 ];

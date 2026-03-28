@@ -85,10 +85,16 @@ self.addEventListener('sync', (event) => {
   }
 });
 
-// Listen for sync registration from clients
+// Listen for messages from clients
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'REGISTER_SYNC') {
     self.registration.sync?.register('sync-mutations').catch(() => {});
+  }
+  // Clear all caches on logout so no authenticated pages are served after sign-out
+  if (event.data?.type === 'LOGOUT') {
+    caches.keys().then((keys) =>
+      Promise.all(keys.map((k) => caches.delete(k)))
+    );
   }
 });
 
