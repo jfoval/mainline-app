@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Plus, Check, Trash2 } from 'lucide-react';
+import { Plus, Check, Trash2, Search } from 'lucide-react';
 import { Suspense } from 'react';
 import { useOfflineStore, nextActionsStore } from '@/lib/offline';
 
@@ -63,12 +63,18 @@ function ActionsContent() {
       .catch(() => {});
   }, []);
 
+  const [viewMode, setViewMode] = useState<'active' | 'completed'>('active');
   const { data: actions, create, update, remove } = useOfflineStore(
     nextActionsStore,
-    { context: activeContext, status: 'active' }
+    { context: activeContext, status: viewMode }
   );
   const [newAction, setNewAction] = useState('');
   const [showAdd, setShowAdd] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const filteredActions = search.trim()
+    ? actions.filter(a => a.content.toLowerCase().includes(search.toLowerCase()))
+    : actions;
   const [waitingPerson, setWaitingPerson] = useState('');
   const [agendaPerson, setAgendaPerson] = useState('');
 
@@ -108,36 +114,72 @@ function ActionsContent() {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold">Next Actions</h1>
-          <p className="text-sm text-muted mt-1">{actions.length} active items</p>
+          <p className="text-sm text-muted mt-1">{actions.length} {viewMode} items</p>
         </div>
+        {viewMode === 'active' && (
+          <button
+            onClick={() => setShowAdd(!showAdd)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary-hover transition-colors"
+          >
+            <Plus size={18} />
+            Add Action
+          </button>
+        )}
+      </div>
+
+      {/* Active / Completed toggle */}
+      <div className="flex gap-1 mb-4 bg-card rounded-lg border border-border p-1 w-fit">
         <button
-          onClick={() => setShowAdd(!showAdd)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary-hover transition-colors"
+          onClick={() => setViewMode('active')}
+          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${viewMode === 'active' ? 'bg-primary text-white' : 'text-muted hover:text-foreground'}`}
         >
-          <Plus size={18} />
-          Add Action
+          Active
+        </button>
+        <button
+          onClick={() => setViewMode('completed')}
+          className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${viewMode === 'completed' ? 'bg-primary text-white' : 'text-muted hover:text-foreground'}`}
+        >
+          Completed
         </button>
       </div>
 
       {/* Context Tabs */}
-      <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-        {contexts.map(ctx => (
-          <button
-            key={ctx.key}
-            onClick={() => router.push(`/actions?context=${ctx.key}`)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-              activeContext === ctx.key
-                ? getColorClasses(ctx.color)
-                : 'bg-card text-muted hover:bg-primary/5'
-            }`}
-          >
-            @{ctx.name}
-          </button>
-        ))}
+      <div className="relative mb-6">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide scroll-smooth" style={{ WebkitOverflowScrolling: 'touch' }}>
+          {contexts.map(ctx => (
+            <button
+              key={ctx.key}
+              onClick={() => router.push(`/actions?context=${ctx.key}`)}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
+                activeContext === ctx.key
+                  ? getColorClasses(ctx.color)
+                  : 'bg-card text-muted hover:bg-primary/5'
+              }`}
+            >
+              @{ctx.name}
+            </button>
+          ))}
+        </div>
+        {/* Right fade to hint at scrollable content */}
+        <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
       </div>
+
+      {/* Search */}
+      {actions.length > 3 && (
+        <div className="relative mb-4">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search actions..."
+            className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+          />
+        </div>
+      )}
 
       {/* Add Action Form */}
       {showAdd && (
@@ -187,26 +229,41 @@ function ActionsContent() {
       )}
 
       {/* Actions List */}
-      {actions.length === 0 ? (
+      {filteredActions.length === 0 ? (
         <div className="text-center py-12 text-muted">
-          <p className="text-lg font-medium">No items in @{contextInfo.name}</p>
-          <p className="text-sm mt-1">Add an action or process your inbox.</p>
+          {search ? (
+            <>
+              <p className="text-lg font-medium">No matches</p>
+              <p className="text-sm mt-1">Try a different search term.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-lg font-medium">No items in @{contextInfo.name}</p>
+              <p className="text-sm mt-1">Add an action or process your inbox.</p>
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-2">
-          {actions.map(action => (
+          {filteredActions.map(action => (
             <div
               key={action.id}
               className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border group hover:border-primary/30 transition-colors"
             >
-              <button
-                onClick={() => completeAction(action.id)}
-                className="mt-0.5 w-5 h-5 rounded border-2 border-muted/40 hover:border-success hover:bg-success/10 transition-colors flex-shrink-0 flex items-center justify-center"
-              >
-                <Check size={12} className="text-transparent group-hover:text-success/50" />
-              </button>
+              {viewMode === 'active' ? (
+                <button
+                  onClick={() => completeAction(action.id)}
+                  className="mt-0.5 w-5 h-5 rounded border-2 border-muted/40 hover:border-success hover:bg-success/10 transition-colors flex-shrink-0 flex items-center justify-center"
+                >
+                  <Check size={12} className="text-transparent group-hover:text-success/50" />
+                </button>
+              ) : (
+                <div className="mt-0.5 w-5 h-5 rounded bg-success/20 flex-shrink-0 flex items-center justify-center">
+                  <Check size={12} className="text-success" />
+                </div>
+              )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm">{action.content}</p>
+                <p className={`text-sm ${viewMode === 'completed' ? 'text-muted line-through' : ''}`}>{action.content}</p>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {action.project_title && (
                     <span className="text-xs text-primary">
@@ -225,16 +282,20 @@ function ActionsContent() {
                     </span>
                   )}
                   <span className="text-xs text-muted">
-                    Added: {new Date(action.added_at).toLocaleDateString()}
+                    {viewMode === 'completed' && action.completed_at
+                      ? `Completed: ${new Date(action.completed_at).toLocaleDateString()}`
+                      : `Added: ${new Date(action.added_at).toLocaleDateString()}`}
                   </span>
                 </div>
               </div>
-              <button
-                onClick={() => deleteAction(action.id)}
-                className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-danger/10 text-danger transition-all"
-              >
-                <Trash2 size={14} />
-              </button>
+              {viewMode === 'active' && (
+                <button
+                  onClick={() => deleteAction(action.id)}
+                  className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-danger/10 text-danger transition-all"
+                >
+                  <Trash2 size={14} />
+                </button>
+              )}
             </div>
           ))}
         </div>

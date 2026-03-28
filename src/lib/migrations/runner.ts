@@ -456,7 +456,7 @@ const embeddedMigrations: { version: number; name: string; statements: string[] 
       // Use AT TIME ZONE to produce Central Time strings matching nowLocal() format
       `UPDATE inbox_items SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
       `UPDATE next_actions SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
-      `UPDATE projects SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
+      // projects.updated_at is TIMESTAMP NOT NULL DEFAULT NOW() — no backfill needed
       `UPDATE daily_notes SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
       `UPDATE list_items SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,
       `UPDATE recurring_tasks SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'America/Chicago', 'YYYY-MM-DD HH24:MI:SS') WHERE updated_at = '' OR updated_at IS NULL`,

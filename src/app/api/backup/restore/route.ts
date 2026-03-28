@@ -1,7 +1,117 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import sql from '@/lib/db';
+import { ensureDb } from '@/lib/init';
 
-export async function POST() {
-  return NextResponse.json({
-    error: 'Database restore is not available. Your data is hosted on Neon with automatic backups and point-in-time recovery.',
-  }, { status: 410 });
+// Tables in dependency order (parents before children)
+const TABLE_ORDER = [
+  'settings',
+  'horizons',
+  'context_lists',
+  'projects',
+  'disciplines',
+  'week_patterns',
+  'next_actions',
+  'discipline_logs',
+  'week_pattern_blocks',
+  'week_schedule',
+  'week_pattern_rotation',
+  'daily_blocks',
+  'inbox_items',
+  'daily_notes',
+  'recurring_tasks',
+  'routine_blocks',
+  'thinking_docs',
+  'reference_docs',
+  'list_items',
+  'pipeline_deals',
+  'pipeline_contacts',
+  'pipeline_warm_leads',
+  'client_notes',
+  'offerings',
+  'learning_profiles',
+  'faith_journal',
+  'health_log',
+  'business_health_log',
+  'decisions_log',
+  'family_meetings',
+];
+
+const PROTECTED_TABLES = new Set(['schema_version', 'backup_log']);
+
+export async function POST(req: NextRequest) {
+  await ensureDb();
+
+  try {
+    const body = await req.json();
+
+    // Validate structure
+    if (!body.version || !body.tables || typeof body.tables !== 'object') {
+      return NextResponse.json({ error: 'Invalid backup format. Expected { version, tables }.' }, { status: 400 });
+    }
+
+    const importTables = Object.keys(body.tables).filter(t => !PROTECTED_TABLES.has(t));
+    let totalRows = 0;
+
+    // Truncate in reverse dependency order
+    const truncateOrder = [...TABLE_ORDER].reverse();
+    for (const table of truncateOrder) {
+      if (importTables.includes(table)) {
+        try {
+          await sql.query(`TRUNCATE TABLE ${table} CASCADE`);
+        } catch {
+          // Table may not exist yet — skip
+        }
+      }
+    }
+
+    // Also truncate any tables in the backup that aren't in our ordered list
+    for (const table of importTables) {
+      if (!TABLE_ORDER.includes(table)) {
+        try {
+          await sql.query(`TRUNCATE TABLE ${table} CASCADE`);
+        } catch {
+          // Skip
+        }
+      }
+    }
+
+    // Insert in forward dependency order, then remaining
+    const orderedTables = [
+      ...TABLE_ORDER.filter(t => importTables.includes(t)),
+      ...importTables.filter(t => !TABLE_ORDER.includes(t)),
+    ];
+
+    for (const table of orderedTables) {
+      const rows = body.tables[table];
+      if (!Array.isArray(rows) || rows.length === 0) continue;
+
+      for (const row of rows) {
+        const cols = Object.keys(row);
+        if (cols.length === 0) continue;
+
+        const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
+        const values = cols.map(c => row[c]);
+        const colNames = cols.map(c => `"${c}"`).join(', ');
+
+        try {
+          await sql.query(
+            `INSERT INTO ${table} (${colNames}) VALUES (${placeholders}) ON CONFLICT DO NOTHING`,
+            values
+          );
+          totalRows++;
+        } catch (err) {
+          console.error(`[import] Error inserting into ${table}:`, err);
+        }
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      tables_imported: orderedTables.length,
+      rows_imported: totalRows,
+    });
+  } catch (err) {
+    console.error('[import] Error:', err);
+    return NextResponse.json({ error: 'Import failed' }, { status: 500 });
+  }
 }

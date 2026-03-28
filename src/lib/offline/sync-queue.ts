@@ -39,6 +39,14 @@ export async function processQueue(): Promise<{ processed: number; failed: numbe
   let conflicts = 0;
 
   for (const entry of entries) {
+    // Exponential backoff: skip entries that aren't ready for retry yet
+    if (entry.retries > 0 && entry.lastRetryAt) {
+      const backoffMs = Math.min(30000, 1000 * Math.pow(2, entry.retries)); // 2s, 4s, 8s, 16s, 30s
+      if (Date.now() - entry.lastRetryAt < backoffMs) {
+        continue; // Not ready for retry yet — skip, don't break
+      }
+    }
+
     try {
       const res = await fetch(entry.url, {
         method: entry.method,
@@ -46,51 +54,60 @@ export async function processQueue(): Promise<{ processed: number; failed: numbe
         body: entry.body,
       });
 
-      if (res.ok || res.status === 404) {
-        // Success or item already gone server-side — safe to dequeue
+      if (res.ok) {
         await offlineDb.sync_queue.delete(entry.queueId!);
         processed++;
+      } else if (res.status === 404) {
+        // For DELETE: item already gone — safe to dequeue
+        // For PATCH/POST: the endpoint itself may be wrong — log and dequeue to avoid infinite retries
+        if (entry.method === 'DELETE') {
+          await offlineDb.sync_queue.delete(entry.queueId!);
+          processed++;
+        } else {
+          console.warn(`[sync] 404 on ${entry.method} ${entry.url} — dequeuing (endpoint may have changed)`);
+          await offlineDb.sync_queue.delete(entry.queueId!);
+          failed++;
+        }
       } else if (res.status === 409) {
         // Conflict detected — store for user resolution
         const conflictData = await res.json();
         const bodyParsed = entry.body ? JSON.parse(entry.body) : {};
         const table = tableFromUrl(entry.url);
-        // Also check the body for entity_type to refine table name
-        const resolvedTable = table;
 
         await offlineDb.conflicts.add({
-          table: resolvedTable,
+          table,
           recordId: bodyParsed.id || '',
           clientVersion: bodyParsed,
           serverVersion: conflictData.serverRecord || {},
           detectedAt: Date.now(),
         });
-        // Dequeue — conflict stored separately for resolution
         await offlineDb.sync_queue.delete(entry.queueId!);
         conflicts++;
-        // Continue processing queue (don't break on conflicts)
-      } else if (entry.retries >= 3) {
-        // Give up after 3 retries
+      } else if (entry.retries >= 5) {
+        // Give up after 5 retries (was 3)
+        console.warn(`[sync] Giving up on ${entry.method} ${entry.url} after ${entry.retries} retries (status ${res.status})`);
         await offlineDb.sync_queue.delete(entry.queueId!);
         failed++;
       } else {
         await offlineDb.sync_queue.update(entry.queueId!, {
           retries: entry.retries + 1,
+          lastRetryAt: Date.now(),
         });
         failed++;
-        break; // Stop to maintain FIFO ordering
+        // Don't break — continue processing other entries (non-FIFO for retries)
       }
     } catch {
-      // Network error — increment retries, stop to retry on reconnect
-      if (entry.retries >= 3) {
+      // Network error — increment retries with backoff timestamp
+      if (entry.retries >= 5) {
         await offlineDb.sync_queue.delete(entry.queueId!).catch(() => {});
       } else {
         await offlineDb.sync_queue.update(entry.queueId!, {
           retries: entry.retries + 1,
+          lastRetryAt: Date.now(),
         }).catch(() => {});
       }
       failed++;
-      break;
+      break; // Network down — stop queue processing
     }
   }
 

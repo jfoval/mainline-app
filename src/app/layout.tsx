@@ -42,10 +42,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.png" sizes="32x32" type="image/png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem('mainline-theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}` }} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}

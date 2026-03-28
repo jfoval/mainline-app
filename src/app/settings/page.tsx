@@ -2,13 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Key, LogOut, Database, Download } from 'lucide-react';
+import { Key, LogOut, Database, Download, Upload, Sun, Moon, Palette } from 'lucide-react';
+import { useTheme } from '@/components/ThemeProvider';
 
 export default function SettingsPage() {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<string | null>(null);
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
 
   async function testConnection() {
     setTesting(true);
@@ -107,6 +111,30 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* Appearance */}
+      <div className="bg-card rounded-xl border border-border p-6 mt-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Palette size={20} className="text-primary" />
+          <h2 className="text-lg font-semibold">Appearance</h2>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setTheme('light')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm transition-colors ${theme === 'light' ? 'border-primary bg-primary/10 text-primary font-medium' : 'border-border hover:bg-primary/5'}`}
+          >
+            <Sun size={16} />
+            Light
+          </button>
+          <button
+            onClick={() => setTheme('dark')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm transition-colors ${theme === 'dark' ? 'border-primary bg-primary/10 text-primary font-medium' : 'border-border hover:bg-primary/5'}`}
+          >
+            <Moon size={16} />
+            Dark
+          </button>
+        </div>
+      </div>
+
       {/* Database */}
       <div className="bg-card rounded-xl border border-border p-6 mt-6">
         <div className="flex items-center gap-2 mb-4">
@@ -116,14 +144,64 @@ export default function SettingsPage() {
         <p className="text-sm text-muted mb-4">
           Your data is hosted on Neon Postgres with automatic backups and point-in-time recovery.
         </p>
-        <button
-          onClick={exportData}
-          disabled={exporting}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-sm hover:bg-primary/5 disabled:opacity-50"
-        >
-          <Download size={14} />
-          {exporting ? 'Exporting...' : 'Export Data as JSON'}
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={exportData}
+            disabled={exporting}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-sm hover:bg-primary/5 disabled:opacity-50"
+          >
+            <Download size={14} />
+            {exporting ? 'Exporting...' : 'Export Data as JSON'}
+          </button>
+          <label className={`flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-sm hover:bg-primary/5 cursor-pointer ${importing ? 'opacity-50 pointer-events-none' : ''}`}>
+            <Upload size={14} />
+            {importing ? 'Importing...' : 'Import from JSON'}
+            <input
+              type="file"
+              accept=".json"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                setImportResult(null);
+                try {
+                  const text = await file.text();
+                  const data = JSON.parse(text);
+                  if (!data.version || !data.tables) {
+                    setImportResult('Error: Invalid backup file format.');
+                    return;
+                  }
+                  const tableCount = Object.keys(data.tables).length;
+                  const confirmed = window.confirm(
+                    `Import backup from ${data.exported_at?.slice(0, 10) || 'unknown date'}?\n\nThis will replace ALL current data (${tableCount} tables). This cannot be undone.\n\nContinue?`
+                  );
+                  if (!confirmed) return;
+                  setImporting(true);
+                  const res = await fetch('/api/backup/restore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: text,
+                  });
+                  const result = await res.json();
+                  if (result.success) {
+                    setImportResult(`Imported ${result.rows_imported} rows across ${result.tables_imported} tables.`);
+                  } else {
+                    setImportResult(`Error: ${result.error}`);
+                  }
+                } catch {
+                  setImportResult('Error: Could not read file.');
+                }
+                setImporting(false);
+                e.target.value = '';
+              }}
+            />
+          </label>
+        </div>
+        {importResult && (
+          <p className={`text-sm mt-3 ${importResult.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
+            {importResult}
+          </p>
+        )}
       </div>
 
       {/* Account */}

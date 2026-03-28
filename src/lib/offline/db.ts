@@ -151,6 +151,7 @@ export interface SyncQueueEntry {
   body: string | null;
   timestamp: number;
   retries: number;
+  lastRetryAt?: number;
 }
 
 // ---- Sync Metadata ----

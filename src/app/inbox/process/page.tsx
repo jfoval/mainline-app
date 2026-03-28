@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Trash2, CheckSquare, FolderKanban, BookOpen, Lightbulb,
   ShoppingBag, Book, Film, Tv, Music, Plane, Users,
-  ArrowRight, ArrowLeft, Zap, Archive, Sparkles, Loader2, Plus
+  ArrowRight, ArrowLeft, Zap, Archive, Sparkles, Loader2, Plus, Undo2
 } from 'lucide-react';
 
 interface InboxItem {
@@ -82,6 +82,17 @@ export default function ProcessPage() {
   // AI suggestion
   const [aiSuggestion, setAiSuggestion] = useState<{ suggestion?: string; context?: string; project_match?: string; category?: string; two_minute?: boolean; concrete?: boolean; reworded?: string } | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState(false);
+
+  // Undo support
+  const [undoEntry, setUndoEntry] = useState<{
+    inboxItemId: string;
+    createdType: string | null;
+    createdId: string | null;
+    createdActionId?: string | null;
+    previousIndex: number;
+  } | null>(null);
+  const [undoing, setUndoing] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -124,8 +135,47 @@ export default function ProcessPage() {
   const currentItem = items[currentIndex];
   const progress = items.length > 0 ? ((currentIndex) / items.length) * 100 : 100;
 
+  // Keyboard shortcuts
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+    if (step === 'actionable') {
+      if (e.key === 'y' || e.key === 'Y') { e.preventDefault(); if (currentItem) { setActionText(currentItem.content); setStep('route_action'); } }
+      else if (e.key === 'n' || e.key === 'N') { e.preventDefault(); setStep('route_non_action'); }
+      else if (e.key === 'd' || e.key === 'D') { e.preventDefault(); routeItem({ type: 'do_now' }); }
+    } else if (step === 'route_action') {
+      if (e.key === 'Escape') { e.preventDefault(); setStep('actionable'); }
+      else if (e.key === 'p' || e.key === 'P') { e.preventDefault(); if (currentItem) { setNewProjectTitle(currentItem.content); setStep('create_project'); } }
+      else if (e.key >= '1' && e.key <= '9') {
+        const idx = parseInt(e.key) - 1;
+        if (idx < contexts.length) {
+          e.preventDefault();
+          routeItem({ type: 'action', context: contexts[idx].key });
+        }
+      }
+    } else if (step === 'route_non_action') {
+      if (e.key === 'Escape') { e.preventDefault(); setStep('actionable'); }
+      else if (e.key === 't' || e.key === 'T') { e.preventDefault(); routeItem({ type: 'trash' }); }
+      else if (e.key === 's' || e.key === 'S') { e.preventDefault(); routeItem({ type: 'someday' }); }
+      else if (e.key === 'r' || e.key === 'R') { e.preventDefault(); setStep('route_reference'); }
+    } else if (step === 'route_reference' || step === 'create_project') {
+      if (e.key === 'Escape') { e.preventDefault(); setStep(step === 'route_reference' ? 'route_non_action' : 'route_action'); }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, currentItem, contexts]);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
   async function routeItem(destination: RouteDestination) {
     if (!currentItem) return;
+
+    let createdType: string | null = null;
+    let createdId: string | null = null;
+    let createdActionId: string | null = null;
 
     switch (destination.type) {
       case 'action': {
@@ -138,15 +188,17 @@ export default function ProcessPage() {
           body.waiting_on_person = waitingPerson;
           body.waiting_since = new Date().toISOString().slice(0, 10);
         }
-        await fetch('/api/actions', {
+        const res = await fetch('/api/actions', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(body),
         });
+        const created = await res.json();
+        createdType = 'action';
+        createdId = created.id;
         break;
       }
       case 'project': {
-        // Create project
         const projRes = await fetch('/api/projects', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -156,10 +208,11 @@ export default function ProcessPage() {
           }),
         });
         const newProject = await projRes.json();
+        createdType = 'project';
+        createdId = newProject.id;
 
-        // Create first action
         if (destination.firstAction) {
-          await fetch('/api/actions', {
+          const actionRes = await fetch('/api/actions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -168,11 +221,13 @@ export default function ProcessPage() {
               project_id: newProject.id,
             }),
           });
+          const newAction = await actionRes.json();
+          createdActionId = newAction.id;
         }
         break;
       }
       case 'someday': {
-        await fetch('/api/projects', {
+        const res = await fetch('/api/projects', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -181,10 +236,13 @@ export default function ProcessPage() {
             status: 'someday_maybe',
           }),
         });
+        const created = await res.json();
+        createdType = 'someday';
+        createdId = created.id;
         break;
       }
       case 'list': {
-        await fetch('/api/lists', {
+        const res = await fetch('/api/lists', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -193,10 +251,13 @@ export default function ProcessPage() {
             url: currentItem.url,
           }),
         });
+        const created = await res.json();
+        createdType = 'list';
+        createdId = created.id;
         break;
       }
       case 'reference': {
-        await fetch('/api/reference', {
+        const res = await fetch('/api/reference', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -205,11 +266,13 @@ export default function ProcessPage() {
             content: currentItem.url ? `Source: ${currentItem.url}` : '',
           }),
         });
+        const created = await res.json();
+        createdType = 'reference';
+        createdId = created.id;
         break;
       }
       case 'trash':
       case 'do_now':
-        // These just mark the item as processed
         break;
     }
 
@@ -220,6 +283,15 @@ export default function ProcessPage() {
       body: JSON.stringify({ id: currentItem.id, status: 'processed' }),
     });
 
+    // Save undo entry
+    setUndoEntry({
+      inboxItemId: currentItem.id,
+      createdType,
+      createdId,
+      createdActionId,
+      previousIndex: currentIndex,
+    });
+
     // Move to next item
     resetForms();
     if (currentIndex + 1 >= items.length) {
@@ -228,6 +300,43 @@ export default function ProcessPage() {
       setCurrentIndex(currentIndex + 1);
       setStep('actionable');
     }
+  }
+
+  async function undoLastAction() {
+    if (!undoEntry || undoing) return;
+    setUndoing(true);
+    try {
+      // Delete created entities
+      if (undoEntry.createdActionId) {
+        await fetch(`/api/actions?id=${undoEntry.createdActionId}`, { method: 'DELETE' });
+      }
+      if (undoEntry.createdId) {
+        const endpoint = undoEntry.createdType === 'action' ? '/api/actions'
+          : undoEntry.createdType === 'project' || undoEntry.createdType === 'someday' ? '/api/projects'
+          : undoEntry.createdType === 'reference' ? '/api/reference'
+          : undoEntry.createdType === 'list' ? '/api/lists'
+          : null;
+        if (endpoint) {
+          await fetch(`${endpoint}?id=${undoEntry.createdId}`, { method: 'DELETE' });
+        }
+      }
+
+      // Un-process the inbox item
+      await fetch('/api/inbox', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: undoEntry.inboxItemId, status: 'pending' }),
+      });
+
+      // Navigate back
+      setCurrentIndex(undoEntry.previousIndex);
+      setStep('actionable');
+      setUndoEntry(null);
+      resetForms();
+    } catch {
+      // Undo failed — just clear the entry
+    }
+    setUndoing(false);
   }
 
   function resetForms() {
@@ -244,20 +353,26 @@ export default function ProcessPage() {
     setShowNewRefCategory(false);
     setRefTitle('');
     setAiSuggestion(null);
+    setAiError(false);
   }
 
   async function getAiSuggestion() {
     if (!currentItem) return;
     setAiLoading(true);
+    setAiError(false);
     try {
       const res = await fetch('/api/ai', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'process_inbox', data: { content: currentItem.content } }),
       });
+      if (!res.ok) throw new Error('AI request failed');
       const data = await res.json();
       if (data.result) setAiSuggestion(data.result);
-    } catch { /* ignore */ }
+      else throw new Error('No result');
+    } catch {
+      setAiError(true);
+    }
     setAiLoading(false);
   }
 
@@ -300,7 +415,19 @@ export default function ProcessPage() {
       {/* Progress Bar */}
       <div className="mb-6">
         <div className="flex items-center justify-between text-sm text-muted mb-2">
-          <span>Processing Inbox</span>
+          <div className="flex items-center gap-2">
+            <span>Processing Inbox</span>
+            {undoEntry && (
+              <button
+                onClick={undoLastAction}
+                disabled={undoing}
+                className="flex items-center gap-1 px-2 py-0.5 rounded text-xs border border-border hover:bg-card transition-colors disabled:opacity-50"
+              >
+                <Undo2 size={12} />
+                {undoing ? 'Undoing...' : 'Undo'}
+              </button>
+            )}
+          </div>
           <span>{currentIndex + 1} of {items.length}</span>
         </div>
         <div className="w-full bg-border rounded-full h-2">
@@ -346,10 +473,10 @@ export default function ProcessPage() {
             <button
               onClick={getAiSuggestion}
               disabled={aiLoading}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-purple-600 border border-purple-200 hover:bg-purple-50 disabled:opacity-50 transition-colors"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border disabled:opacity-50 transition-colors ${aiError ? 'text-red-600 border-red-200 hover:bg-red-50' : 'text-purple-600 border-purple-200 hover:bg-purple-50'}`}
             >
               {aiLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
-              AI suggest routing
+              {aiError ? 'AI unavailable — retry?' : 'AI suggest routing'}
             </button>
           )}
         </div>
@@ -370,7 +497,7 @@ export default function ProcessPage() {
             >
               <Zap size={20} className="text-primary shrink-0" />
               <div>
-                <p className="font-medium text-sm">Yes, actionable</p>
+                <p className="font-medium text-sm">Yes, actionable <kbd className="text-[10px] px-1 py-0.5 rounded bg-background text-muted font-mono ml-1">Y</kbd></p>
                 <p className="text-xs text-muted">Route to a context list or project</p>
               </div>
             </button>
@@ -381,7 +508,7 @@ export default function ProcessPage() {
             >
               <Archive size={20} className="text-muted shrink-0" />
               <div>
-                <p className="font-medium text-sm">No, not actionable</p>
+                <p className="font-medium text-sm">No, not actionable <kbd className="text-[10px] px-1 py-0.5 rounded bg-background text-muted font-mono ml-1">N</kbd></p>
                 <p className="text-xs text-muted">Reference, idea, list, or trash</p>
               </div>
             </button>
@@ -393,7 +520,7 @@ export default function ProcessPage() {
           >
             <ArrowRight size={20} className="text-accent shrink-0" />
             <div>
-              <p className="font-medium text-sm">Under 2 minutes — do it now</p>
+              <p className="font-medium text-sm">Under 2 minutes — do it now <kbd className="text-[10px] px-1 py-0.5 rounded bg-background text-muted font-mono ml-1">D</kbd></p>
               <p className="text-xs text-muted">Handle it and move on</p>
             </div>
           </button>
@@ -430,7 +557,7 @@ export default function ProcessPage() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {contexts.map(ctx => (
+                {contexts.map((ctx, idx) => (
                   <button
                     key={ctx.key}
                     onClick={() => {
@@ -443,7 +570,7 @@ export default function ProcessPage() {
                       selectedContext === ctx.key ? 'bg-primary text-white' : 'bg-background hover:bg-primary/10'
                     }`}
                   >
-                    {ctx.label}
+                    {ctx.label} <kbd className="text-[10px] px-1 py-0.5 rounded bg-background/50 text-muted font-mono ml-0.5">{idx + 1}</kbd>
                   </button>
                 ))}
               </div>
@@ -515,7 +642,7 @@ export default function ProcessPage() {
             <button onClick={() => routeItem({ type: 'trash' })} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-danger/50 transition-colors text-left">
               <Trash2 size={18} className="text-danger" />
               <div>
-                <p className="text-sm font-medium">Trash</p>
+                <p className="text-sm font-medium">Trash <kbd className="text-[10px] px-1 py-0.5 rounded bg-background text-muted font-mono ml-1">T</kbd></p>
                 <p className="text-xs text-muted">Delete it</p>
               </div>
             </button>
@@ -523,7 +650,7 @@ export default function ProcessPage() {
             <button onClick={() => routeItem({ type: 'someday' })} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors text-left">
               <Archive size={18} className="text-muted" />
               <div>
-                <p className="text-sm font-medium">Someday/Maybe</p>
+                <p className="text-sm font-medium">Someday/Maybe <kbd className="text-[10px] px-1 py-0.5 rounded bg-background text-muted font-mono ml-1">S</kbd></p>
                 <p className="text-xs text-muted">Not now, but maybe later</p>
               </div>
             </button>
@@ -542,7 +669,7 @@ export default function ProcessPage() {
             >
               <BookOpen size={18} className="text-green-600" />
               <div>
-                <p className="text-sm font-medium">Reference</p>
+                <p className="text-sm font-medium">Reference <kbd className="text-[10px] px-1 py-0.5 rounded bg-background text-muted font-mono ml-1">R</kbd></p>
                 <p className="text-xs text-muted">File for later lookup</p>
               </div>
             </button>

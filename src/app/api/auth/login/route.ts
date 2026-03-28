@@ -3,12 +3,28 @@ import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
 import sql from '@/lib/db';
 
+// Simple rate limiting via cookie-based attempt tracking
+function getRateLimitInfo(req: NextRequest): { attempts: number; lockedUntil: number } {
+  try {
+    const raw = req.cookies.get('mainline-login-attempts')?.value;
+    if (!raw) return { attempts: 0, lockedUntil: 0 };
+    return JSON.parse(raw);
+  } catch { return { attempts: 0, lockedUntil: 0 }; }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { password } = await req.json();
 
     if (!password) {
       return NextResponse.json({ error: 'Password is required' }, { status: 400 });
+    }
+
+    // Rate limiting check
+    const rateLimit = getRateLimitInfo(req);
+    if (rateLimit.lockedUntil > Date.now()) {
+      const secondsLeft = Math.ceil((rateLimit.lockedUntil - Date.now()) / 1000);
+      return NextResponse.json({ error: `Too many attempts. Try again in ${secondsLeft} seconds.` }, { status: 429 });
     }
 
     const jwtSecret = process.env.JWT_SECRET;
@@ -40,7 +56,15 @@ export async function POST(req: NextRequest) {
     // Verify password
     const passwordValid = await bcrypt.compare(password, passwordHash);
     if (!passwordValid) {
-      return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+      const newAttempts = rateLimit.attempts + 1;
+      // Exponential backoff: 0, 0, 5s, 15s, 30s, 60s...
+      const lockDuration = newAttempts >= 3 ? Math.min(60, 5 * Math.pow(2, newAttempts - 3)) * 1000 : 0;
+      const response = NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+      response.cookies.set('mainline-login-attempts', JSON.stringify({
+        attempts: newAttempts,
+        lockedUntil: lockDuration > 0 ? Date.now() + lockDuration : 0,
+      }), { httpOnly: true, path: '/', maxAge: 600, sameSite: 'lax' });
+      return response;
     }
 
     // Create JWT
@@ -51,8 +75,9 @@ export async function POST(req: NextRequest) {
       .setExpirationTime('7d')
       .sign(secret);
 
-    // Set cookie
+    // Set cookie and clear rate limit
     const response = NextResponse.json({ success: true });
+    response.cookies.delete('mainline-login-attempts');
     response.cookies.set('mainline-auth', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

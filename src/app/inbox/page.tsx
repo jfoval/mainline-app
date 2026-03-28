@@ -1,14 +1,19 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Plus, Trash2, ArrowRight, Mic, MicOff, Play } from 'lucide-react';
+import { Plus, Trash2, ArrowRight, Mic, MicOff, Play, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useOfflineStore, inboxStore } from '@/lib/offline';
 
 export default function InboxPage() {
   const { data: items, create, update, remove } = useOfflineStore(inboxStore);
   const [newItem, setNewItem] = useState('');
+  const [search, setSearch] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+
+  const filteredItems = search.trim()
+    ? items.filter(item => item.content.toLowerCase().includes(search.toLowerCase()))
+    : items;
 
   async function addItem(e: React.FormEvent) {
     e.preventDefault();
@@ -131,6 +136,20 @@ export default function InboxPage() {
         )}
       </div>
 
+      {/* Search */}
+      {items.length > 5 && (
+        <div className="relative mb-4">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search inbox..."
+            className="w-full pl-9 pr-4 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+          />
+        </div>
+      )}
+
       {/* Capture Input */}
       <form onSubmit={addItem} className="flex gap-2 mb-6">
         <input
@@ -162,14 +181,23 @@ export default function InboxPage() {
       </form>
 
       {/* Inbox Items */}
-      {items.length === 0 ? (
+      {filteredItems.length === 0 ? (
         <div className="text-center py-12 text-muted">
-          <p className="text-lg font-medium">Inbox Zero</p>
-          <p className="text-sm mt-1">All clear. Capture something new or enjoy the calm.</p>
+          {search ? (
+            <>
+              <p className="text-lg font-medium">No matches</p>
+              <p className="text-sm mt-1">Try a different search term.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-lg font-medium">Inbox Zero</p>
+              <p className="text-sm mt-1">All clear. Capture something new or enjoy the calm.</p>
+            </>
+          )}
         </div>
       ) : (
         <div className="space-y-2">
-          {items.map(item => (
+          {filteredItems.map(item => (
             <div
               key={item.id}
               className="flex items-start gap-3 p-4 rounded-xl bg-card border border-border group hover:border-primary/30 transition-colors"

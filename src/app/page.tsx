@@ -56,6 +56,7 @@ export default function Dashboard() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef('');
+  const [refreshing, setRefreshing] = useState(false);
   const [displayDate] = useState(() => format(new Date(), 'EEEE, MMMM d, yyyy'));
   const [greeting] = useState(() => {
     const hour = new Date().getHours();
@@ -212,12 +213,15 @@ export default function Dashboard() {
             <h1 className="text-2xl font-bold">{greeting ? `Good ${greeting}` : 'Dashboard'}</h1>
             <button
               onClick={() => {
-                fetch('/api/dashboard').then(r => { if (r.ok) return r.json(); throw new Error(); }).then(d => { setData(d); cacheDashboard(d); }).catch(() => {});
+                if (refreshing) return;
+                setRefreshing(true);
+                fetch('/api/dashboard').then(r => { if (r.ok) return r.json(); throw new Error(); }).then(d => { setData(d); cacheDashboard(d); }).catch(() => {}).finally(() => setRefreshing(false));
               }}
-              className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-primary/5 transition-colors"
+              disabled={refreshing}
+              className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-primary/5 transition-colors disabled:opacity-50"
               title="Refresh dashboard"
             >
-              <RefreshCw size={16} />
+              <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
             </button>
           </div>
           <p className="text-muted mt-1">{displayDate}</p>

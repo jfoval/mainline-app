@@ -73,8 +73,10 @@ export default function ReviewPage() {
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [restored, setRestored] = useState(false);
+  const [lastWeekly, setLastWeekly] = useState<string | null>(null);
+  const [lastMonthly, setLastMonthly] = useState<string | null>(null);
 
-  // Restore progress from sessionStorage on mount
+  // Restore progress from sessionStorage on mount + fetch last review dates
   useEffect(() => {
     const saved = loadProgress();
     if (saved) {
@@ -87,6 +89,15 @@ export default function ReviewPage() {
         .then(d => setData(d));
     }
     setRestored(true);
+
+    // Fetch last review dates from settings
+    fetch('/api/settings')
+      .then(r => r.ok ? r.json() : {})
+      .then((settings: Record<string, string>) => {
+        if (settings.last_weekly_review) setLastWeekly(settings.last_weekly_review);
+        if (settings.last_monthly_review) setLastMonthly(settings.last_monthly_review);
+      })
+      .catch(() => {});
   }, []);
 
   // Persist progress to sessionStorage whenever it changes
@@ -144,22 +155,52 @@ export default function ReviewPage() {
         <div className="grid md:grid-cols-2 gap-4">
           <button
             onClick={() => startReview('weekly')}
-            className="p-6 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors text-left"
+            className={`p-6 rounded-xl bg-card border transition-colors text-left ${
+              lastWeekly && (Date.now() - new Date(lastWeekly).getTime()) > 8 * 24 * 60 * 60 * 1000
+                ? 'border-amber-300 bg-amber-50/50' : 'border-border hover:border-primary/50'
+            }`}
           >
             <Calendar size={32} className="text-primary mb-3" />
             <h2 className="text-lg font-semibold">Weekly Review</h2>
             <p className="text-sm text-muted mt-2">7-step guided walkthrough. Clear inboxes, review projects, actions, and areas of focus.</p>
             <p className="text-xs text-muted mt-3">Saturday 7:30-8:30 AM · 60-90 min</p>
+            {lastWeekly ? (
+              <p className={`text-xs mt-2 font-medium ${
+                (Date.now() - new Date(lastWeekly).getTime()) > 8 * 24 * 60 * 60 * 1000
+                  ? 'text-amber-600' : 'text-green-600'
+              }`}>
+                {(Date.now() - new Date(lastWeekly).getTime()) > 8 * 24 * 60 * 60 * 1000
+                  ? `Overdue — last completed ${new Date(lastWeekly).toLocaleDateString()}`
+                  : `Last completed ${new Date(lastWeekly).toLocaleDateString()}`}
+              </p>
+            ) : (
+              <p className="text-xs mt-2 text-amber-600 font-medium">Never completed — start your first one!</p>
+            )}
           </button>
 
           <button
             onClick={() => startReview('monthly')}
-            className="p-6 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors text-left"
+            className={`p-6 rounded-xl bg-card border transition-colors text-left ${
+              lastMonthly && (Date.now() - new Date(lastMonthly).getTime()) > 35 * 24 * 60 * 60 * 1000
+                ? 'border-amber-300 bg-amber-50/50' : 'border-border hover:border-primary/50'
+            }`}
           >
             <Sparkles size={32} className="text-amber-500 mb-3" />
             <h2 className="text-lg font-semibold">Monthly Deep Review</h2>
             <p className="text-sm text-muted mt-2">Weekly review + deeper pass: goals check, thinking docs, systems review, personal pulse.</p>
             <p className="text-xs text-muted mt-3">One Saturday/month · 2-3 hours total</p>
+            {lastMonthly ? (
+              <p className={`text-xs mt-2 font-medium ${
+                (Date.now() - new Date(lastMonthly).getTime()) > 35 * 24 * 60 * 60 * 1000
+                  ? 'text-amber-600' : 'text-green-600'
+              }`}>
+                {(Date.now() - new Date(lastMonthly).getTime()) > 35 * 24 * 60 * 60 * 1000
+                  ? `Overdue — last completed ${new Date(lastMonthly).toLocaleDateString()}`
+                  : `Last completed ${new Date(lastMonthly).toLocaleDateString()}`}
+              </p>
+            ) : (
+              <p className="text-xs mt-2 text-muted">Not yet completed</p>
+            )}
           </button>
         </div>
       </div>

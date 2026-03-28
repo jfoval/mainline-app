@@ -153,5 +153,12 @@ function startIncrementalSync(): void {
         performIncrementalSync();
       }
     });
+
+    // Sync when user returns to the tab (catches stale data from backgrounding)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && !hasInitialSyncFailed()) {
+        performIncrementalSync();
+      }
+    });
   }
 }

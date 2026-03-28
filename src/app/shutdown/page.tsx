@@ -487,13 +487,19 @@ export default function ShutdownPage() {
               </ol>
             </div>
 
-            {/* Shutdown complete message */}
-            <div className="bg-card rounded-xl border border-border p-8 text-center space-y-3">
-              <Moon size={48} className="mx-auto text-indigo-400" />
-              <h3 className="text-xl font-bold text-foreground">
+            {/* Shutdown complete celebration */}
+            <div className="bg-gradient-to-b from-indigo-500/10 to-card rounded-xl border border-indigo-200 p-10 text-center space-y-4">
+              <div className="text-5xl mb-2">🌙</div>
+              <h3 className="text-2xl font-bold text-foreground">
                 Shutdown Complete
               </h3>
-              <p className="text-muted">Enjoy your evening.</p>
+              <p className="text-muted text-lg">
+                Your mind is clear. Enjoy your evening.
+              </p>
+              <div className="flex items-center justify-center gap-1.5 text-sm text-indigo-500 font-medium pt-2">
+                <Check size={16} />
+                All open loops captured and organized
+              </div>
             </div>
           </div>
         );

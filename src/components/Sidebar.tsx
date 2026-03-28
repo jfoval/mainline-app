@@ -19,6 +19,7 @@ import {
   Moon,
   Compass,
   LifeBuoy,
+  GitMerge,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -36,12 +37,16 @@ const navItems = [
   { href: '/review', label: 'Review', icon: Calendar },
   { href: '/recovery', label: 'Recovery', icon: LifeBuoy },
   { href: '/ai', label: 'AI Assistant', icon: Bot },
+  { href: '/conflicts', label: 'Sync Conflicts', icon: GitMerge },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+
+  // Don't render sidebar on login/setup pages
+  if (pathname === '/login' || pathname === '/setup') return null;
 
   return (
     <>
