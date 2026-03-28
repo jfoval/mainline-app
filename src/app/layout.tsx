@@ -6,6 +6,7 @@ import { ServiceWorkerRegistrar } from "@/components/ServiceWorker";
 import InstallPrompt from "@/components/InstallPrompt";
 import Providers from "@/components/Providers";
 import SyncStatus from "@/components/SyncStatus";
+import MainContent from "@/components/MainContent";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -55,9 +56,7 @@ export default function RootLayout({
         <InstallPrompt />
         <Providers>
           <Sidebar />
-          <main className="md:ml-64 min-h-screen p-6 pt-16 md:pt-6">
-            {children}
-          </main>
+          <MainContent>{children}</MainContent>
           <SyncStatus />
         </Providers>
       </body>
