@@ -252,7 +252,7 @@ export default function Dashboard() {
             <span className="text-xs text-green-600 font-medium">Saved to inbox</span>
           )}
           {isRecording && (
-            <span className="text-xs text-red-500 font-medium max-w-[160px] truncate">
+            <span className="text-xs text-red-500 font-medium max-w-[300px] sm:max-w-[400px] line-clamp-2">
               {interimText || 'Listening...'}
             </span>
           )}
