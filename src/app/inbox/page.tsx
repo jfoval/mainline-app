@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Plus, Trash2, Mic, MicOff, Play, Search } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useOfflineStore, inboxStore } from '@/lib/offline';
 import { useUndoableAction, useToast } from '@/lib/toast';
 
 export default function InboxPage() {
+  const router = useRouter();
   const { data: items, create, remove } = useOfflineStore(inboxStore);
   const { pendingDeletes } = useToast();
   const { undoableDelete } = useUndoableAction();
@@ -40,7 +42,8 @@ export default function InboxPage() {
     await create({ content: text.trim(), source: 'voice' });
   }
 
-  function toggleVoiceCapture() {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const toggleVoiceCapture = useCallback(function toggleVoiceCapture() {
     // If already recording, stop and save whatever we have
     if (isRecording && recognitionRef.current) {
       recognitionRef.current.stop();
@@ -112,7 +115,21 @@ export default function InboxPage() {
     };
 
     recognition.start();
-  }
+  }, [isRecording]);
+
+  // Keyboard shortcuts (only active when not typing in an input)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      switch (e.key.toLowerCase()) {
+        case 'v': e.preventDefault(); toggleVoiceCapture(); break;
+        case 'p': e.preventDefault(); router.push('/inbox/process'); break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleVoiceCapture, router]);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -129,7 +146,7 @@ export default function InboxPage() {
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary-hover transition-colors"
           >
             <Play size={18} />
-            Process Inbox
+            Process Inbox <kbd className="text-[10px] px-1 py-0.5 rounded bg-white/20 font-mono ml-1">P</kbd>
           </Link>
         )}
       </div>
@@ -166,7 +183,7 @@ export default function InboxPage() {
               ? 'bg-red-500 text-white border-red-500 motion-safe:animate-pulse'
               : 'border-border bg-card hover:bg-primary/5'
           }`}
-          title={isRecording ? 'Click to stop recording' : 'Voice capture'}
+          title={isRecording ? 'Click to stop recording (V)' : 'Voice capture (V)'}
           aria-label={isRecording ? 'Stop recording' : 'Voice capture'}
         >
           {isRecording ? <MicOff size={20} /> : <Mic size={20} />}

@@ -8,6 +8,7 @@ import {
   Mic, MicOff, Check, RefreshCw
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import DailyCalendar from '@/components/DailyCalendar';
 import { formatTime, timeToMinutes } from '@/lib/time-utils';
 
@@ -48,6 +49,7 @@ function getCachedDashboard(): { data: DashboardData; cachedAt: number } | null 
 }
 
 export default function Dashboard() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState(false);
   const [staleCache, setStaleCache] = useState<number | null>(null);
@@ -58,6 +60,7 @@ export default function Dashboard() {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const transcriptRef = useRef('');
   const [refreshing, setRefreshing] = useState(false);
+  const refreshingRef = useRef(false);
   const [displayDate] = useState(() => format(new Date(), 'EEEE, MMMM d, yyyy'));
   const [greeting] = useState(() => {
     const hour = new Date().getHours();
@@ -155,19 +158,34 @@ export default function Dashboard() {
     recognition.start();
   }, [isRecording]);
 
-  // Hotkey: "V" to toggle voice capture
+  const refreshDashboard = useCallback(() => {
+    if (refreshingRef.current) return;
+    refreshingRef.current = true;
+    setRefreshing(true);
+    fetch('/api/dashboard')
+      .then(r => { if (r.ok) return r.json(); throw new Error(); })
+      .then((d: DashboardData) => { setData(d); cacheDashboard(d); })
+      .catch(() => {})
+      .finally(() => { setRefreshing(false); refreshingRef.current = false; });
+  }, []);
+
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
       if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-      if (e.key === 'v' || e.key === 'V') {
-        e.preventDefault();
-        toggleVoiceCapture();
+      switch (e.key.toLowerCase()) {
+        case 'v': e.preventDefault(); toggleVoiceCapture(); break;
+        case 'i': e.preventDefault(); router.push('/inbox'); break;
+        case 'a': e.preventDefault(); router.push('/actions'); break;
+        case 'p': e.preventDefault(); router.push('/projects'); break;
+        case 'w': e.preventDefault(); router.push('/actions?context=waiting_for'); break;
+        case 'r': e.preventDefault(); refreshDashboard(); break;
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleVoiceCapture]);
+  }, [toggleVoiceCapture, router, refreshDashboard]);
 
   useEffect(() => {
     fetch('/api/dashboard')
@@ -225,14 +243,10 @@ export default function Dashboard() {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-bold">{greeting ? `Good ${greeting}` : 'Dashboard'}</h1>
             <button
-              onClick={() => {
-                if (refreshing) return;
-                setRefreshing(true);
-                fetch('/api/dashboard').then(r => { if (r.ok) return r.json(); throw new Error(); }).then(d => { setData(d); cacheDashboard(d); }).catch(() => {}).finally(() => setRefreshing(false));
-              }}
+              onClick={refreshDashboard}
               disabled={refreshing}
               className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-primary/5 transition-colors disabled:opacity-50"
-              title="Refresh dashboard"
+              title="Refresh dashboard (R)"
             >
               <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
             </button>
@@ -261,16 +275,16 @@ export default function Dashboard() {
           >
             {captureStatus === 'saved' ? <Check size={22} /> : isRecording ? <MicOff size={22} /> : <Mic size={22} />}
           </button>
-          {captureStatus === 'saved' && (
+          {captureStatus === 'saved' ? (
             <span className="text-xs text-green-600 font-medium">Saved to inbox</span>
-          )}
-          {isRecording && (
+          ) : isRecording ? (
             <span className="text-xs text-red-500 font-medium max-w-[300px] sm:max-w-[400px] line-clamp-2">
               {interimText || 'Listening...'}
             </span>
-          )}
-          {voiceError && (
+          ) : voiceError ? (
             <span className="text-xs text-red-500 font-medium max-w-[260px] text-right">{voiceError}</span>
+          ) : (
+            <kbd className="text-[10px] px-1 py-0.5 rounded bg-background text-muted font-mono">V</kbd>
           )}
         </div>
       </div>
@@ -313,7 +327,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-2xl font-bold">{data.inbox_count}</p>
-              <p className="text-xs text-muted">Inbox</p>
+              <p className="text-xs text-muted">Inbox <kbd className="text-[10px] px-1 py-0.5 rounded bg-background/50 text-muted font-mono ml-0.5">I</kbd></p>
             </div>
           </div>
         </Link>
@@ -325,7 +339,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-2xl font-bold">{data.total_actions}</p>
-              <p className="text-xs text-muted">Actions</p>
+              <p className="text-xs text-muted">Actions <kbd className="text-[10px] px-1 py-0.5 rounded bg-background/50 text-muted font-mono ml-0.5">A</kbd></p>
             </div>
           </div>
         </Link>
@@ -337,7 +351,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-2xl font-bold">{data.active_project_count}</p>
-              <p className="text-xs text-muted">Projects</p>
+              <p className="text-xs text-muted">Projects <kbd className="text-[10px] px-1 py-0.5 rounded bg-background/50 text-muted font-mono ml-0.5">P</kbd></p>
             </div>
           </div>
         </Link>
@@ -349,7 +363,7 @@ export default function Dashboard() {
             </div>
             <div>
               <p className="text-2xl font-bold">{data.action_counts.waiting_for || 0}</p>
-              <p className="text-xs text-muted">Waiting</p>
+              <p className="text-xs text-muted">Waiting <kbd className="text-[10px] px-1 py-0.5 rounded bg-background/50 text-muted font-mono ml-0.5">W</kbd></p>
             </div>
           </div>
         </Link>
