@@ -155,6 +155,20 @@ export default function Dashboard() {
     recognition.start();
   }, [isRecording]);
 
+  // Hotkey: "V" to toggle voice capture
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+      if (e.key === 'v' || e.key === 'V') {
+        e.preventDefault();
+        toggleVoiceCapture();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleVoiceCapture]);
+
   useEffect(() => {
     fetch('/api/dashboard')
       .then(r => { if (!r.ok) throw new Error('API error'); return r.json(); })
@@ -242,7 +256,7 @@ export default function Dashboard() {
                   ? 'bg-red-500 text-white motion-safe:animate-pulse'
                   : 'bg-primary text-white hover:bg-primary/90'
             }`}
-            title={isRecording ? 'Tap to stop & save' : 'Quick capture to inbox'}
+            title={isRecording ? 'Tap to stop & save (V)' : 'Quick capture to inbox (V)'}
             aria-label={isRecording ? 'Stop recording and save' : 'Voice capture to inbox'}
           >
             {captureStatus === 'saved' ? <Check size={22} /> : isRecording ? <MicOff size={22} /> : <Mic size={22} />}
