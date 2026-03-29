@@ -172,6 +172,7 @@ export default function InboxPage() {
         </button>
         <button
           type="submit"
+          aria-label="Add to inbox"
           className="px-4 py-3 rounded-xl bg-primary text-white hover:bg-primary-hover transition-colors"
         >
           <Plus size={20} />
@@ -232,6 +233,7 @@ export default function InboxPage() {
                   onClick={() => deleteItem(item.id)}
                   className="p-2 rounded-lg hover:bg-danger/10 text-danger"
                   title="Delete"
+                  aria-label="Delete item"
                 >
                   <Trash2 size={16} />
                 </button>

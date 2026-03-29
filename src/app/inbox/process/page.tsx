@@ -531,7 +531,7 @@ export default function ProcessPage() {
       {step === 'route_action' && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <button onClick={() => setStep('actionable')} className="p-1 rounded hover:bg-card">
+            <button onClick={() => setStep('actionable')} aria-label="Back" className="p-1 rounded hover:bg-card">
               <ArrowLeft size={18} />
             </button>
             <h2 className="font-semibold text-lg">Route this action</h2>
@@ -632,7 +632,7 @@ export default function ProcessPage() {
       {step === 'route_non_action' && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <button onClick={() => setStep('actionable')} className="p-1 rounded hover:bg-card">
+            <button onClick={() => setStep('actionable')} aria-label="Back" className="p-1 rounded hover:bg-card">
               <ArrowLeft size={18} />
             </button>
             <h2 className="font-semibold text-lg">Where does this belong?</h2>
@@ -726,7 +726,7 @@ export default function ProcessPage() {
       {step === 'route_reference' && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <button onClick={() => setStep('route_non_action')} className="p-1 rounded hover:bg-card">
+            <button onClick={() => setStep('route_non_action')} aria-label="Back" className="p-1 rounded hover:bg-card">
               <ArrowLeft size={18} />
             </button>
             <h2 className="font-semibold text-lg">File as Reference</h2>
@@ -815,7 +815,7 @@ export default function ProcessPage() {
       {step === 'create_project' && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <button onClick={() => setStep('route_action')} className="p-1 rounded hover:bg-card">
+            <button onClick={() => setStep('route_action')} aria-label="Back" className="p-1 rounded hover:bg-card">
               <ArrowLeft size={18} />
             </button>
             <h2 className="font-semibold text-lg">Create Project</h2>

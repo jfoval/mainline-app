@@ -479,13 +479,13 @@ export default function DisciplinesPage() {
                       </p>
                     </div>
                     <div className="flex gap-1">
-                      <button onClick={() => startEdit(d)} className="p-1.5 rounded hover:bg-card transition-colors" title="Edit">
+                      <button onClick={() => startEdit(d)} className="p-1.5 rounded hover:bg-card transition-colors" title="Edit" aria-label="Edit discipline">
                         <Edit3 size={14} className="text-muted" />
                       </button>
-                      <button onClick={() => handleToggleActive(d)} className="p-1.5 rounded hover:bg-card transition-colors" title="Deactivate">
+                      <button onClick={() => handleToggleActive(d)} className="p-1.5 rounded hover:bg-card transition-colors" title="Deactivate" aria-label="Deactivate discipline">
                         <X size={14} className="text-muted" />
                       </button>
-                      <button onClick={() => handleDelete(d.id)} className="p-1.5 rounded hover:bg-card transition-colors" title="Delete">
+                      <button onClick={() => handleDelete(d.id)} className="p-1.5 rounded hover:bg-card transition-colors" title="Delete" aria-label="Delete discipline">
                         <Trash2 size={14} className="text-red-400" />
                       </button>
                     </div>
@@ -509,13 +509,13 @@ export default function DisciplinesPage() {
                       {d.description && <p className="text-xs text-muted">{d.description}</p>}
                     </div>
                     <div className="flex gap-1">
-                      <button onClick={() => startEdit(d)} className="p-1.5 rounded hover:bg-card transition-colors" title="Edit">
+                      <button onClick={() => startEdit(d)} className="p-1.5 rounded hover:bg-card transition-colors" title="Edit" aria-label="Edit discipline">
                         <Edit3 size={14} className="text-muted" />
                       </button>
-                      <button onClick={() => handleToggleActive(d)} className="p-1.5 rounded hover:bg-card transition-colors" title="Deactivate">
+                      <button onClick={() => handleToggleActive(d)} className="p-1.5 rounded hover:bg-card transition-colors" title="Deactivate" aria-label="Deactivate discipline">
                         <X size={14} className="text-muted" />
                       </button>
-                      <button onClick={() => handleDelete(d.id)} className="p-1.5 rounded hover:bg-card transition-colors" title="Delete">
+                      <button onClick={() => handleDelete(d.id)} className="p-1.5 rounded hover:bg-card transition-colors" title="Delete" aria-label="Delete discipline">
                         <Trash2 size={14} className="text-red-400" />
                       </button>
                     </div>

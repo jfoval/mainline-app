@@ -99,6 +99,7 @@ export default function UpdateChecker() {
             onClick={dismiss}
             className="p-1.5 text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors"
             title="Dismiss"
+            aria-label="Dismiss update notification"
           >
             <X className="w-4 h-4" />
           </button>

@@ -447,6 +447,7 @@ export default function IdealCalendarPage() {
                     <span className="text-xs text-muted">{dayBlocks.length} block{dayBlocks.length !== 1 ? 's' : ''}</span>
                     <button
                       onClick={() => setAddingBlockDay(addingBlockDay === dayIndex ? null : dayIndex)}
+                      aria-label={addingBlockDay === dayIndex ? 'Cancel add block' : 'Add block'}
                       className="p-1 rounded hover:bg-primary/10 text-primary"
                     >
                       {addingBlockDay === dayIndex ? <X size={16} /> : <Plus size={16} />}
@@ -503,10 +504,10 @@ export default function IdealCalendarPage() {
                             )}
                           </div>
                           <div className="flex gap-1 shrink-0">
-                            <button onClick={() => { setEditingBlockId(block.id); setEditBlock({}); }} className="p-1 rounded hover:bg-background text-muted hover:text-foreground">
+                            <button onClick={() => { setEditingBlockId(block.id); setEditBlock({}); }} aria-label="Edit block" className="p-1 rounded hover:bg-background text-muted hover:text-foreground">
                               <Edit3 size={14} />
                             </button>
-                            <button onClick={() => deleteBlock(block.id)} className="p-1 rounded hover:bg-red-50 text-muted hover:text-red-600">
+                            <button onClick={() => deleteBlock(block.id)} aria-label="Delete block" className="p-1 rounded hover:bg-red-50 text-muted hover:text-red-600">
                               <Trash2 size={14} />
                             </button>
                           </div>

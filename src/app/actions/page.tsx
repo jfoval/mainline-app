@@ -43,6 +43,7 @@ function SortableActionItem({ action, onComplete, onDelete }: { action: NextActi
       </button>
       <button
         onClick={() => onComplete(action.id)}
+        aria-label="Complete action"
         className="mt-0.5 w-5 h-5 rounded border-2 border-muted/40 hover:border-success hover:bg-success/10 transition-colors flex-shrink-0 flex items-center justify-center"
       >
         <Check size={12} className="text-transparent group-hover:text-success/50" />
@@ -62,6 +63,7 @@ function SortableActionItem({ action, onComplete, onDelete }: { action: NextActi
       </div>
       <button
         onClick={() => onDelete(action.id)}
+        aria-label="Delete action"
         className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-danger/10 text-danger transition-all"
       >
         <Trash2 size={14} />

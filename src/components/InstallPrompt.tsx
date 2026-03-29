@@ -63,7 +63,7 @@ export default function InstallPrompt() {
           <Download size={18} className="text-primary" />
           <p className="font-medium text-sm">Install Mainline</p>
         </div>
-        <button onClick={dismiss} className="p-1 text-muted hover:text-foreground">
+        <button onClick={dismiss} aria-label="Dismiss" className="p-1 text-muted hover:text-foreground">
           <X size={16} />
         </button>
       </div>

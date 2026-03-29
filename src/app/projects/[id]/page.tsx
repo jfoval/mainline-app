@@ -149,7 +149,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <button onClick={() => router.push('/projects')} className="p-2 rounded-lg hover:bg-card">
+          <button onClick={() => router.push('/projects')} aria-label="Back to projects" className="p-2 rounded-lg hover:bg-card">
             <ArrowLeft size={20} />
           </button>
           <div>

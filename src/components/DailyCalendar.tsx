@@ -280,12 +280,14 @@ export default function DailyCalendar({ date }: { date: string }) {
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 shrink-0">
                     <button
                       onClick={e => { e.stopPropagation(); startEdit(block); }}
+                      aria-label="Edit block"
                       className="p-1.5 rounded hover:bg-primary/10 text-primary"
                     >
                       <Edit3 size={14} />
                     </button>
                     <button
                       onClick={e => { e.stopPropagation(); handleDelete(block.id); }}
+                      aria-label="Delete block"
                       className="p-1.5 rounded hover:bg-red-100 text-red-500"
                     >
                       <Trash2 size={14} />
