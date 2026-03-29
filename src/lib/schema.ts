@@ -115,6 +115,6 @@ async function seedHorizons() {
     { id: 'growth_intentions', type: 'growth_intentions', content: '' },
   ];
   for (const h of horizons) {
-    await sql`INSERT INTO horizons (id, type, content) VALUES (${h.id}, ${h.type}, ${h.content})`;
+    await sql`INSERT INTO horizons (id, type, content) VALUES (${h.id}, ${h.type}, ${h.content}) ON CONFLICT (id) DO NOTHING`;
   }
 }
