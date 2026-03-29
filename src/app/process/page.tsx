@@ -5,8 +5,6 @@ import Link from 'next/link';
 import {
   Sun,
   Inbox,
-
-  Target,
   Rocket,
   Check,
   ChevronRight,
@@ -46,19 +44,6 @@ interface Action {
   status: string;
 }
 
-interface DisciplineItem {
-  id: string;
-  name: string;
-  type: 'discipline' | 'value';
-  description: string | null;
-  time_of_day: string;
-}
-
-interface DisciplineLogItem {
-  discipline_id: string;
-  completed: number;
-}
-
 interface InboxType {
   id: string;
   name: string;
@@ -68,7 +53,6 @@ interface InboxType {
 const STEPS = [
   { id: 'reflection', label: 'Daily Note & Reflection', icon: Sun },
   { id: 'inbox', label: 'Process Inbox', icon: Inbox },
-  { id: 'disciplines', label: 'Disciplines', icon: Target },
   { id: 'ready', label: 'Ready to Work', icon: Rocket },
 ];
 
@@ -113,9 +97,6 @@ export default function MorningProcessPage() {
   const [top3First, setTop3First] = useState('');
   const [top3Second, setTop3Second] = useState('');
   const [top3Third, setTop3Third] = useState('');
-  const [morningDisciplines, setMorningDisciplines] = useState<DisciplineItem[]>([]);
-  const [disciplineLogs, setDisciplineLogs] = useState<DisciplineLogItem[]>([]);
-
   // Inbox types
   const [inboxTypes, setInboxTypes] = useState<InboxType[]>([]);
   const [inboxChecks, setInboxChecks] = useState<Record<string, boolean>>({});
@@ -132,15 +113,13 @@ export default function MorningProcessPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [noteRes, yesterdayRes, inboxRes, actionsRes, projectsRes, discRes, discLogsRes, settingsRes] =
+        const [noteRes, yesterdayRes, inboxRes, actionsRes, projectsRes, settingsRes] =
           await Promise.all([
             fetch(`/api/daily-notes?date=${todayStr()}`),
             fetch(`/api/daily-notes?date=${yesterdayStr()}`),
             fetch('/api/inbox'),
             fetch('/api/actions'),
             fetch('/api/projects?status=active'),
-            fetch('/api/disciplines'),
-            fetch(`/api/disciplines/logs?date=${todayStr()}`),
             fetch('/api/settings'),
           ]);
 
@@ -174,15 +153,6 @@ export default function MorningProcessPage() {
             pjData.filter((p: { active_action_count?: number }) => p.active_action_count === 0)
               .map((p: { title: string }) => ({ title: p.title }))
           );
-        }
-
-        const discData = await discRes.json();
-        if (Array.isArray(discData)) {
-          setMorningDisciplines(discData.filter((d: DisciplineItem) => d.time_of_day === 'morning'));
-        }
-        const dlData = await discLogsRes.json();
-        if (Array.isArray(dlData)) {
-          setDisciplineLogs(dlData);
         }
 
         // Load inbox types from settings
@@ -560,100 +530,8 @@ export default function MorningProcessPage() {
           </div>
         );
 
-      // ── Step 2: Today's Disciplines ───────────────────────────────
+      // ── Step 2: Ready to Work ────────────────────────────────────
       case 2: {
-        const toggleDiscipline = async (disciplineId: string) => {
-          const existing = disciplineLogs.find(l => l.discipline_id === disciplineId);
-          const newCompleted = existing?.completed === 1 ? 0 : 1;
-
-          await fetch('/api/disciplines/logs', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              discipline_id: disciplineId,
-              date: todayStr(),
-              completed: newCompleted,
-            }),
-          });
-
-          if (existing) {
-            setDisciplineLogs(disciplineLogs.map(l =>
-              l.discipline_id === disciplineId ? { ...l, completed: newCompleted } : l
-            ));
-          } else {
-            setDisciplineLogs([...disciplineLogs, { discipline_id: disciplineId, completed: newCompleted }]);
-          }
-        };
-
-        const morningChecked = morningDisciplines.filter(d =>
-          disciplineLogs.find(l => l.discipline_id === d.id)?.completed === 1
-        ).length;
-
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <Target size={24} className="text-emerald-500" />
-                Today&apos;s Disciplines
-              </h2>
-              <p className="text-muted mt-1">
-                Check off your morning disciplines. {morningDisciplines.length > 0 ? `${morningChecked}/${morningDisciplines.length} done.` : ''}
-              </p>
-            </div>
-
-            {morningDisciplines.length === 0 ? (
-              <div className="bg-card rounded-xl border border-border p-6 text-center space-y-3">
-                <Target size={36} className="mx-auto text-muted" />
-                <p className="text-foreground font-medium">No morning disciplines set up yet.</p>
-                <p className="text-muted text-sm">
-                  Add disciplines in the <Link href="/disciplines" className="text-primary underline">Disciplines</Link> page.
-                </p>
-              </div>
-            ) : (
-              <div className="bg-card rounded-xl border border-border p-6 space-y-2">
-                {morningDisciplines.map(d => {
-                  const log = disciplineLogs.find(l => l.discipline_id === d.id);
-                  const done = log?.completed === 1;
-                  return (
-                    <button
-                      key={d.id}
-                      onClick={() => toggleDiscipline(d.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                        done ? 'bg-green-50 border border-green-200' : 'bg-background border border-border hover:border-primary/30'
-                      }`}
-                    >
-                      <span className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
-                        done ? 'bg-green-500' : 'border-2 border-border'
-                      }`}>
-                        {done && <Check size={12} className="text-white" />}
-                      </span>
-                      <div>
-                        <span className={`text-sm ${done ? 'line-through text-muted' : 'text-foreground'}`}>
-                          {d.name}
-                        </span>
-                        {d.description && (
-                          <p className="text-xs text-muted">{d.description}</p>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            <button
-              onClick={() => advance()}
-              className="px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-hover flex items-center gap-2 font-medium transition-colors"
-            >
-              <ChevronRight size={16} />
-              Continue
-            </button>
-          </div>
-        );
-      }
-
-      // ── Step 3: Ready to Work ────────────────────────────────────
-      case 3: {
         const contextCounts: Record<string, number> = {};
         actions.forEach((a) => {
           const ctx = a.context || 'uncategorized';

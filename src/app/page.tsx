@@ -29,6 +29,7 @@ interface DashboardData {
   stale_waiting: Array<{ content: string; waiting_on_person: string | null; waiting_since: string }>;
   disciplines_done: number;
   disciplines_total: number;
+  discipline_items: Array<{ id: string; name: string; completed: boolean }>;
 }
 
 const DASHBOARD_CACHE_KEY = 'mainline_dashboard_cache';
@@ -443,25 +444,57 @@ export default function Dashboard() {
         </Link>
       )}
 
-      {/* Disciplines Progress */}
-      {data.disciplines_total > 0 && (
-        <Link href="/disciplines" className="bg-card rounded-xl p-5 border border-border hover:border-primary transition-colors block">
-          <div className="flex items-center justify-between mb-2">
+      {/* Disciplines Checkmarks */}
+      {data.discipline_items && data.discipline_items.length > 0 && (
+        <div className="bg-card rounded-xl p-5 border border-border">
+          <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold">Disciplines</h2>
             <span className="text-sm font-medium text-primary">
-              {data.disciplines_done}/{data.disciplines_total} done
+              {data.disciplines_done}/{data.disciplines_total}
             </span>
           </div>
-          <div className="w-full h-2 rounded-full bg-border overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${(data.disciplines_done / data.disciplines_total) * 100}%`,
-                backgroundColor: data.disciplines_done === data.disciplines_total ? '#22c55e' : 'var(--color-primary)',
-              }}
-            />
+          <div className="space-y-1.5">
+            {data.discipline_items.map(d => (
+              <button
+                key={d.id}
+                onClick={async () => {
+                  const newCompleted = !d.completed;
+                  // Optimistic update
+                  setData(prev => {
+                    if (!prev) return prev;
+                    const items = prev.discipline_items.map(item =>
+                      item.id === d.id ? { ...item, completed: newCompleted } : item
+                    );
+                    return {
+                      ...prev,
+                      discipline_items: items,
+                      disciplines_done: items.filter(i => i.completed).length,
+                    };
+                  });
+                  // Persist
+                  const today = new Date().toISOString().slice(0, 10);
+                  await fetch('/api/disciplines/logs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ discipline_id: d.id, date: today, completed: newCompleted ? 1 : 0 }),
+                  });
+                }}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
+                  d.completed ? 'bg-green-50 border border-green-200' : 'bg-background border border-border hover:border-primary/30'
+                }`}
+              >
+                <span className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
+                  d.completed ? 'bg-green-500' : 'border-2 border-border'
+                }`}>
+                  {d.completed && <Check size={12} className="text-white" />}
+                </span>
+                <span className={`text-sm ${d.completed ? 'line-through text-muted' : 'text-foreground'}`}>
+                  {d.name}
+                </span>
+              </button>
+            ))}
           </div>
-        </Link>
+        </div>
       )}
 
       {/* Next Actions */}

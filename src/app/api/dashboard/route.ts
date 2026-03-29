@@ -103,20 +103,27 @@ export async function GET() {
       SELECT * FROM next_actions WHERE context = 'waiting_for' AND status = 'active' AND waiting_since IS NOT NULL AND waiting_since <= ${sevenDaysAgo}
     ` as Array<{ content: string; waiting_on_person: string | null; waiting_since: string }>;
 
-    // Discipline progress for today
+    // Discipline progress for today — return individual items with completion status
     let disciplinesDone = 0;
     let disciplinesTotal = 0;
+    let disciplineItems: Array<{ id: string; name: string; completed: boolean }> = [];
     try {
-      const activeDisciplines = await sql`SELECT COUNT(*) as count FROM disciplines WHERE is_active = 1`;
-      disciplinesTotal = Number(activeDisciplines[0]?.count || 0);
+      const activeDisciplines = await sql`SELECT id, name FROM disciplines WHERE is_active = 1 ORDER BY sort_order, name` as Array<{ id: string; name: string }>;
+      disciplinesTotal = activeDisciplines.length;
 
       if (disciplinesTotal > 0) {
-        const completedToday = await sql`
-          SELECT COUNT(*) as count FROM discipline_logs dl
-          JOIN disciplines d ON dl.discipline_id = d.id
-          WHERE dl.date = ${today} AND dl.completed = 1 AND d.is_active = 1
-        `;
-        disciplinesDone = Number(completedToday[0]?.count || 0);
+        const logsToday = await sql`
+          SELECT discipline_id, completed FROM discipline_logs
+          WHERE date = ${today}
+        ` as Array<{ discipline_id: string; completed: number }>;
+        const logMap = new Map(logsToday.map(l => [l.discipline_id, l.completed === 1]));
+
+        disciplineItems = activeDisciplines.map(d => ({
+          id: d.id,
+          name: d.name,
+          completed: logMap.get(d.id) || false,
+        }));
+        disciplinesDone = disciplineItems.filter(d => d.completed).length;
       }
     } catch {
       // Table may not exist yet for existing installs before migration runs
@@ -139,6 +146,7 @@ export async function GET() {
       stale_waiting: staleWaiting,
       disciplines_done: disciplinesDone,
       disciplines_total: disciplinesTotal,
+      discipline_items: disciplineItems,
     });
   } catch (err) {
     console.error('GET /api/dashboard error:', err);
