@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   Moon,
   Inbox,
-  PenLine,
   Check,
   ChevronRight,
   Plus,
@@ -19,7 +18,6 @@ interface DailyNote {
   top3_first: string;
   top3_second: string;
   top3_third: string;
-  tomorrow: string;
   evening_did_well: string;
   evening_fell_short: string;
   evening_do_differently: string;
@@ -36,7 +34,6 @@ interface InboxItem {
 const STEPS = [
   { id: 'capture', label: 'Capture Sweep', icon: Inbox },
   { id: 'reflection', label: 'Evening Reflection', icon: Sun },
-  { id: 'tomorrow', label: 'Write Tomorrow', icon: PenLine },
   { id: 'complete', label: 'Day Complete', icon: Moon },
 ];
 
@@ -56,7 +53,6 @@ export default function ShutdownPage() {
   // Form state
   const [captureInput, setCaptureInput] = useState('');
   const [capturedCount, setCapturedCount] = useState(0);
-  const [tomorrowText, setTomorrowText] = useState('');
   const [eveningReflection, setEveningReflection] = useState({
     did_well: '',
     fell_short: '',
@@ -80,7 +76,6 @@ export default function ShutdownPage() {
         const noteData = await noteRes.json();
         if (noteData && !noteData.error) {
           setDailyNote(noteData);
-          setTomorrowText(noteData.tomorrow || '');
           setEveningReflection({
             did_well: noteData.evening_did_well || '',
             fell_short: noteData.evening_fell_short || '',
@@ -160,8 +155,8 @@ export default function ShutdownPage() {
 
   // ── Mark final step complete when reached ───────────────────────────
   useEffect(() => {
-    if (step === 3) {
-      setCompletedSteps((prev) => new Set(prev).add(3));
+    if (step === 2) {
+      setCompletedSteps((prev) => new Set(prev).add(2));
     }
   }, [step]);
 
@@ -316,51 +311,8 @@ export default function ShutdownPage() {
           </div>
         );
 
-      // ── Step 2: Write Tomorrow ───────────────────────────────────
+      // ── Step 2: Day Complete ─────────────────────────────────────
       case 2:
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <PenLine size={24} className="text-violet-500" />
-                Write Tomorrow
-              </h2>
-              <p className="text-muted mt-1">
-                What needs to happen tomorrow? Things to prep for, notes for morning-you.
-              </p>
-            </div>
-
-            <div className="bg-card rounded-xl border border-border p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">Tomorrow</h3>
-              <textarea
-                rows={5}
-                value={tomorrowText}
-                onChange={(e) => setTomorrowText(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
-                placeholder="What does tomorrow-you need to know? Key meetings, deadlines, things to prep..."
-              />
-            </div>
-
-            <button
-              onClick={async () => {
-                await patchNote({ tomorrow: tomorrowText.trim() });
-                advance();
-              }}
-              disabled={saving}
-              className="px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-hover disabled:opacity-50 flex items-center gap-2 font-medium transition-colors"
-            >
-              {saving ? (
-                <Loader2 size={16} className="animate-spin" />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-              Save &amp; Continue
-            </button>
-          </div>
-        );
-
-      // ── Step 3: Day Complete ─────────────────────────────────────
-      case 3:
         return (
           <div className="space-y-6">
             <div>
@@ -374,22 +326,11 @@ export default function ShutdownPage() {
             {/* Summary */}
             <div className="bg-card rounded-xl border border-border p-6 space-y-4">
               <h3 className="font-semibold text-foreground">Shutdown Summary</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border">
-                  <Inbox size={18} className="text-blue-500" />
-                  <div>
-                    <p className="text-sm text-muted">Items Captured</p>
-                    <p className="text-lg font-semibold text-foreground">{capturedCount}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border">
-                  <PenLine size={18} className="text-violet-500" />
-                  <div>
-                    <p className="text-sm text-muted">Tomorrow</p>
-                    <p className="text-lg font-semibold text-foreground">
-                      {tomorrowText.trim() ? 'Written' : 'Skipped'}
-                    </p>
-                  </div>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border">
+                <Inbox size={18} className="text-blue-500" />
+                <div>
+                  <p className="text-sm text-muted">Items Captured</p>
+                  <p className="text-lg font-semibold text-foreground">{capturedCount}</p>
                 </div>
               </div>
             </div>
