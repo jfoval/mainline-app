@@ -2,7 +2,7 @@
 ## Personal Productivity System
 
 **Last updated:** 2026-03-28
-**Status:** Production-ready. Deployed on Vercel. 19+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v10. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v013. Journal with AI insights. 70+ tests. HTTP security headers. Error boundary + 404 page. Backup restore SQL injection hardened. Sync data-loss fix.
+**Status:** Production-ready. Deployed on Vercel. 19+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v10. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists with inline context manager. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v015. Journal with AI insights. Horizons named-item blocks. Daily inbox type checkboxes. 70+ tests. HTTP security headers. Error boundary + 404 page. Backup restore SQL injection hardened. Sync data-loss fix.
 
 ---
 
@@ -79,14 +79,14 @@ A self-deployed personal productivity app. Each customer gets their own instance
 ## What's Built (18+ pages, ~30 API routes)
 
 ### Daily Workflows
-- **Morning Process** (`/process`) — 5-step guided flow: forward-looking reflection (what matters most, who to be, one action) → inbox (with physical desk reminder) → top 3 → disciplines → ready
+- **Morning Process** (`/process`) — 5-step guided flow: forward-looking reflection (what matters most, who to be, one action) → inbox with **inbox type checkboxes** (Physical/Work Email/Personal Email, user-configurable via gear icon; check state saves to `daily_notes.inbox_checks`) → top 3 → disciplines → ready (navigates to dashboard `/`)
 - **Shutdown** (`/shutdown`) — 5-step: capture sweep → disciplines check-in → evening reflection (did well, fell short, do differently) → write tomorrow → day complete (celebration screen with summary)
-- **Dashboard** (`/`) — mini timeline of today's schedule, Now/Up Next blocks, stats, Top 3, disciplines, next actions by context, daily calendar. Caches offline with stale-data banner. Voice capture. Refresh button with spinner.
+- **Dashboard** (`/`) — **Quick Stats above Now/Up Next** (new order: stats → Now/Up Next → Top 3 → Disciplines → Next Actions → Daily Calendar). Mini timeline, voice capture, refresh button with spinner.
 
 ### Core Productivity
 - **Inbox** (`/inbox`) — text + voice capture (Web Speech API). Search filter for 5+ items.
 - **Inbox Processing** (`/inbox/process`) — decision tree, one item at a time, AI-assisted routing. Keyboard shortcuts (Y/N/D, 1-8 for contexts, T/S/R, Esc). Undo last routing decision. Quick-route: trash, someday/maybe, reference, wish list, reading, movie, show, album, travel.
-- **Next Actions** (`/actions`) — user-configurable context lists. Active/Completed toggle. Search filter. Drag-to-reorder via @dnd-kit.
+- **Next Actions** (`/actions`) — user-configurable context lists. **Gear icon opens inline context manager**: add/edit/delete contexts with color picker (key auto-gen from name). Active/Completed toggle. Search filter. Drag-to-reorder via @dnd-kit.
 - **Projects** (`/projects`, `/projects/[id]`) — CRUD with categories, Active/Someday-Maybe toggle, stalled project detection
 
 ### Schedule System
@@ -96,12 +96,12 @@ A self-deployed personal productivity app. Each customer gets their own instance
 
 ### Life System
 - **Journal** (`/journal`) — combined daily view: morning reflections (read-only), free-form journal entries (create/edit/delete with tags), evening reflections (read-only). Date navigation. AI Insights analyzes last 14 days for patterns and themes.
-- **Horizons** (`/horizons`) — purpose, vision, goals, areas of focus, growth intentions
+- **Horizons** (`/horizons`) — purpose, vision, goals, areas of focus, growth intentions. **Named item blocks**: each section shows a list of user-created named items (with optional description) that can be added, edited, and deleted. Data stored in `horizon_items` table and synced via `/api/horizon-items`.
 - **Reference/Lists** (`/reference`) — wish list (3 tiers), reading (3 statuses), movies, shows, albums, travel
 
 ### Reviews & AI
-- **Weekly Review** (`/review`) — 7 guided steps with live system data and per-step notes. Tracks last completion date, shows overdue warning if >8 days.
-- **Monthly Review** (`/review`) — 11 steps (weekly 7 + goals check, thinking docs, systems check, personal pulse). Overdue warning if >35 days.
+- **Weekly Review** (`/review`) — **6 guided steps** (recurring tasks step removed; notes sections removed). Live system data. Tracks last completion date, shows overdue warning if >8 days.
+- **Monthly Review** (`/review`) — **10 steps** (weekly 6 + goals check, horizons review, systems check, personal pulse). Overdue warning if >35 days.
 - **AI Assistant** (`/ai`) — 3 tabs: morning briefing, prioritize day, ask Claude (all Opus)
 - **Recovery** (`/recovery`) — AI-powered "get back on track" guided re-engagement
 
@@ -154,7 +154,7 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 **IndexedDB is the client's source of truth.** Pages read from IndexedDB instantly, then sync with the server API in background.
 
 ### Stack
-- **Dexie.js v4** for IndexedDB (`src/lib/offline/db.ts`)
+- **Dexie.js v4** for IndexedDB (`src/lib/offline/db.ts`) — schema version 9 (horizon_items added)
 - **Custom sync queue** — FIFO mutation queue, replayed on reconnect (`src/lib/offline/sync-queue.ts`)
 - **Per-table store configs** — queryLocal, fetchUrl, create/update/remove (`src/lib/offline/stores.ts`)
 - **React hook `useOfflineStore()`** — replaces useState+useEffect+fetch
@@ -170,8 +170,8 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 - **Local notifications** — Notification API for inbox overflow and stalled projects (quiet hours 9pm-7am, 30-min interval)
 - **Update notifications** — checks upstream GitHub repo for newer versions (24h client cache, 1h server cache), shows indigo banner with "How to Update" modal guiding users through GitHub fork sync. Settings → About shows current version + manual check button. Version injected at build time via `NEXT_PUBLIC_APP_VERSION` from package.json.
 
-### Tables mirrored in IndexedDB (12)
-`next_actions`, `inbox_items`, `list_items`, `projects`, `daily_notes`, `routine_blocks`, `reference_docs`, `disciplines`, `discipline_logs`, `context_lists`, `daily_blocks`, `journal_entries`
+### Tables mirrored in IndexedDB (13)
+`next_actions`, `inbox_items`, `list_items`, `projects`, `daily_notes`, `routine_blocks`, `reference_docs`, `disciplines`, `discipline_logs`, `context_lists`, `daily_blocks`, `journal_entries`, `horizon_items`
 
 ### What works offline on mobile
 - View and check off next actions (all context lists)
@@ -190,7 +190,7 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 
 ### Migration System
 - `src/lib/migrations/runner.ts` — embedded SQL migrations (Postgres dialect), `schema_version` table tracks applied versions
-- 13 migrations applied: baseline through daily_blocks, disciplines, context_lists, updated_at backfill, legacy table cleanup, reflection questions, journal_entries
+- 15 migrations applied: baseline through daily_blocks, disciplines, context_lists, updated_at backfill, legacy table cleanup, reflection questions, journal_entries, inbox_checks (014), horizon_items (015)
 - Note: Neon HTTP driver is stateless — each `sql.query()` is an independent request. DDL auto-commits in Postgres. No cross-query transactions.
 
 ### Database Durability
@@ -250,27 +250,25 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 
 ## Weekly Review (Saturday 7:30-8:30)
 
-8 steps with per-step notes (saved on completion):
+6 steps (recurring tasks step and per-step notes removed in v0.6.0):
 
 1. Clear ALL inboxes (app inbox, email, physical, phone notifications)
 2. Review every active project + scan Someday/Maybe
-3. Review all 7 context lists
+3. Review all context lists
 4. Review @waiting-for and @agendas (stale items highlighted)
 5. Review calendar (look back 1 week, forward 2 weeks)
-6. Check recurring tasks (due items highlighted, inline CRUD)
-7. Review pipeline and offerings
-8. Review areas of focus (faith, marriage, kids, health, Nurik, LSU, music, finances, home, growth)
+6. Review areas of focus (faith, marriage, kids, health, Nurik, LSU, music, finances, home, growth)
 
 ---
 
 ## Monthly Deep Review (one Saturday/month, ~2-3 hours)
 
-Weekly review steps 1-8 first, then:
+Weekly review steps 1-6 first, then:
 
-9. Goals check (goals vs active projects — aligned?)
-10. Thinking docs review (connections, redundancy, consolidation)
-11. Systems check (pick 1-2 areas to evaluate)
-12. Personal pulse (spending time on what matters?)
+7. Goals check (goals vs active projects — aligned?)
+8. Horizons review (scan for connections and gaps)
+9. Systems check (pick 1-2 areas to evaluate)
+10. Personal pulse (spending time on what matters?)
 
 ---
 

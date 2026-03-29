@@ -2,7 +2,7 @@
 
 Your complete productivity system in one app.
 
-**Version 0.5.1 · March 2026**
+**Version 0.6.0 · March 2026**
 
 ---
 
@@ -52,10 +52,10 @@ The app is designed around three daily touchpoints.
 Open **Morning Process** from the sidebar. It walks you through 5 steps:
 
 1. **Reflection** — Three forward-looking questions: What matters most today? Who do I want to be today? What one action would move my life forward most?
-2. **Process Inbox** — Work through every inbox item using the decision tree. The app reminds you to check physical inboxes too.
+2. **Process Inbox** — Work through every inbox item using the decision tree. A checklist shows your configured inbox types (Physical, Work Email, Personal Email, etc.) — check each one off as you clear it. Tap the gear icon to add, edit, or delete inbox types. The check state saves daily so you can see what you've cleared.
 3. **Review Projects** — Scan active projects for stalled ones (no next action).
 4. **Pick Top 3** — Choose your three most important outcomes for today.
-5. **Ready to Work** — See your Top 3, context counts, and today's schedule. Hit "Start Your Day."
+5. **Ready to Work** — See your Top 3, context counts, and today's schedule. Hit "Start Your Day" to go to the dashboard.
 
 ### During the Day
 
@@ -80,11 +80,12 @@ Open **Shutdown** from the sidebar. 5 steps:
 
 ### Dashboard (`/`)
 
-Your home screen. Shows:
+Your home screen. Shows (in order):
 
 - **Greeting** with today's date and week type (Girls Week / Non-Girls Week, auto-detected)
 - **Alerts** for stalled projects and overflowing inbox
 - **Quick Stats** — inbox count, action counts, active projects
+- **Now / Up Next** — current and next calendar block with times
 - **Top 3** — today's three priorities
 - **Disciplines** — today's habit tracker
 - **Next Actions** — action counts per context list
@@ -138,6 +139,7 @@ Features:
 - **Complete:** Check the box to mark done. Completed actions move to the history tab
 - **Drag to reorder:** Drag the handle on any action to reorder within a list
 - **Active / Completed toggle:** Switch between open actions and your completion history
+- **Context manager:** Tap the gear icon at the end of the tabs bar to add, edit, or delete context lists. Each context has a name and a color dot. Deleting a context removes the tab but does not delete the actions inside it.
 
 ---
 
@@ -207,12 +209,14 @@ Your daily journal — a combined view of reflections and free-form writing.
 
 Big-picture alignment: purpose, vision, goals, areas of focus, and growth intentions. Review during monthly reviews to make sure daily work connects to what matters most.
 
-Five levels:
+Five levels — each shows a list of named items you create:
 1. **Purpose** — Why you exist
-2. **Vision** — What you're building toward
-3. **Goals** — 1–2 year outcomes
-4. **Areas of Focus** — Ongoing responsibilities
-5. **Growth** — Current learning and development intentions
+2. **Vision** — What you're building toward (3–5 years)
+3. **Goals** — 1–2 year specific outcomes
+4. **Areas of Focus** — Ongoing roles and responsibilities
+5. **Growth Intentions** — Skills, knowledge, and character traits you're developing
+
+**Adding items:** Click **+ Add** on any section. Give it a name and optional description. Click the pencil to edit, trash to delete. Items are saved permanently and appear every time you visit.
 
 ---
 
@@ -232,18 +236,16 @@ Your personal reference lists:
 
 Guided weekly and monthly review workflow. The app tracks when you last completed each and shows overdue warnings.
 
-**Weekly Review (8 steps):**
+**Weekly Review (6 steps):**
 1. Clear ALL inboxes — app inbox, email, physical desk, phone notifications
 2. Review every active project — still active? has next action? Scan Someday/Maybe too
 3. Review all context lists — still relevant? right wording? already done?
 4. Review @Waiting-For — follow up needed? stale items highlighted
 5. Review calendar — look back 1 week, forward 2 weeks
-6. Check recurring tasks — monthly/quarterly/annual items due?
-7. Review areas of focus — are all areas represented in your projects?
-8. Capture and close — anything left in your head?
+6. Review areas of focus — are all areas represented in your projects?
 
 **Monthly Deep Review (extends to 2–3 hours):**
-Do the weekly 8 steps first, then:
+Do the weekly 6 steps first, then:
 1. Goals check — are your goals aligned with your active projects?
 2. Horizons review — scan for connections and gaps
 3. Systems check — pick 1–2 areas to evaluate
