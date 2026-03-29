@@ -64,13 +64,10 @@ export default function DailyCalendar({ date }: { date: string }) {
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-scroll to current block on first load
+  // Mark first load complete (kept for ref stability)
   useEffect(() => {
-    if (!loading && currentBlockRef.current && !hasScrolled.current) {
-      currentBlockRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      hasScrolled.current = true;
-    }
-  }, [loading, currentTime]);
+    if (!loading) hasScrolled.current = true;
+  }, [loading]);
 
   // Add block
   const handleAdd = async () => {
