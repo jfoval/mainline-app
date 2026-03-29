@@ -64,6 +64,12 @@ export interface DailyNote {
   reflection_fell_short: string | null;
   reflection_noticed: string | null;
   reflection_grateful: string | null;
+  reflection_matters_most: string | null;
+  reflection_who_to_be: string | null;
+  reflection_one_action: string | null;
+  evening_did_well: string | null;
+  evening_fell_short: string | null;
+  evening_do_differently: string | null;
   top3_first: string | null;
   top3_second: string | null;
   top3_third: string | null;

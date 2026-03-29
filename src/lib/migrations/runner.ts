@@ -482,4 +482,18 @@ const embeddedMigrations: { version: number; name: string; statements: string[] 
       `DROP TABLE IF EXISTS family_meetings`,
     ],
   },
+  {
+    version: 12,
+    name: '012_reflection_questions',
+    statements: [
+      // Morning reflection: new forward-looking questions
+      `ALTER TABLE daily_notes ADD COLUMN IF NOT EXISTS reflection_matters_most TEXT`,
+      `ALTER TABLE daily_notes ADD COLUMN IF NOT EXISTS reflection_who_to_be TEXT`,
+      `ALTER TABLE daily_notes ADD COLUMN IF NOT EXISTS reflection_one_action TEXT`,
+      // Evening reflection questions
+      `ALTER TABLE daily_notes ADD COLUMN IF NOT EXISTS evening_did_well TEXT`,
+      `ALTER TABLE daily_notes ADD COLUMN IF NOT EXISTS evening_fell_short TEXT`,
+      `ALTER TABLE daily_notes ADD COLUMN IF NOT EXISTS evening_do_differently TEXT`,
+    ],
+  },
 ];

@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Plus,
   Loader2,
+  Sun,
 } from 'lucide-react';
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -20,6 +21,9 @@ interface DailyNote {
   top3_second: string;
   top3_third: string;
   tomorrow: string;
+  evening_did_well: string;
+  evening_fell_short: string;
+  evening_do_differently: string;
 }
 
 interface InboxItem {
@@ -46,6 +50,7 @@ interface ShutdownDisciplineLog {
 const STEPS = [
   { id: 'capture', label: 'Capture Sweep', icon: Inbox },
   { id: 'disciplines', label: 'Disciplines Check-In', icon: Target },
+  { id: 'reflection', label: 'Evening Reflection', icon: Sun },
   { id: 'tomorrow', label: 'Write Tomorrow', icon: PenLine },
   { id: 'complete', label: 'Day Complete', icon: Moon },
 ];
@@ -70,6 +75,11 @@ export default function ShutdownPage() {
   const [captureInput, setCaptureInput] = useState('');
   const [capturedCount, setCapturedCount] = useState(0);
   const [tomorrowText, setTomorrowText] = useState('');
+  const [eveningReflection, setEveningReflection] = useState({
+    did_well: '',
+    fell_short: '',
+    do_differently: '',
+  });
 
   // Loading
   const [loading, setLoading] = useState(true);
@@ -91,6 +101,11 @@ export default function ShutdownPage() {
         if (noteData && !noteData.error) {
           setDailyNote(noteData);
           setTomorrowText(noteData.tomorrow || '');
+          setEveningReflection({
+            did_well: noteData.evening_did_well || '',
+            fell_short: noteData.evening_fell_short || '',
+            do_differently: noteData.evening_do_differently || '',
+          });
         }
 
         const inboxData = await inboxRes.json();
@@ -173,8 +188,8 @@ export default function ShutdownPage() {
 
   // ── Mark final step complete when reached ───────────────────────────
   useEffect(() => {
-    if (step === 3) {
-      setCompletedSteps((prev) => new Set(prev).add(3));
+    if (step === 4) {
+      setCompletedSteps((prev) => new Set(prev).add(4));
     }
   }, [step]);
 
@@ -352,8 +367,77 @@ export default function ShutdownPage() {
         );
       }
 
-      // ── Step 2: Write Tomorrow ───────────────────────────────────
+      // ── Step 2: Evening Reflection ──────────────────────────────
       case 2:
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <Sun size={24} className="text-amber-500" />
+                Evening Reflection
+              </h2>
+              <p className="text-muted mt-1">
+                Look back on your day with honesty and self-respect.
+              </p>
+            </div>
+
+            <div className="bg-card rounded-xl border border-border p-6 space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-muted mb-1">What did I do well today?</label>
+                <textarea
+                  rows={2}
+                  value={eveningReflection.did_well}
+                  onChange={(e) => setEveningReflection((r) => ({ ...r, did_well: e.target.value }))}
+                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                  placeholder="Recognize what's working..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-muted mb-1">Where did I fall short, and why?</label>
+                <textarea
+                  rows={2}
+                  value={eveningReflection.fell_short}
+                  onChange={(e) => setEveningReflection((r) => ({ ...r, fell_short: e.target.value }))}
+                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                  placeholder="Honest awareness — the 'why' is where the lesson is..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-muted mb-1">What will I do differently tomorrow?</label>
+                <textarea
+                  rows={2}
+                  value={eveningReflection.do_differently}
+                  onChange={(e) => setEveningReflection((r) => ({ ...r, do_differently: e.target.value }))}
+                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                  placeholder="Turn insight into improvement..."
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={async () => {
+                await patchNote({
+                  evening_did_well: eveningReflection.did_well,
+                  evening_fell_short: eveningReflection.fell_short,
+                  evening_do_differently: eveningReflection.do_differently,
+                });
+                advance();
+              }}
+              disabled={saving}
+              className="px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-hover disabled:opacity-50 flex items-center gap-2 font-medium transition-colors"
+            >
+              {saving ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <ChevronRight size={16} />
+              )}
+              Save &amp; Continue
+            </button>
+          </div>
+        );
+
+      // ── Step 3: Write Tomorrow ───────────────────────────────────
+      case 3:
         return (
           <div className="space-y-6">
             <div>
@@ -395,8 +479,8 @@ export default function ShutdownPage() {
           </div>
         );
 
-      // ── Step 3: Day Complete ─────────────────────────────────────
-      case 3:
+      // ── Step 4: Day Complete ─────────────────────────────────────
+      case 4:
         return (
           <div className="space-y-6">
             <div>

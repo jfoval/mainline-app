@@ -17,10 +17,9 @@ import {
 interface DailyNote {
   id: string;
   date: string;
-  reflection_showed_up: string;
-  reflection_fell_short: string;
-  reflection_noticed: string;
-  reflection_grateful: string;
+  reflection_matters_most: string;
+  reflection_who_to_be: string;
+  reflection_one_action: string;
   top3_first: string;
   top3_second: string;
   top3_third: string;
@@ -88,10 +87,9 @@ export default function MorningProcessPage() {
 
   // Form state
   const [reflection, setReflection] = useState({
-    showed_up: '',
-    fell_short: '',
-    noticed: '',
-    grateful: '',
+    matters_most: '',
+    who_to_be: '',
+    one_action: '',
   });
   const [top3First, setTop3First] = useState('');
   const [top3Second, setTop3Second] = useState('');
@@ -122,10 +120,9 @@ export default function MorningProcessPage() {
         if (noteData && !noteData.error) {
           setDailyNote(noteData);
           setReflection({
-            showed_up: noteData.reflection_showed_up || '',
-            fell_short: noteData.reflection_fell_short || '',
-            noticed: noteData.reflection_noticed || '',
-            grateful: noteData.reflection_grateful || '',
+            matters_most: noteData.reflection_matters_most || '',
+            who_to_be: noteData.reflection_who_to_be || '',
+            one_action: noteData.reflection_one_action || '',
           });
           if (noteData.top3_first) setTop3First(noteData.top3_first);
           if (noteData.top3_second) setTop3Second(noteData.top3_second);
@@ -220,7 +217,7 @@ export default function MorningProcessPage() {
                 <Sun size={24} className="text-amber-500" />
                 Daily Note &amp; Reflection
               </h2>
-              <p className="text-muted mt-1">Good morning. Take a breath, then reflect on yesterday.</p>
+              <p className="text-muted mt-1">Good morning. Take a breath, then set your intention for today.</p>
             </div>
 
             {/* Yesterday's "tomorrow" field */}
@@ -233,48 +230,38 @@ export default function MorningProcessPage() {
               </div>
             )}
 
-            {/* Reflection fields */}
+            {/* Morning reflection fields */}
             <div className="bg-card rounded-xl border border-border p-6 space-y-5">
-              <h3 className="font-semibold text-foreground">Reflection</h3>
+              <h3 className="font-semibold text-foreground">Morning Reflection</h3>
 
               <div>
-                <label className="block text-sm font-medium text-muted mb-1">Where did I show up well yesterday?</label>
+                <label className="block text-sm font-medium text-muted mb-1">What matters most today?</label>
                 <textarea
                   rows={2}
-                  value={reflection.showed_up}
-                  onChange={(e) => setReflection((r) => ({ ...r, showed_up: e.target.value }))}
+                  value={reflection.matters_most}
+                  onChange={(e) => setReflection((r) => ({ ...r, matters_most: e.target.value }))}
                   className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
-                  placeholder="What went well..."
+                  placeholder="Cut through the noise — what's the priority?"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-muted mb-1">Where did I fall short?</label>
+                <label className="block text-sm font-medium text-muted mb-1">Who do I want to be today?</label>
                 <textarea
                   rows={2}
-                  value={reflection.fell_short}
-                  onChange={(e) => setReflection((r) => ({ ...r, fell_short: e.target.value }))}
+                  value={reflection.who_to_be}
+                  onChange={(e) => setReflection((r) => ({ ...r, who_to_be: e.target.value }))}
                   className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
-                  placeholder="What could improve..."
+                  placeholder="Calm, disciplined, courageous, generous, focused..."
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-muted mb-1">What did I notice about myself?</label>
+                <label className="block text-sm font-medium text-muted mb-1">What one action, if completed today, would move my life forward most?</label>
                 <textarea
                   rows={2}
-                  value={reflection.noticed}
-                  onChange={(e) => setReflection((r) => ({ ...r, noticed: e.target.value }))}
+                  value={reflection.one_action}
+                  onChange={(e) => setReflection((r) => ({ ...r, one_action: e.target.value }))}
                   className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
-                  placeholder="Observations, patterns..."
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-muted mb-1">What am I grateful for?</label>
-                <textarea
-                  rows={2}
-                  value={reflection.grateful}
-                  onChange={(e) => setReflection((r) => ({ ...r, grateful: e.target.value }))}
-                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
-                  placeholder="Gratitude..."
+                  placeholder="Progress, not just activity..."
                 />
               </div>
             </div>
@@ -282,10 +269,9 @@ export default function MorningProcessPage() {
             <button
               onClick={async () => {
                 await patchNote({
-                  reflection_showed_up: reflection.showed_up,
-                  reflection_fell_short: reflection.fell_short,
-                  reflection_noticed: reflection.noticed,
-                  reflection_grateful: reflection.grateful,
+                  reflection_matters_most: reflection.matters_most,
+                  reflection_who_to_be: reflection.who_to_be,
+                  reflection_one_action: reflection.one_action,
                 });
                 advance();
               }}
