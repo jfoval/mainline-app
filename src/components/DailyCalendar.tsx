@@ -252,7 +252,7 @@ export default function DailyCalendar({ date }: { date: string }) {
               ) : (
                 <div className="flex items-start gap-3 cursor-pointer" onClick={() => startEdit(block)}>
                   {/* Drag handle */}
-                  <button {...dragHandleProps} className="mt-2 cursor-grab active:cursor-grabbing text-muted/30 hover:text-muted touch-none" onClick={e => e.stopPropagation()}>
+                  <button {...dragHandleProps} aria-label="Drag to reorder" className="mt-2 cursor-grab active:cursor-grabbing text-muted/30 hover:text-muted touch-none" onClick={e => e.stopPropagation()}>
                     <GripVertical size={14} />
                   </button>
                   {/* Time column */}

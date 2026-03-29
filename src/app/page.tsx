@@ -243,6 +243,7 @@ export default function Dashboard() {
                   : 'bg-primary text-white hover:bg-primary/90'
             }`}
             title={isRecording ? 'Tap to stop & save' : 'Quick capture to inbox'}
+            aria-label={isRecording ? 'Stop recording and save' : 'Voice capture to inbox'}
           >
             {captureStatus === 'saved' ? <Check size={22} /> : isRecording ? <MicOff size={22} /> : <Mic size={22} />}
           </button>

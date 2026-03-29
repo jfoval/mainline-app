@@ -38,7 +38,7 @@ function SortableActionItem({ action, onComplete, onDelete }: { action: NextActi
 
   return (
     <div ref={setNodeRef} style={style} className="flex items-start gap-2 p-4 rounded-xl bg-card border border-border group hover:border-primary/30 transition-colors">
-      <button {...attributes} {...listeners} className="mt-1 cursor-grab active:cursor-grabbing text-muted/40 hover:text-muted touch-none">
+      <button {...attributes} {...listeners} aria-label="Drag to reorder" className="mt-1 cursor-grab active:cursor-grabbing text-muted/40 hover:text-muted touch-none">
         <GripVertical size={14} />
       </button>
       <button

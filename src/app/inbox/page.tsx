@@ -167,6 +167,7 @@ export default function InboxPage() {
               : 'border-border bg-card hover:bg-primary/5'
           }`}
           title={isRecording ? 'Click to stop recording' : 'Voice capture'}
+          aria-label={isRecording ? 'Stop recording' : 'Voice capture'}
         >
           {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
         </button>
