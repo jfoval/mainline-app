@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Plus, Trash2, ChevronDown, ChevronRight, BookOpen, Film, Tv, Music, Plane, Gift, FileText, FolderOpen } from 'lucide-react';
 import { useOfflineStore, listItemsStore } from '@/lib/offline';
 import type { ListItem } from '@/lib/offline';
+import { useUndoableAction, useToast } from '@/lib/toast';
 
 interface ReferenceDoc {
   id: string;
@@ -50,6 +51,8 @@ export default function ReferencePage() {
   // When a list is active, query its items from the offline store
   const listParams = activeList ? { type: activeList.type } : { type: '__none__' };
   const { data: items, create, remove } = useOfflineStore(listItemsStore, listParams);
+  const { pendingDeletes } = useToast();
+  const { undoableDelete, undoableFetchDelete } = useUndoableAction();
 
   // Load reference categories on mount
   useEffect(() => {
@@ -94,13 +97,17 @@ export default function ReferencePage() {
     } catch { /* offline */ }
   }
 
-  async function deleteRefDoc(id: string) {
-    try {
-      await fetch(`/api/reference?id=${id}`, { method: 'DELETE' });
-      setRefDocs(refDocs.filter(d => d.id !== id));
-      // If last doc in category, refresh categories
-      if (refDocs.length <= 1) fetchRefCategories();
-    } catch { /* offline */ }
+  function deleteRefDoc(id: string) {
+    const doc = refDocs.find(d => d.id === id);
+    setRefDocs(prev => prev.filter(d => d.id !== id));
+    undoableFetchDelete(id, `/api/reference?id=${id}`, 'Reference deleted', {
+      onUndo: () => {
+        if (doc) setRefDocs(prev => [...prev, doc]);
+      },
+      onSettled: () => {
+        fetchRefCategories();
+      },
+    });
   }
 
   async function addNewCategory() {
@@ -137,8 +144,8 @@ export default function ReferencePage() {
     setShowAdd(false);
   }
 
-  async function deleteItem(id: string) {
-    await remove(id);
+  function deleteItem(id: string) {
+    undoableDelete(id, remove, 'List item deleted');
   }
 
   // ─── Reference Docs Category View ──────────────────────
@@ -200,23 +207,24 @@ export default function ReferencePage() {
   // ─── List Detail View ──────────────────────
   if (activeList) {
     const Icon = activeList.icon;
+    const visibleItems = items.filter(i => !pendingDeletes.has(i.id));
 
     let groupedItems: Record<string, ListItem[]> | null = null;
     if (activeList.tiers) {
       groupedItems = {};
       for (const tier of activeList.tiers) {
-        const tierItems = items.filter(i => i.tier === tier);
+        const tierItems = visibleItems.filter(i => i.tier === tier);
         if (tierItems.length > 0) groupedItems[tier] = tierItems;
       }
-      const noTier = items.filter(i => !i.tier || !activeList.tiers!.includes(i.tier));
+      const noTier = visibleItems.filter(i => !i.tier || !activeList.tiers!.includes(i.tier));
       if (noTier.length > 0) groupedItems['other'] = noTier;
     } else if (activeList.statuses) {
       groupedItems = {};
       for (const status of activeList.statuses) {
-        const statusItems = items.filter(i => i.status === status);
+        const statusItems = visibleItems.filter(i => i.status === status);
         if (statusItems.length > 0) groupedItems[status] = statusItems;
       }
-      const noStatus = items.filter(i => !i.status || !activeList.statuses!.includes(i.status));
+      const noStatus = visibleItems.filter(i => !i.status || !activeList.statuses!.includes(i.status));
       if (noStatus.length > 0) groupedItems['other'] = noStatus;
     }
 
@@ -230,7 +238,7 @@ export default function ReferencePage() {
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Icon size={24} /> {activeList.label}
             </h1>
-            <p className="text-sm text-muted mt-1">{items.length} item{items.length !== 1 ? 's' : ''}</p>
+            <p className="text-sm text-muted mt-1">{visibleItems.length} item{visibleItems.length !== 1 ? 's' : ''}</p>
           </div>
           <button onClick={() => setShowAdd(!showAdd)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary-hover transition-colors">
             <Plus size={18} /> Add
@@ -266,7 +274,7 @@ export default function ReferencePage() {
           </form>
         )}
 
-        {items.length === 0 ? (
+        {visibleItems.length === 0 ? (
           <div className="text-center py-12 text-muted">
             <p>No items yet. Add your first one.</p>
           </div>
@@ -278,7 +286,7 @@ export default function ReferencePage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {items.map(item => (
+            {visibleItems.map(item => (
               <ItemCard key={item.id} item={item} onDelete={deleteItem} />
             ))}
           </div>

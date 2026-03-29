@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Plus, Check, Trash2, Search, GripVertical } from 'lucide-react';
 import { Suspense } from 'react';
 import { useOfflineStore, nextActionsStore, type NextAction } from '@/lib/offline';
+import { useUndoableAction, useToast } from '@/lib/toast';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -111,13 +112,16 @@ function ActionsContent() {
     nextActionsStore,
     { context: activeContext, status: viewMode }
   );
+  const { pendingDeletes } = useToast();
+  const { undoableDelete, undoableStatusChange } = useUndoableAction();
   const [newAction, setNewAction] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [search, setSearch] = useState('');
 
+  const visibleActions = actions.filter(a => !pendingDeletes.has(a.id));
   const filteredActions = search.trim()
-    ? actions.filter(a => a.content.toLowerCase().includes(search.toLowerCase()))
-    : actions;
+    ? visibleActions.filter(a => a.content.toLowerCase().includes(search.toLowerCase()))
+    : visibleActions;
   const [waitingPerson, setWaitingPerson] = useState('');
   const [agendaPerson, setAgendaPerson] = useState('');
 
@@ -146,11 +150,11 @@ function ActionsContent() {
   }
 
   async function completeAction(id: string) {
-    await update({ id, status: 'completed' });
+    await undoableStatusChange(id, 'completed', 'active', update, 'Action completed');
   }
 
-  async function deleteAction(id: string) {
-    await remove(id);
+  function deleteAction(id: string) {
+    undoableDelete(id, remove, 'Action deleted');
   }
 
   const sensors = useSensors(

@@ -14,6 +14,7 @@ import {
   TrendingUp,
   BarChart3,
 } from 'lucide-react';
+import { useUndoableAction } from '@/lib/toast';
 
 interface Discipline {
   id: string;
@@ -65,6 +66,7 @@ export default function DisciplinesPage() {
   const [formFrequency, setFormFrequency] = useState('daily');
   const [formTimeOfDay, setFormTimeOfDay] = useState('morning');
   const [saving, setSaving] = useState(false);
+  const { undoableFetchDelete } = useUndoableAction();
 
   const load = useCallback(async () => {
     try {
@@ -148,10 +150,15 @@ export default function DisciplinesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this discipline? All associated logs will be removed.')) return;
-    await fetch(`/api/disciplines?id=${id}`, { method: 'DELETE' });
-    await load();
+  const handleDelete = (id: string) => {
+    const discipline = disciplines.find(d => d.id === id);
+    setDisciplines(prev => prev.filter(d => d.id !== id));
+    undoableFetchDelete(id, `/api/disciplines?id=${id}`, 'Discipline deleted', {
+      onUndo: () => {
+        if (discipline) setDisciplines(prev => [...prev, discipline]);
+      },
+      onSettled: () => load(),
+    });
   };
 
   const handleToggleActive = async (d: Discipline) => {

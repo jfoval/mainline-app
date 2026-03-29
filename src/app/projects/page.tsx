@@ -5,6 +5,7 @@ import { Plus, AlertTriangle, Archive, ChevronDown, ChevronRight } from 'lucide-
 import Link from 'next/link';
 import { useOfflineStore, projectsStore } from '@/lib/offline';
 import type { Project } from '@/lib/offline';
+import { useUndoableAction } from '@/lib/toast';
 
 const CATEGORIES = [
   'business', 'personal', 'home', 'family', 'health', 'finance', 'learning', 'other'
@@ -21,6 +22,7 @@ export default function ProjectsPage() {
     projectsStore,
     { status: viewStatus }
   );
+  const { undoableStatusChange } = useUndoableAction();
 
   async function addProject(e: React.FormEvent) {
     e.preventDefault();
@@ -37,7 +39,7 @@ export default function ProjectsPage() {
   }
 
   async function archiveProject(id: string) {
-    await update({ id, status: 'archived' });
+    await undoableStatusChange(id, 'archived', viewStatus, update, 'Project archived');
   }
 
   // Group projects by category

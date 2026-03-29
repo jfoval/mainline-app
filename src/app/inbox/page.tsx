@@ -4,17 +4,21 @@ import { useState, useRef } from 'react';
 import { Plus, Trash2, ArrowRight, Mic, MicOff, Play, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useOfflineStore, inboxStore } from '@/lib/offline';
+import { useUndoableAction, useToast } from '@/lib/toast';
 
 export default function InboxPage() {
   const { data: items, create, update, remove } = useOfflineStore(inboxStore);
+  const { pendingDeletes } = useToast();
+  const { undoableDelete } = useUndoableAction();
   const [newItem, setNewItem] = useState('');
   const [search, setSearch] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [voiceError, setVoiceError] = useState<string | null>(null);
 
+  const visibleItems = items.filter(item => !pendingDeletes.has(item.id));
   const filteredItems = search.trim()
-    ? items.filter(item => item.content.toLowerCase().includes(search.toLowerCase()))
-    : items;
+    ? visibleItems.filter(item => item.content.toLowerCase().includes(search.toLowerCase()))
+    : visibleItems;
 
   async function addItem(e: React.FormEvent) {
     e.preventDefault();
@@ -23,8 +27,8 @@ export default function InboxPage() {
     setNewItem('');
   }
 
-  async function deleteItem(id: string) {
-    await remove(id);
+  function deleteItem(id: string) {
+    undoableDelete(id, remove, 'Inbox item deleted');
   }
 
   async function processItem(id: string) {
