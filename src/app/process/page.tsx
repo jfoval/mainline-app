@@ -15,6 +15,7 @@ import {
   Pencil,
   X,
 } from 'lucide-react';
+import CompletionCelebration from '@/components/CompletionCelebration';
 
 // ── Types ────────────────────────────────────────────────────────────
 interface DailyNote {
@@ -35,12 +36,6 @@ interface InboxItem {
   id: string;
   content: string;
   source: string;
-  status: string;
-}
-
-interface Action {
-  content: string;
-  context: string;
   status: string;
 }
 
@@ -86,7 +81,6 @@ export default function MorningProcessPage() {
   const [dailyNote, setDailyNote] = useState<DailyNote | null>(null);
   const [yesterdayNote, setYesterdayNote] = useState<DailyNote | null>(null);
   const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
-  const [actions, setActions] = useState<Action[]>([]);
   const [stalledProjects, setStalledProjects] = useState<{title: string}[]>([]);
 
   // Form state
@@ -113,12 +107,11 @@ export default function MorningProcessPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [noteRes, yesterdayRes, inboxRes, actionsRes, projectsRes, settingsRes] =
+        const [noteRes, yesterdayRes, inboxRes, projectsRes, settingsRes] =
           await Promise.all([
             fetch(`/api/daily-notes?date=${todayStr()}`),
             fetch(`/api/daily-notes?date=${yesterdayStr()}`),
             fetch('/api/inbox'),
-            fetch('/api/actions'),
             fetch('/api/projects?status=active'),
             fetch('/api/settings'),
           ]);
@@ -143,9 +136,6 @@ export default function MorningProcessPage() {
 
         const inboxData = await inboxRes.json();
         setInboxItems(Array.isArray(inboxData) ? inboxData.filter((i: InboxItem) => i.status === 'pending') : []);
-
-        const aData = await actionsRes.json();
-        setActions(Array.isArray(aData) ? aData.filter((a: Action) => a.status === 'active') : []);
 
         const pjData = await projectsRes.json();
         if (Array.isArray(pjData)) {
@@ -531,72 +521,13 @@ export default function MorningProcessPage() {
         );
 
       // ── Step 2: Ready to Work ────────────────────────────────────
-      case 2: {
-        const contextCounts: Record<string, number> = {};
-        actions.forEach((a) => {
-          const ctx = a.context || 'uncategorized';
-          contextCounts[ctx] = (contextCounts[ctx] || 0) + 1;
-        });
-
+      case 2:
         return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <Rocket size={24} className="text-orange-500" />
-                Ready to Work
-              </h2>
-              <p className="text-muted mt-1">You&apos;re set. Here&apos;s your day at a glance.</p>
-            </div>
-
-            {/* Top 3 summary */}
-            <div className="bg-card rounded-xl border border-border p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">Today&apos;s Top 3</h3>
-              <ol className="space-y-3 list-none">
-                <li className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-sm font-bold">1</span>
-                  <span className="text-foreground pt-0.5">{top3First || <span className="text-muted italic">Not set</span>}</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-violet-500/10 text-violet-500 flex items-center justify-center text-sm font-bold">2</span>
-                  <span className="text-foreground pt-0.5">{top3Second || <span className="text-muted italic">Not set</span>}</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center text-sm font-bold">3</span>
-                  <span className="text-foreground pt-0.5">{top3Third || <span className="text-muted italic">Not set</span>}</span>
-                </li>
-              </ol>
-            </div>
-
-            {/* Context actions */}
-            <div className="bg-card rounded-xl border border-border p-6 space-y-3">
-              <h3 className="font-semibold text-foreground">Context Actions Available</h3>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(contextCounts).map(([ctx, count]) => (
-                  <span key={ctx} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-background border border-border text-sm text-foreground">
-                    <span className="font-medium">@{ctx}</span>
-                    <span className="text-muted">{count}</span>
-                  </span>
-                ))}
-                {Object.keys(contextCounts).length === 0 && (
-                  <p className="text-muted text-sm">No active context actions.</p>
-                )}
-              </div>
-              <p className="text-sm text-muted mt-2">
-                {actions.length} active action{actions.length !== 1 ? 's' : ''} across {Object.keys(contextCounts).length} context{Object.keys(contextCounts).length !== 1 ? 's' : ''}
-              </p>
-            </div>
-
-            {/* Start your day */}
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white hover:bg-primary-hover font-semibold text-lg transition-colors"
-            >
-              <Rocket size={20} />
-              Start Your Day
-            </Link>
-          </div>
+          <CompletionCelebration
+            title="You're ready!"
+            subtitle="Go make it a great day."
+          />
         );
-      }
 
       default:
         return null;

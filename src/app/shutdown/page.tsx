@@ -10,6 +10,7 @@ import {
   Loader2,
   Sun,
 } from 'lucide-react';
+import CompletionCelebration from '@/components/CompletionCelebration';
 
 // ── Types ────────────────────────────────────────────────────────────
 interface DailyNote {
@@ -314,79 +315,10 @@ export default function ShutdownPage() {
       // ── Step 2: Day Complete ─────────────────────────────────────
       case 2:
         return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <Moon size={24} className="text-indigo-400" />
-                Day Complete
-              </h2>
-              <p className="text-muted mt-1">Here&apos;s a summary of your shutdown routine.</p>
-            </div>
-
-            {/* Summary */}
-            <div className="bg-card rounded-xl border border-border p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">Shutdown Summary</h3>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-background border border-border">
-                <Inbox size={18} className="text-blue-500" />
-                <div>
-                  <p className="text-sm text-muted">Items Captured</p>
-                  <p className="text-lg font-semibold text-foreground">{capturedCount}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Top 3 mini-reflection */}
-            <div className="bg-card rounded-xl border border-border p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">Today&apos;s Top 3 &mdash; Did you get to them?</h3>
-              <ol className="space-y-3 list-none">
-                <li className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-sm font-bold">
-                    1
-                  </span>
-                  <span className="text-foreground pt-0.5">
-                    {dailyNote?.top3_first || (
-                      <span className="text-muted italic">Not set</span>
-                    )}
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-violet-500/10 text-violet-500 flex items-center justify-center text-sm font-bold">
-                    2
-                  </span>
-                  <span className="text-foreground pt-0.5">
-                    {dailyNote?.top3_second || (
-                      <span className="text-muted italic">Not set</span>
-                    )}
-                  </span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center text-sm font-bold">
-                    3
-                  </span>
-                  <span className="text-foreground pt-0.5">
-                    {dailyNote?.top3_third || (
-                      <span className="text-muted italic">Not set</span>
-                    )}
-                  </span>
-                </li>
-              </ol>
-            </div>
-
-            {/* Shutdown complete celebration */}
-            <div className="bg-gradient-to-b from-indigo-500/10 to-card rounded-xl border border-indigo-200 p-10 text-center space-y-4">
-              <div className="text-5xl mb-2">🌙</div>
-              <h3 className="text-2xl font-bold text-foreground">
-                Shutdown Complete
-              </h3>
-              <p className="text-muted text-lg">
-                Your mind is clear. Enjoy your evening.
-              </p>
-              <div className="flex items-center justify-center gap-1.5 text-sm text-indigo-500 font-medium pt-2">
-                <Check size={16} />
-                All open loops captured and organized
-              </div>
-            </div>
-          </div>
+          <CompletionCelebration
+            title="Shutdown Complete"
+            subtitle="Your mind is clear. Enjoy your evening."
+          />
         );
 
       default:
