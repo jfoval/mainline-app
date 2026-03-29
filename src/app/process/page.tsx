@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   Sun,
   Inbox,
-  ListChecks,
+
   Target,
   Rocket,
   Check,
@@ -68,7 +68,6 @@ interface InboxType {
 const STEPS = [
   { id: 'reflection', label: 'Daily Note & Reflection', icon: Sun },
   { id: 'inbox', label: 'Process Inbox', icon: Inbox },
-  { id: 'top3', label: 'Pick Top 3', icon: ListChecks },
   { id: 'disciplines', label: 'Disciplines', icon: Target },
   { id: 'ready', label: 'Ready to Work', icon: Rocket },
 ];
@@ -110,7 +109,6 @@ export default function MorningProcessPage() {
   const [reflection, setReflection] = useState({
     matters_most: '',
     who_to_be: '',
-    one_action: '',
   });
   const [top3First, setTop3First] = useState('');
   const [top3Second, setTop3Second] = useState('');
@@ -152,9 +150,8 @@ export default function MorningProcessPage() {
           setReflection({
             matters_most: noteData.reflection_matters_most || '',
             who_to_be: noteData.reflection_who_to_be || '',
-            one_action: noteData.reflection_one_action || '',
           });
-          if (noteData.top3_first) setTop3First(noteData.top3_first);
+          setTop3First(noteData.top3_first || noteData.reflection_one_action || '');
           if (noteData.top3_second) setTop3Second(noteData.top3_second);
           if (noteData.top3_third) setTop3Third(noteData.top3_third);
           if (noteData.inbox_checks) {
@@ -332,6 +329,15 @@ export default function MorningProcessPage() {
               </div>
             )}
 
+            {stalledProjects.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <h3 className="text-sm font-semibold text-red-800 mb-1">{stalledProjects.length} stalled project{stalledProjects.length !== 1 ? 's' : ''} (no next action)</h3>
+                <ul className="text-xs text-red-600 list-disc ml-5">
+                  {stalledProjects.map((p, i) => <li key={i}>{p.title}</li>)}
+                </ul>
+              </div>
+            )}
+
             {/* Morning reflection fields */}
             <div className="bg-card rounded-xl border border-border p-6 space-y-5">
               <h3 className="font-semibold text-foreground">Morning Reflection</h3>
@@ -356,14 +362,35 @@ export default function MorningProcessPage() {
                   placeholder="Calm, disciplined, courageous, generous, focused..."
                 />
               </div>
+              <h3 className="font-semibold text-foreground pt-2">Today&apos;s Top 3</h3>
               <div>
-                <label className="block text-sm font-medium text-muted mb-1">What one action, if completed today, would move my life forward most?</label>
+                <label className="block text-sm font-semibold text-foreground mb-1">#1 — What one action, if completed today, would move my life forward most?</label>
                 <textarea
                   rows={2}
-                  value={reflection.one_action}
-                  onChange={(e) => setReflection((r) => ({ ...r, one_action: e.target.value }))}
+                  value={top3First}
+                  onChange={(e) => setTop3First(e.target.value)}
                   className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
                   placeholder="Progress, not just activity..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1">#2 — Second most important</label>
+                <textarea
+                  rows={2}
+                  value={top3Second}
+                  onChange={(e) => setTop3Second(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                  placeholder="Second most important outcome for today..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-foreground mb-1">#3 — Third most important</label>
+                <textarea
+                  rows={2}
+                  value={top3Third}
+                  onChange={(e) => setTop3Third(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                  placeholder="Third most important outcome for today..."
                 />
               </div>
             </div>
@@ -373,7 +400,10 @@ export default function MorningProcessPage() {
                 await patchNote({
                   reflection_matters_most: reflection.matters_most,
                   reflection_who_to_be: reflection.who_to_be,
-                  reflection_one_action: reflection.one_action,
+                  reflection_one_action: top3First.trim(),
+                  top3_first: top3First.trim(),
+                  top3_second: top3Second.trim(),
+                  top3_third: top3Third.trim(),
                 });
                 advance();
               }}
@@ -530,87 +560,8 @@ export default function MorningProcessPage() {
           </div>
         );
 
-      // ── Step 2: Pick Top 3 ───────────────────────────────────────
-      case 2:
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <ListChecks size={24} className="text-violet-500" />
-                Pick Your Top 3
-              </h2>
-              <p className="text-muted mt-1">
-                What three outcomes would make today a win?
-              </p>
-            </div>
-
-            {stalledProjects.length > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                <h3 className="text-sm font-semibold text-red-800 mb-1">{stalledProjects.length} stalled project{stalledProjects.length !== 1 ? 's' : ''} (no next action)</h3>
-                <ul className="text-xs text-red-600 list-disc ml-5">
-                  {stalledProjects.map((p, i) => <li key={i}>{p.title}</li>)}
-                </ul>
-              </div>
-            )}
-
-            <div className="bg-card rounded-xl border border-border p-6 space-y-5">
-              {/* Slot 1 */}
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-1">#1 — Most important</label>
-                <textarea
-                  rows={2}
-                  value={top3First}
-                  onChange={(e) => setTop3First(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
-                  placeholder="The single most important outcome for today..."
-                />
-              </div>
-
-              {/* Slot 2 */}
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-1">#2</label>
-                <textarea
-                  rows={2}
-                  value={top3Second}
-                  onChange={(e) => setTop3Second(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
-                  placeholder="Second most important outcome for today..."
-                />
-              </div>
-
-              {/* Slot 3 */}
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-1">#3</label>
-                <textarea
-                  rows={2}
-                  value={top3Third}
-                  onChange={(e) => setTop3Third(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
-                  placeholder="Third most important outcome for today..."
-                />
-              </div>
-            </div>
-
-            <button
-              onClick={async () => {
-                await patchNote({
-                  top3_first: top3First.trim(),
-                  top3_second: top3Second.trim(),
-                  top3_third: top3Third.trim(),
-                });
-                advance();
-              }}
-              disabled={saving}
-              className="px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-hover disabled:opacity-50 flex items-center gap-2 font-medium transition-colors"
-            >
-              {saving ? <Loader2 size={16} className="animate-spin" /> : <ChevronRight size={16} />}
-              Save Top 3 &amp; Continue
-            </button>
-          </div>
-        );
-
-      // ── Step 3: Today's Disciplines ───────────────────────────────
-      case 3: {
+      // ── Step 2: Today's Disciplines ───────────────────────────────
+      case 2: {
         const toggleDiscipline = async (disciplineId: string) => {
           const existing = disciplineLogs.find(l => l.discipline_id === disciplineId);
           const newCompleted = existing?.completed === 1 ? 0 : 1;
@@ -701,8 +652,8 @@ export default function MorningProcessPage() {
         );
       }
 
-      // ── Step 4: Ready to Work ────────────────────────────────────
-      case 4: {
+      // ── Step 3: Ready to Work ────────────────────────────────────
+      case 3: {
         const contextCounts: Record<string, number> = {};
         actions.forEach((a) => {
           const ctx = a.context || 'uncategorized';

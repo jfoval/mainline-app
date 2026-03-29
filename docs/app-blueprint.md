@@ -79,7 +79,7 @@ A self-deployed personal productivity app. Each customer gets their own instance
 ## What's Built (18+ pages, ~30 API routes)
 
 ### Daily Workflows
-- **Morning Process** (`/process`) — 5-step guided flow: forward-looking reflection (what matters most, who to be, one action) → inbox with **inbox type checkboxes** (Physical/Work Email/Personal Email, user-configurable via gear icon; check state saves to `daily_notes.inbox_checks`) → top 3 → disciplines → ready (navigates to dashboard `/`)
+- **Morning Process** (`/process`) — 4-step guided flow: daily note & reflection (what matters most, who to be) + **Top 3 priorities inline** (#1 = "one action to move forward most", #2, #3; stalled projects flagged) → inbox with **inbox type checkboxes** (Physical/Work Email/Personal Email, user-configurable via gear icon; check state saves to `daily_notes.inbox_checks`) → disciplines → ready (navigates to dashboard `/`)
 - **Shutdown** (`/shutdown`) — 5-step: capture sweep → disciplines check-in → evening reflection (did well, fell short, do differently) → write tomorrow → day complete (celebration screen with summary)
 - **Dashboard** (`/`) — **Quick Stats above Now/Up Next** (new order: stats → Now/Up Next → Top 3 → Disciplines → Next Actions → Daily Calendar). Mini timeline, voice capture, refresh button with spinner.
 
@@ -222,11 +222,10 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 ## Daily Workflow
 
 ### Morning (7:30-8:00) — Morning Process page
-1. Forward-looking reflection — "What matters most today?", "Who do I want to be today?", "What one action would move my life forward most?"
+1. Daily Note & Reflection — "What matters most today?", "Who do I want to be today?", then Top 3 priorities inline: #1 = "What one action would move my life forward most?", #2 and #3 for next most important outcomes. Stalled projects flagged.
 2. Process inbox — every item through decision tree. Also check physical desk inbox.
-3. Revenue focus — app shows pipeline + warm leads. Pick highest-leverage revenue move.
-4. Pick Top 3 — slot 1 = revenue focus. Slots 2-3 = other priorities.
-5. Ready to work — summary of Top 3, context action counts.
+3. Disciplines — check off morning disciplines.
+4. Ready to work — summary of Top 3, context action counts.
 
 ### During the day
 - Check @work list during work blocks

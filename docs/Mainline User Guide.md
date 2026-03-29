@@ -49,13 +49,12 @@ The app is designed around three daily touchpoints.
 
 ### Morning (15–30 minutes)
 
-Open **Morning Process** from the sidebar. It walks you through 5 steps:
+Open **Morning Process** from the sidebar. It walks you through 4 steps:
 
-1. **Reflection** — Three forward-looking questions: What matters most today? Who do I want to be today? What one action would move my life forward most?
+1. **Daily Note & Reflection** — Two forward-looking reflection questions (What matters most today? Who do I want to be today?) followed by your Top 3 priorities: #1 asks "What one action, if completed today, would move my life forward most?", then #2 and #3 for second and third most important outcomes. Stalled projects (no next action) are flagged here too.
 2. **Process Inbox** — Work through every inbox item using the decision tree. A checklist shows your configured inbox types (Physical, Work Email, Personal Email, etc.) — check each one off as you clear it. Tap the gear icon to add, edit, or delete inbox types. The check state saves daily so you can see what you've cleared.
-3. **Review Projects** — Scan active projects for stalled ones (no next action).
-4. **Pick Top 3** — Choose your three most important outcomes for today.
-5. **Ready to Work** — See your Top 3, context counts, and today's schedule. Hit "Start Your Day" to go to the dashboard.
+3. **Disciplines** — Check off your morning disciplines.
+4. **Ready to Work** — See your Top 3, context counts, and today's schedule. Hit "Start Your Day" to go to the dashboard.
 
 ### During the Day
 

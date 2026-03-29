@@ -76,7 +76,10 @@ export default function JournalPage() {
     const fields: { label: string; value: string }[] = [];
     if (dailyNote.reflection_matters_most) fields.push({ label: 'What matters most today', value: dailyNote.reflection_matters_most });
     if (dailyNote.reflection_who_to_be) fields.push({ label: 'Who I want to be today', value: dailyNote.reflection_who_to_be });
-    if (dailyNote.reflection_one_action) fields.push({ label: 'One action to move forward', value: dailyNote.reflection_one_action });
+    const topAction = dailyNote.top3_first || dailyNote.reflection_one_action;
+    if (topAction) fields.push({ label: '#1 — Most important action', value: topAction });
+    if (dailyNote.top3_second) fields.push({ label: '#2 — Second most important', value: dailyNote.top3_second });
+    if (dailyNote.top3_third) fields.push({ label: '#3 — Third most important', value: dailyNote.top3_third });
     return fields;
   }, [dailyNote]);
 
