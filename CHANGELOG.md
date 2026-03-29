@@ -2,6 +2,16 @@
 
 All notable changes to Mainline will be documented here.
 
+## [0.3.0] - 2026-03-28
+
+### Added
+- Test suite with 66 tests across 5 modules (time-utils, api-helpers, version, pattern-resolver, session-validity)
+- Web Speech API TypeScript type declarations (`src/types/speech-recognition.d.ts`)
+- Mainline User Guide rewritten as markdown (`docs/Mainline User Guide.md`) — covers all features including dark mode, search, keyboard shortcuts, timezone, offline sync, settings, and deployment
+
+### Changed
+- Removed `window as any` casts in voice capture (dashboard and inbox) — replaced with proper typed interfaces
+
 ## [0.2.0] - 2026-03-28
 
 ### Fixed
