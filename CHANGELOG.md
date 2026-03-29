@@ -2,6 +2,20 @@
 
 All notable changes to Mainline will be documented here.
 
+## [0.5.0] - 2026-03-28
+
+### Added
+- **Journal page** (`/journal`) — combined daily view of morning reflections, free-form journal entries, and evening reflections. Date navigation with prev/next day, date picker, and Today button.
+- **Journal entries** — free-form text entries with optional tags (gratitude, idea, lesson, goal, win, struggle, or custom). Inline editing and undoable deletes via the toast system.
+- **Morning/evening reflection cards** — read-only display of daily reflection data from Morning Process and Shutdown, with links to edit in their respective flows. Amber border for morning, indigo for evening.
+- **AI Journal Insights** — "Analyze Recent Entries" button that sends the last 14 days of journal entries and daily reflections to Claude for pattern analysis, theme identification, and actionable suggestions.
+- **Offline-first journal** — full offline support with Dexie v8 IndexedDB table, sync queue integration, and incremental sync.
+- New migration v13: `journal_entries` table (id, entry_date, content, tag, created_at, updated_at)
+- New API: `/api/journal` with GET/POST/PATCH/DELETE
+- Sidebar: Journal nav item (NotebookPen icon) between Disciplines and Horizons
+
+---
+
 ## [0.4.1] - 2026-03-28
 
 ### Added

@@ -11,6 +11,7 @@ A personal productivity system built on capture, organize, act. Deploy your own 
 - **Projects** — multi-step outcomes with linked actions and stalled project alerts
 - **Ideal Calendar** — multi-week pattern rotation (e.g., alternating A/B week schedules)
 - **Disciplines & Values** — track daily habits and aspirational values with streaks and stats
+- **Journal** — daily reflection + free-form entries with tags and AI-powered insights
 - **Weekly Review** — guided review process
 - **AI Assistant** — powered by Claude (bring your own Anthropic API key, optional)
 - **Offline-first** — works without internet, syncs when back online

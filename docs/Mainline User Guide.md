@@ -2,7 +2,7 @@
 
 Your complete productivity system in one app.
 
-**Version 0.2.0 · March 2026**
+**Version 0.5.0 · March 2026**
 
 ---
 
@@ -51,7 +51,7 @@ The app is designed around three daily touchpoints.
 
 Open **Morning Process** from the sidebar. It walks you through 5 steps:
 
-1. **Reflection** — Answer 4 questions about yesterday (where you showed up, fell short, noticed, and are grateful for). Yesterday's note is shown for context.
+1. **Reflection** — Three forward-looking questions: What matters most today? Who do I want to be today? What one action would move my life forward most?
 2. **Process Inbox** — Work through every inbox item using the decision tree. The app reminds you to check physical inboxes too.
 3. **Review Projects** — Scan active projects for stalled ones (no next action).
 4. **Pick Top 3** — Choose your three most important outcomes for today.
@@ -66,11 +66,13 @@ Open **Morning Process** from the sidebar. It walks you through 5 steps:
 
 ### Shutdown (10–15 minutes)
 
-Open **Shutdown** from the sidebar. 3 steps:
+Open **Shutdown** from the sidebar. 5 steps:
 
 1. **Capture Sweep** — Add anything still in your head from today
-2. **Write Tomorrow** — Note what you need to prep for tomorrow
-3. **Day Complete** — See your Top 3 reflection and a summary of the day
+2. **Disciplines Check-In** — Review today's discipline completions
+3. **Evening Reflection** — What did I do well? Where did I fall short? What will I do differently tomorrow?
+4. **Write Tomorrow** — Note what you need to prep for tomorrow
+5. **Day Complete** — See your Top 3 reflection and a summary of the day
 
 ---
 
@@ -170,6 +172,34 @@ Daily habit tracking. Each discipline shows:
 - 30-day completion rate
 
 Add disciplines from the settings area on the page. No judgment — it's a tool, not a scorecard.
+
+---
+
+### Journal (`/journal`)
+
+Your daily journal — a combined view of reflections and free-form writing.
+
+**What you see each day:**
+- **Morning Reflection** (amber card) — read-only display of your morning reflection answers. Link to edit them in Morning Process.
+- **Journal Entries** — your free-form writing for the day. Add as many entries as you like.
+- **Evening Reflection** (indigo card) — read-only display of your evening reflection answers. Link to edit them in Shutdown Routine.
+
+**Writing entries:**
+- Tap **+ Add Entry** to start writing
+- Optionally tag your entry: gratitude, idea, lesson, goal, win, struggle, or type a custom tag
+- Tags appear as colored badges on each entry
+- Edit or delete any entry with the pencil and trash icons
+- Deleting shows an undo toast — tap Undo to restore
+
+**Date navigation:**
+- Use the left/right arrows to move between days
+- Tap the date to open a date picker
+- The **Today** pill jumps back to the current date
+
+**AI Insights:**
+- Tap **Analyze Recent Entries** at the bottom of the page
+- Claude reviews your last 14 days of journal entries and daily reflections
+- Returns insights about recurring themes, emotional patterns, progress toward goals, strengths, struggles, and one actionable suggestion
 
 ---
 

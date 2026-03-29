@@ -2,7 +2,7 @@
 ## Personal Productivity System
 
 **Last updated:** 2026-03-28
-**Status:** Production-ready. Deployed on Vercel. 18+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v10. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v011. 70+ tests. HTTP security headers. Error boundary + 404 page. Backup restore SQL injection hardened. Sync data-loss fix.
+**Status:** Production-ready. Deployed on Vercel. 19+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v10. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v013. Journal with AI insights. 70+ tests. HTTP security headers. Error boundary + 404 page. Backup restore SQL injection hardened. Sync data-loss fix.
 
 ---
 
@@ -79,8 +79,8 @@ A self-deployed personal productivity app. Each customer gets their own instance
 ## What's Built (18+ pages, ~30 API routes)
 
 ### Daily Workflows
-- **Morning Process** (`/process`) — 5-step guided flow: reflection → inbox (with physical desk reminder) → top 3 → disciplines → ready
-- **Shutdown** (`/shutdown`) — 4-step: capture sweep → disciplines check-in → write tomorrow → day complete (celebration screen with summary)
+- **Morning Process** (`/process`) — 5-step guided flow: forward-looking reflection (what matters most, who to be, one action) → inbox (with physical desk reminder) → top 3 → disciplines → ready
+- **Shutdown** (`/shutdown`) — 5-step: capture sweep → disciplines check-in → evening reflection (did well, fell short, do differently) → write tomorrow → day complete (celebration screen with summary)
 - **Dashboard** (`/`) — mini timeline of today's schedule, Now/Up Next blocks, stats, Top 3, disciplines, next actions by context, daily calendar. Caches offline with stale-data banner. Voice capture. Refresh button with spinner.
 
 ### Core Productivity
@@ -95,6 +95,7 @@ A self-deployed personal productivity app. Each customer gets their own instance
 - **Disciplines** (`/disciplines`) — daily habit/value tracking with streaks and completion percentages
 
 ### Life System
+- **Journal** (`/journal`) — combined daily view: morning reflections (read-only), free-form journal entries (create/edit/delete with tags), evening reflections (read-only). Date navigation. AI Insights analyzes last 14 days for patterns and themes.
 - **Horizons** (`/horizons`) — purpose, vision, goals, areas of focus, growth intentions
 - **Reference/Lists** (`/reference`) — wish list (3 tiers), reading (3 statuses), movies, shows, albums, travel
 
@@ -169,8 +170,8 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 - **Local notifications** — Notification API for inbox overflow and stalled projects (quiet hours 9pm-7am, 30-min interval)
 - **Update notifications** — checks upstream GitHub repo for newer versions (24h client cache, 1h server cache), shows indigo banner with "How to Update" modal guiding users through GitHub fork sync. Settings → About shows current version + manual check button. Version injected at build time via `NEXT_PUBLIC_APP_VERSION` from package.json.
 
-### Tables mirrored in IndexedDB (11)
-`next_actions`, `inbox_items`, `list_items`, `projects`, `daily_notes`, `routine_blocks`, `reference_docs`, `disciplines`, `discipline_logs`, `context_lists`, `daily_blocks`
+### Tables mirrored in IndexedDB (12)
+`next_actions`, `inbox_items`, `list_items`, `projects`, `daily_notes`, `routine_blocks`, `reference_docs`, `disciplines`, `discipline_logs`, `context_lists`, `daily_blocks`, `journal_entries`
 
 ### What works offline on mobile
 - View and check off next actions (all context lists)
@@ -189,7 +190,7 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 
 ### Migration System
 - `src/lib/migrations/runner.ts` — embedded SQL migrations (Postgres dialect), `schema_version` table tracks applied versions
-- 11 migrations applied: baseline through daily_blocks, disciplines, context_lists, updated_at backfill, legacy table cleanup
+- 13 migrations applied: baseline through daily_blocks, disciplines, context_lists, updated_at backfill, legacy table cleanup, reflection questions, journal_entries
 - Note: Neon HTTP driver is stateless — each `sql.query()` is an independent request. DDL auto-commits in Postgres. No cross-query transactions.
 
 ### Database Durability
@@ -221,7 +222,7 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 ## Daily Workflow
 
 ### Morning (7:30-8:00) — Morning Process page
-1. Check yesterday's "Tomorrow." Answer 4 reflection questions.
+1. Forward-looking reflection — "What matters most today?", "Who do I want to be today?", "What one action would move my life forward most?"
 2. Process inbox — every item through decision tree. Also check physical desk inbox.
 3. Revenue focus — app shows pipeline + warm leads. Pick highest-leverage revenue move.
 4. Pick Top 3 — slot 1 = revenue focus. Slots 2-3 = other priorities.
@@ -236,8 +237,10 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 
 ### Shutdown (4:45-5:00) — Shutdown page
 1. Capture sweep — anything uncaptured from today?
-2. Write Tomorrow — check calendar, note prep needs.
-3. Day complete — see Top 3 reflection. You're off.
+2. Disciplines check-in — review today's discipline completions
+3. Evening reflection — "What did I do well?", "Where did I fall short, and why?", "What will I do differently tomorrow?"
+4. Write Tomorrow — check calendar, note prep needs.
+5. Day complete — see Top 3 reflection. You're off.
 
 ### Evening
 - @prayers during God time
