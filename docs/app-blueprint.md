@@ -79,8 +79,8 @@ A self-deployed personal productivity app. Each customer gets their own instance
 ## What's Built (18+ pages, ~30 API routes)
 
 ### Daily Workflows
-- **Morning Process** (`/process`) — 4-step guided flow: daily note & reflection (what matters most, who to be) + **Top 3 priorities inline** (#1 = "one action to move forward most", #2, #3; stalled projects flagged) → inbox with **inbox type checkboxes** (Physical/Work Email/Personal Email, user-configurable via gear icon; check state saves to `daily_notes.inbox_checks`) → disciplines → ready (navigates to dashboard `/`)
-- **Shutdown** (`/shutdown`) — 5-step: capture sweep → disciplines check-in → evening reflection (did well, fell short, do differently) → write tomorrow → day complete (celebration screen with summary)
+- **Morning Process** (`/process`) — 3-step guided flow: daily note & reflection (what matters most, who to be) + **Top 3 priorities inline** (#1 = "one action to move forward most", #2, #3; stalled projects flagged) → inbox with **inbox type checkboxes** (Physical/Work Email/Personal Email, user-configurable via gear icon; check state saves to `daily_notes.inbox_checks`) → animated completion celebration (auto-redirects to dashboard)
+- **Shutdown** (`/shutdown`) — 3-step: capture sweep → evening reflection (did well, fell short, do differently) → animated completion celebration (auto-redirects to dashboard)
 - **Dashboard** (`/`) — **Quick Stats above Now/Up Next** (new order: stats → Now/Up Next → Top 3 → Disciplines → Next Actions → Daily Calendar). Mini timeline, voice capture, refresh button with spinner.
 
 ### Core Productivity
@@ -224,8 +224,7 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 ### Morning (7:30-8:00) — Morning Process page
 1. Daily Note & Reflection — "What matters most today?", "Who do I want to be today?", then Top 3 priorities inline: #1 = "What one action would move my life forward most?", #2 and #3 for next most important outcomes. Stalled projects flagged.
 2. Process inbox — every item through decision tree. Also check physical desk inbox.
-3. Disciplines — check off morning disciplines.
-4. Ready to work — summary of Top 3, context action counts.
+3. Completion animation — animated checkmark celebration, auto-redirects to dashboard.
 
 ### During the day
 - Check @work list during work blocks
@@ -236,10 +235,8 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 
 ### Shutdown (4:45-5:00) — Shutdown page
 1. Capture sweep — anything uncaptured from today?
-2. Disciplines check-in — review today's discipline completions
-3. Evening reflection — "What did I do well?", "Where did I fall short, and why?", "What will I do differently tomorrow?"
-4. Write Tomorrow — check calendar, note prep needs.
-5. Day complete — see Top 3 reflection. You're off.
+2. Evening reflection — "What did I do well?", "Where did I fall short, and why?", "What will I do differently tomorrow?"
+3. Completion animation — animated checkmark celebration, auto-redirects to dashboard.
 
 ### Evening
 - @prayers during God time
