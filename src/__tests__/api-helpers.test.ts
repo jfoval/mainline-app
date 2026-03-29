@@ -140,16 +140,18 @@ describe('getTimezone / setTimezone', () => {
     expect(getTimezone()).toBe('America/New_York');
   });
 
-  it('uses TIMEZONE env var when set', () => {
-    setTimezone('America/Chicago'); // reset cache
+  it('reads TIMEZONE env var when cache is cleared (falsy)', () => {
+    // setTimezone('') makes the cache falsy, so the next getTimezone() call
+    // falls through to read from process.env.TIMEZONE.
     process.env.TIMEZONE = 'America/Los_Angeles';
-    // Force cache miss by resetting
-    setTimezone(''); // empty triggers re-read on next call won't happen here
-    // getTimezone uses the cached value; env var is only read when cache is empty (null)
-    // The env-var path is tested by resetting the module-level cache via setTimezone with a falsy:
-    // Since getTimezone only re-reads env when _cachedTimezone is null/falsy, test from a module reset:
-    // We verify that setTimezone('America/Los_Angeles') works, which is equivalent
-    setTimezone('America/Los_Angeles');
+    setTimezone(''); // clear cache (empty string is falsy)
     expect(getTimezone()).toBe('America/Los_Angeles');
+    delete process.env.TIMEZONE;
+  });
+
+  it('falls back to America/Chicago when no env var and cache is cleared', () => {
+    delete process.env.TIMEZONE;
+    setTimezone(''); // clear cache
+    expect(getTimezone()).toBe('America/Chicago');
   });
 });
