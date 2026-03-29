@@ -13,6 +13,7 @@ const INITIAL_SYNC_FAILED_KEY = 'mainline_initial_sync_failed';
 const INCREMENTAL_SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 let incrementalSyncTimer: ReturnType<typeof setInterval> | null = null;
 let reconnectListenerAttached = false;
+let syncInProgress = false;
 
 export function hasInitialSyncFailed(): boolean {
   try {
@@ -124,12 +125,15 @@ export async function performInitialSync(): Promise<void> {
 
 /** Perform an incremental sync — re-fetch all data from server to refresh local cache */
 export async function performIncrementalSync(): Promise<void> {
-  if (!navigator.onLine) return;
+  if (!navigator.onLine || syncInProgress) return;
 
+  syncInProgress = true;
   try {
     await fetchAllData();
   } catch {
     // Silently fail — we'll retry on next interval or reconnect
+  } finally {
+    syncInProgress = false;
   }
 }
 

@@ -91,7 +91,11 @@ export function nowCentral() {
     weekday: 'long',
   }).formatToParts(now);
 
-  const get = (type: string) => parts.find(p => p.type === type)!.value;
+  const get = (type: string) => {
+    const part = parts.find(p => p.type === type);
+    if (!part) throw new Error(`[nowCentral] Missing date part "${type}" for timezone "${tz}"`);
+    return part.value;
+  };
 
   const year = Number(get('year'));
   const month = Number(get('month'));

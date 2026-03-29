@@ -69,7 +69,8 @@ export async function PATCH(req: NextRequest) {
     );
 
     const rows = await sql`SELECT * FROM context_lists WHERE id = ${id}`;
-    return NextResponse.json(rows[0] || { id });
+    if (!rows[0]) return NextResponse.json({ error: 'Record not found after update' }, { status: 404 });
+    return NextResponse.json(rows[0]);
   } catch (err) {
     console.error('PATCH /api/context-lists error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

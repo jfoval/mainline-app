@@ -67,14 +67,39 @@ export function useOfflineQuery<T>(
 
       if (serverData.length > 0 || json !== undefined) {
         const dexieTable = offlineDb.table(table);
+
+        // Read pending queue IDs before the transaction so we don't wipe
+        // locally-created items that haven't synced to the server yet.
+        const pendingEntries = await offlineDb.sync_queue.toArray();
+        const pendingIds = new Set(
+          pendingEntries.flatMap(e => {
+            try { return e.body ? [JSON.parse(e.body)?.id].filter(Boolean) : []; }
+            catch { return []; }
+          })
+        );
+
         await offlineDb.transaction('rw', dexieTable, async () => {
-          // For full-table syncs, replace all data
-          // For filtered queries, just upsert
+          // For full-table syncs: delete records absent from server response,
+          // but preserve any record with a pending local mutation (not yet synced).
           if (!params || Object.keys(params).length === 0) {
-            await dexieTable.clear();
+            const serverIds = new Set(
+              serverData.map((item: { id?: string }) => item.id).filter(Boolean)
+            );
+            const allLocal = await dexieTable.toArray();
+            const staleIds = (allLocal as { id?: string }[])
+              .map(item => item.id)
+              .filter((id): id is string => !!id && !serverIds.has(id) && !pendingIds.has(id));
+            if (staleIds.length > 0) {
+              await dexieTable.bulkDelete(staleIds);
+            }
           }
-          if (serverData.length > 0) {
-            await dexieTable.bulkPut(serverData);
+          // Upsert server data, skipping records with pending local mutations
+          // to avoid overwriting unsaved changes with stale server state.
+          const toWrite = (!params || Object.keys(params).length === 0)
+            ? serverData.filter((item: { id?: string }) => !pendingIds.has(item.id))
+            : serverData;
+          if (toWrite.length > 0) {
+            await dexieTable.bulkPut(toWrite);
           }
         });
 

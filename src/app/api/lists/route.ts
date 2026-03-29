@@ -41,9 +41,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'list_type is required' }, { status: 400 });
     }
 
+    const now = nowLocal();
     await sql`
-      INSERT INTO list_items (id, list_type, title, tier, status, url, notes)
-      VALUES (${id}, ${list_type}, ${title}, ${tier || null}, ${status || null}, ${url || null}, ${notes || null})
+      INSERT INTO list_items (id, list_type, title, tier, status, url, notes, created_at, updated_at)
+      VALUES (${id}, ${list_type}, ${title}, ${tier || null}, ${status || null}, ${url || null}, ${notes || null}, ${now}, ${now})
     `;
 
     const rows = await sql`SELECT * FROM list_items WHERE id = ${id}`;

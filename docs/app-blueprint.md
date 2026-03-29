@@ -2,7 +2,7 @@
 ## Personal Productivity System
 
 **Last updated:** 2026-03-28
-**Status:** Production-ready. Deployed on Vercel. 18+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v10. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v011.
+**Status:** Production-ready. Deployed on Vercel. 18+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v10. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v011. 70+ tests. HTTP security headers. Error boundary + 404 page. Backup restore SQL injection hardened. Sync data-loss fix.
 
 ---
 
@@ -118,7 +118,6 @@ A self-deployed personal productivity app. Each customer gets their own instance
 - **Google Calendar integration** — event display, prep prompts
 - **One-on-one rotation tracking** — which kid gets 1:1 time
 - **Brain dump mode** — guided initial system population
-- **Test suite** — automated tests
 - **Custom domain** — optional, Vercel supports it
 
 ---
@@ -161,10 +160,11 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 - **SyncStatus pill** — red "Offline" / orange "Syncing X..." in bottom-right corner
 - **Service worker v10** — caches app shell + key pages, versioned cache for deploy cache busting, notification click handler
 - **Initial sync** — first visit hydrates all priority tables from server (30s timeout per fetch)
-- **Incremental sync** — refreshes all data every 5 minutes while online
+- **Incremental sync** — refreshes all data every 5 minutes while online; `syncInProgress` flag prevents concurrent runs from the timer, online event, and visibilitychange firing simultaneously
 - **Reconnect sync** — listens for `online` event and syncs immediately on reconnect
 - **Tab focus sync** — refreshes data when user returns to the tab (`visibilitychange`)
 - **Sync queue hardening** — exponential backoff (2s-30s), 5 retries, smart 404 handling
+- **Safe table refresh** — incremental sync uses set-difference delete (not `clear()`) so locally-created records that haven't synced yet are never wiped; pending mutations are also skipped during upsert to avoid overwriting local edits with stale server state
 - **Dark mode** — CSS variable overrides on `html.dark`, persisted to localStorage + settings API, flash-prevention inline script
 - **Local notifications** — Notification API for inbox overflow and stalled projects (quiet hours 9pm-7am, 30-min interval)
 - **Update notifications** — checks upstream GitHub repo for newer versions (24h client cache, 1h server cache), shows indigo banner with "How to Update" modal guiding users through GitHub fork sync. Settings → About shows current version + manual check button. Version injected at build time via `NEXT_PUBLIC_APP_VERSION` from package.json.
@@ -203,6 +203,8 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 - All PATCH routes return the updated record (not just `{success: true}`)
 - Rate limiting on AI endpoint (20 req/min)
 - 12-second fetch timeouts
+- HTTP security headers on all responses: `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Strict-Transport-Security`, `Permissions-Policy`
+- Backup restore (`POST /api/backup/restore`) validates all table names against a known whitelist — unknown names in uploaded JSON are silently ignored, not interpolated into SQL
 
 ### Conflict Detection
 - Server PATCH routes check `_base_updated_at` → 409 on conflict

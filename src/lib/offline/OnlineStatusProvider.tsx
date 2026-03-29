@@ -72,7 +72,7 @@ export function OnlineStatusProvider({ children }: { children: ReactNode }) {
     };
     navigator.serviceWorker?.addEventListener('message', handleMessage);
 
-    // Poll pending count every 5 seconds
+    // Poll pending count every 15 seconds
     const interval = setInterval(refreshPendingCount, 15000);
     refreshPendingCount();
 

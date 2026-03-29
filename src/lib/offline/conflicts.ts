@@ -24,8 +24,12 @@ export async function resolveKeepClient(conflictId: number): Promise<boolean> {
   data.updated_at = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
   try {
-    // Determine the URL from the table name
+    // Determine the URL from the table name — bail out if table is unknown
     const url = urlForTable(conflict.table, data);
+    if (!url) {
+      console.warn(`[conflicts] Cannot resolve: no API mapping for table "${conflict.table}"`);
+      return false;
+    }
     const res = await fetch(url, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -67,7 +71,8 @@ export async function resolveKeepServer(conflictId: number): Promise<boolean> {
   }
 }
 
-function urlForTable(table: string, data: Record<string, unknown>): string {
+function urlForTable(table: string, data: Record<string, unknown>): string | null {
+  void data;
   switch (table) {
     case 'next_actions': return '/api/actions';
     case 'projects': return '/api/projects';
@@ -75,6 +80,6 @@ function urlForTable(table: string, data: Record<string, unknown>): string {
     case 'list_items': return '/api/lists';
     case 'inbox_items': return '/api/inbox';
     case 'routine_blocks': return '/api/routine';
-    default: return `/api/${table.replace(/_/g, '-')}`;
+    default: return null; // Unknown table — cannot safely resolve
   }
 }

@@ -20,20 +20,8 @@ const TABLE_ORDER = [
   'daily_notes',
   'recurring_tasks',
   'routine_blocks',
-  'thinking_docs',
   'reference_docs',
   'list_items',
-  'pipeline_deals',
-  'pipeline_contacts',
-  'pipeline_warm_leads',
-  'client_notes',
-  'offerings',
-  'learning_profiles',
-  'faith_journal',
-  'health_log',
-  'business_health_log',
-  'decisions_log',
-  'family_meetings',
 ];
 
 const PROTECTED_TABLES = new Set(['schema_version', 'backup_log']);
@@ -49,7 +37,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid backup format. Expected { version, tables }.' }, { status: 400 });
     }
 
-    const importTables = Object.keys(body.tables).filter(t => !PROTECTED_TABLES.has(t));
+    // Only process tables in the known whitelist — reject any unknown table names
+    // to prevent SQL injection via crafted backup files.
+    const ALLOWED_TABLES = new Set(TABLE_ORDER);
+    const importTables = Object.keys(body.tables).filter(
+      t => ALLOWED_TABLES.has(t) && !PROTECTED_TABLES.has(t)
+    );
     let totalRows = 0;
 
     // Truncate in reverse dependency order
@@ -64,22 +57,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Also truncate any tables in the backup that aren't in our ordered list
-    for (const table of importTables) {
-      if (!TABLE_ORDER.includes(table)) {
-        try {
-          await sql.query(`TRUNCATE TABLE ${table} CASCADE`);
-        } catch {
-          // Skip
-        }
-      }
-    }
-
-    // Insert in forward dependency order, then remaining
-    const orderedTables = [
-      ...TABLE_ORDER.filter(t => importTables.includes(t)),
-      ...importTables.filter(t => !TABLE_ORDER.includes(t)),
-    ];
+    // Insert in forward dependency order (only known tables)
+    const orderedTables = TABLE_ORDER.filter(t => importTables.includes(t));
 
     for (const table of orderedTables) {
       const rows = body.tables[table];

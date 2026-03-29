@@ -77,15 +77,16 @@ export default function ConflictsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {conflicts.map((conflict) => {
-            const isExpanded = expanded === conflict.conflictId;
+          {conflicts.filter(c => c.conflictId != null).map((conflict) => {
+            const conflictId = conflict.conflictId as number;
+            const isExpanded = expanded === conflictId;
             const diffs = getDiffs(conflict.clientVersion, conflict.serverVersion);
             const label = TABLE_LABELS[conflict.table] || conflict.table;
 
             return (
-              <div key={conflict.conflictId} className="bg-card rounded-lg border border-border">
+              <div key={conflictId} className="bg-card rounded-lg border border-border">
                 <button
-                  onClick={() => setExpanded(isExpanded ? null : conflict.conflictId!)}
+                  onClick={() => setExpanded(isExpanded ? null : conflictId)}
                   className="w-full flex items-center justify-between p-4 text-left"
                 >
                   <div>
@@ -131,15 +132,15 @@ export default function ConflictsPage() {
 
                     <div className="flex gap-3 mt-4">
                       <button
-                        onClick={() => handleResolve(conflict.conflictId!, 'client')}
-                        disabled={resolving === conflict.conflictId}
+                        onClick={() => handleResolve(conflictId, 'client')}
+                        disabled={resolving === conflictId}
                         className="flex-1 bg-primary hover:bg-primary/90 text-white text-sm py-2 px-3 rounded-lg disabled:opacity-50"
                       >
                         Keep This Device
                       </button>
                       <button
-                        onClick={() => handleResolve(conflict.conflictId!, 'server')}
-                        disabled={resolving === conflict.conflictId}
+                        onClick={() => handleResolve(conflictId, 'server')}
+                        disabled={resolving === conflictId}
                         className="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm py-2 px-3 rounded-lg disabled:opacity-50"
                       >
                         Keep Server
