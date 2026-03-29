@@ -64,13 +64,6 @@ export async function GET(req: NextRequest) {
 
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
       result.recent_daily_notes = await sql`SELECT * FROM daily_notes WHERE date >= ${thirtyDaysAgo} ORDER BY date DESC`;
-
-      const currentMonth = nowCentral().dateStr.slice(0, 7);
-      const healthRows = await sql`SELECT * FROM health_log WHERE month = ${currentMonth}`;
-      result.health_log = healthRows[0] || null;
-
-      const bizHealthRows = await sql`SELECT * FROM business_health_log WHERE month = ${currentMonth}`;
-      result.business_health = bizHealthRows[0] || null;
     }
 
     return NextResponse.json(result);
