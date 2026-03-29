@@ -72,9 +72,7 @@ export default function Dashboard() {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const win = window as any;
-    const SpeechRecognitionCtor = win.SpeechRecognition || win.webkitSpeechRecognition;
+    const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognitionCtor) {
       alert('Voice capture is not supported in this browser. Try Safari or Chrome.');
       return;
@@ -96,8 +94,7 @@ export default function Dashboard() {
     setIsRecording(true);
     setCaptureStatus('listening');
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       let finalTranscript = '';
       let interim = '';
       for (let i = 0; i < event.results.length; i++) {

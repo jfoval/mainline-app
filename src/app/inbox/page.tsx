@@ -47,9 +47,7 @@ export default function InboxPage() {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const win = window as any;
-    const SpeechRecognitionCtor = win.SpeechRecognition || win.webkitSpeechRecognition;
+    const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognitionCtor) {
       alert('Voice capture is not supported in this browser. Try opening in Safari or Chrome.');
       return;
@@ -70,8 +68,7 @@ export default function InboxPage() {
 
     setIsRecording(true);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    recognition.onresult = (event: any) => {
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
       let finalTranscript = '';
       let interimTranscript = '';
       for (let i = 0; i < event.results.length; i++) {
