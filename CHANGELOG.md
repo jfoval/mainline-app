@@ -2,6 +2,23 @@
 
 All notable changes to Mainline will be documented here.
 
+## [0.4.1] - 2026-03-28
+
+### Added
+- **Global undo toast system** — every destructive action (delete, complete, archive) now shows a persistent toast with an Undo button. Toasts stay until you navigate away or dismiss them; no timer pressure. Undo restores the item instantly. Covers: actions, projects, inbox, reference docs, list items, disciplines, ideal calendar blocks/patterns, daily calendar blocks, and recurring tasks.
+- New files: `src/lib/toast/ToastContext.tsx`, `src/lib/toast/useUndoableAction.ts`, `src/components/Toast.tsx`
+
+### Changed
+- **Inbox**: removed "Mark processed" button — redundant with the Process Inbox flow. Only Delete (with undo) remains on individual items.
+- **Disciplines**: replaced `confirm()` dialog on delete with undo toast
+- **Ideal calendar**: replaced `confirm()` dialog on delete pattern with undo toast
+
+### Fixed
+- TypeScript generic type cast error in `use-offline-query.ts` that was blocking Vercel deploys
+- Added `ts-node` devDependency for CI jest config parsing
+
+---
+
 ## [0.4.0] - 2026-03-28
 
 ### Fixed — Critical
