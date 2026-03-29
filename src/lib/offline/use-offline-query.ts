@@ -83,7 +83,7 @@ export function useOfflineQuery<T>(
           // but preserve any record with a pending local mutation (not yet synced).
           if (!params || Object.keys(params).length === 0) {
             const serverIds = new Set(
-              serverData.map((item: { id?: string }) => item.id).filter(Boolean)
+              (serverData as { id?: string }[]).map(item => item.id).filter(Boolean)
             );
             const allLocal = await dexieTable.toArray();
             const staleIds = (allLocal as { id?: string }[])
@@ -96,7 +96,7 @@ export function useOfflineQuery<T>(
           // Upsert server data, skipping records with pending local mutations
           // to avoid overwriting unsaved changes with stale server state.
           const toWrite = (!params || Object.keys(params).length === 0)
-            ? serverData.filter((item: { id?: string }) => !pendingIds.has(item.id))
+            ? serverData.filter((item) => !pendingIds.has((item as { id?: string }).id))
             : serverData;
           if (toWrite.length > 0) {
             await dexieTable.bulkPut(toWrite);
