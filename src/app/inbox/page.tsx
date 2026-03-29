@@ -32,8 +32,7 @@ export default function InboxPage() {
   }
 
   // Ref to track recognition instance so we can stop it
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const transcriptRef = useRef('');
 
   async function saveVoiceCapture(text: string) {

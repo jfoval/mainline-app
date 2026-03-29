@@ -55,8 +55,7 @@ export default function Dashboard() {
   const [captureStatus, setCaptureStatus] = useState<'idle' | 'listening' | 'saved'>('idle');
   const [interimText, setInterimText] = useState('');
   const [voiceError, setVoiceError] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const transcriptRef = useRef('');
   const [refreshing, setRefreshing] = useState(false);
   const [displayDate] = useState(() => format(new Date(), 'EEEE, MMMM d, yyyy'));

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Plus, Check, Trash2, Search, GripVertical } from 'lucide-react';
 import { Suspense } from 'react';
-import { useOfflineStore, nextActionsStore } from '@/lib/offline';
+import { useOfflineStore, nextActionsStore, type NextAction } from '@/lib/offline';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -32,8 +32,7 @@ function getColorClasses(color: string | null): string {
   return COLOR_MAP[color || 'gray'] || 'bg-gray-100 text-gray-700';
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function SortableActionItem({ action, onComplete, onDelete }: { action: any; onComplete: (id: string) => void; onDelete: (id: string) => void }) {
+function SortableActionItem({ action, onComplete, onDelete }: { action: NextAction; onComplete: (id: string) => void; onDelete: (id: string) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: action.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
 
