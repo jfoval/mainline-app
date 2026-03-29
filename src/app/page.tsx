@@ -27,6 +27,7 @@ interface DashboardData {
   stalled_projects: Array<{ id: string; title: string; category: string }>;
   daily_note: { top3_first: string | null; top3_second: string | null; top3_third: string | null } | null;
   stale_waiting: Array<{ content: string; waiting_on_person: string | null; waiting_since: string }>;
+  do_differently_today: string | null;
   disciplines_done: number;
   disciplines_total: number;
   discipline_items: Array<{ id: string; name: string; completed: boolean }>;
@@ -442,6 +443,13 @@ export default function Dashboard() {
             Set today&apos;s Top 3 in Morning Process
           </div>
         </Link>
+      )}
+
+      {/* Do Differently Today (from yesterday's shutdown) */}
+      {data.do_differently_today && (
+        <div className="px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800 truncate">
+          <span className="font-medium">Do differently today:</span> {data.do_differently_today}
+        </div>
       )}
 
       {/* Disciplines Checkmarks */}

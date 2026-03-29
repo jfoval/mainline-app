@@ -97,6 +97,12 @@ export async function GET() {
       top3_third: string | null;
     } | undefined;
 
+    // Yesterday's "do differently" for dashboard reminder
+    const yesterdayDate = new Date(ct.date.getTime() - 24 * 60 * 60 * 1000);
+    const yesterday = `${yesterdayDate.getFullYear()}-${String(yesterdayDate.getMonth() + 1).padStart(2, '0')}-${String(yesterdayDate.getDate()).padStart(2, '0')}`;
+    const yesterdayNoteRows = await sql`SELECT evening_do_differently FROM daily_notes WHERE date = ${yesterday}`;
+    const doDifferentlyToday = (yesterdayNoteRows[0] as { evening_do_differently: string | null } | undefined)?.evening_do_differently || null;
+
     const sevenDaysAgoDate = new Date(ct.date.getTime() - 7 * 24 * 60 * 60 * 1000);
     const sevenDaysAgo = `${sevenDaysAgoDate.getFullYear()}-${String(sevenDaysAgoDate.getMonth() + 1).padStart(2, '0')}-${String(sevenDaysAgoDate.getDate()).padStart(2, '0')}`;
     const staleWaiting = await sql`
@@ -144,6 +150,7 @@ export async function GET() {
       stalled_projects: stalledProjects,
       daily_note: dailyNote || null,
       stale_waiting: staleWaiting,
+      do_differently_today: doDifferentlyToday,
       disciplines_done: disciplinesDone,
       disciplines_total: disciplinesTotal,
       discipline_items: disciplineItems,
