@@ -163,7 +163,7 @@ export default function InboxPage() {
           onClick={toggleVoiceCapture}
           className={`p-3 rounded-xl border transition-colors ${
             isRecording
-              ? 'bg-red-500 text-white border-red-500 animate-pulse'
+              ? 'bg-red-500 text-white border-red-500 motion-safe:animate-pulse'
               : 'border-border bg-card hover:bg-primary/5'
           }`}
           title={isRecording ? 'Click to stop recording' : 'Voice capture'}

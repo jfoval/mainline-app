@@ -239,7 +239,7 @@ export default function Dashboard() {
               captureStatus === 'saved'
                 ? 'bg-green-500 text-white'
                 : isRecording
-                  ? 'bg-red-500 text-white animate-pulse'
+                  ? 'bg-red-500 text-white motion-safe:animate-pulse'
                   : 'bg-primary text-white hover:bg-primary/90'
             }`}
             title={isRecording ? 'Tap to stop & save' : 'Quick capture to inbox'}

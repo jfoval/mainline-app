@@ -42,7 +42,7 @@ export default function SyncStatus() {
           onClick={() => syncNow()}
           className="flex items-center gap-2 bg-orange-100 text-orange-700 px-3 py-1.5 rounded-full text-sm font-medium shadow-lg hover:bg-orange-200 transition-colors"
         >
-          <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-orange-500 motion-safe:animate-pulse" />
           Syncing {pendingCount}...
         </button>
       ) : null}
