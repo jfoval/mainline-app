@@ -26,10 +26,12 @@ export default function DailyCalendar({ date }: { date: string }) {
   // Add form state
   const [showAddForm, setShowAddForm] = useState(false);
   const [newBlock, setNewBlock] = useState({ start_time: '09:00', end_time: '10:00', label: '', description: '', is_non_negotiable: 0 });
+  const [addFormError, setAddFormError] = useState<string | null>(null);
 
   // Edit form state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editBlock, setEditBlock] = useState({ start_time: '', end_time: '', label: '', description: '', is_non_negotiable: 0 });
+  const [editFormError, setEditFormError] = useState<string | null>(null);
 
   const currentBlockRef = useRef<HTMLDivElement>(null);
   const hasScrolled = useRef(false);
@@ -72,9 +74,10 @@ export default function DailyCalendar({ date }: { date: string }) {
   const handleAdd = async () => {
     if (!newBlock.label.trim()) return;
     if (newBlock.end_time <= newBlock.start_time) {
-      alert('End time must be after start time');
+      setAddFormError('End time must be after start time');
       return;
     }
+    setAddFormError(null);
     try {
       const res = await fetch('/api/daily-blocks', {
         method: 'POST',
@@ -93,9 +96,10 @@ export default function DailyCalendar({ date }: { date: string }) {
   const handleUpdate = async () => {
     if (!editingId || !editBlock.label.trim()) return;
     if (editBlock.end_time <= editBlock.start_time) {
-      alert('End time must be after start time');
+      setEditFormError('End time must be after start time');
       return;
     }
+    setEditFormError(null);
     try {
       const res = await fetch('/api/daily-blocks', {
         method: 'PATCH',
@@ -195,8 +199,9 @@ export default function DailyCalendar({ date }: { date: string }) {
             values={newBlock}
             onChange={setNewBlock}
             onSave={handleAdd}
-            onCancel={() => setShowAddForm(false)}
+            onCancel={() => { setShowAddForm(false); setAddFormError(null); }}
             saveLabel="Add"
+            error={addFormError}
           />
         </div>
       )}
@@ -238,9 +243,10 @@ export default function DailyCalendar({ date }: { date: string }) {
                     values={editBlock}
                     onChange={setEditBlock}
                     onSave={handleUpdate}
-                    onCancel={() => setEditingId(null)}
+                    onCancel={() => { setEditingId(null); setEditFormError(null); }}
                     saveLabel="Save"
                     onDelete={() => handleDelete(block.id)}
+                    error={editFormError}
                   />
                 </div>
               ) : (
@@ -328,6 +334,7 @@ function BlockForm({
   onCancel,
   saveLabel,
   onDelete,
+  error,
 }: {
   values: BlockFormValues;
   onChange: (v: BlockFormValues) => void;
@@ -335,6 +342,7 @@ function BlockForm({
   onCancel: () => void;
   saveLabel: string;
   onDelete?: () => void;
+  error?: string | null;
 }) {
   return (
     <div className="space-y-2">
@@ -372,6 +380,9 @@ function BlockForm({
         onKeyDown={e => { if (e.key === 'Enter') onSave(); if (e.key === 'Escape') onCancel(); }}
         className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-xs focus:ring-2 focus:ring-primary/50 focus:outline-none"
       />
+      {error && (
+        <p className="text-xs text-red-500 font-medium">{error}</p>
+      )}
       <div className="flex items-center justify-between">
         <label className="flex items-center gap-2 text-xs cursor-pointer">
           <input

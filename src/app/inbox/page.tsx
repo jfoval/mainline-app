@@ -10,6 +10,7 @@ export default function InboxPage() {
   const [newItem, setNewItem] = useState('');
   const [search, setSearch] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
 
   const filteredItems = search.trim()
     ? items.filter(item => item.content.toLowerCase().includes(search.toLowerCase()))
@@ -47,9 +48,10 @@ export default function InboxPage() {
       return;
     }
 
+    setVoiceError(null);
     const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognitionCtor) {
-      alert('Voice capture is not supported in this browser. Try opening in Safari or Chrome.');
+      setVoiceError('Voice capture is not supported in this browser. Try Safari or Chrome.');
       return;
     }
     const recognition = new SpeechRecognitionCtor();
@@ -91,7 +93,7 @@ export default function InboxPage() {
         return;
       }
       if (event.error === 'not-allowed') {
-        alert('Microphone or Speech Recognition permission denied. Check System Settings > Privacy & Security > Speech Recognition, and make sure Safari has access.');
+        setVoiceError('Microphone permission denied. Check System Settings → Privacy & Security → Speech Recognition.');
       }
       clearTimeout(timeout);
       setIsRecording(false);
@@ -176,6 +178,9 @@ export default function InboxPage() {
           <Plus size={20} />
         </button>
       </form>
+      {voiceError && (
+        <p className="text-xs text-red-500 px-1">{voiceError}</p>
+      )}
 
       {/* Inbox Items */}
       {filteredItems.length === 0 ? (

@@ -45,6 +45,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [actionsLoaded, setActionsLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Add action form
   const [showAdd, setShowAdd] = useState(false);
@@ -87,9 +88,10 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       });
       if (!res.ok) throw new Error('Save failed');
       setSaved(true);
+      setSaveError(null);
       setTimeout(() => setSaved(false), 2000);
     } catch {
-      alert('Failed to save project. Please try again.');
+      setSaveError('Failed to save. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -173,6 +175,9 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             <Save size={16} />
             {saved ? 'Saved' : saving ? 'Saving...' : 'Save'}
           </button>
+          {saveError && (
+            <span className="text-xs text-red-500">{saveError}</span>
+          )}
         </div>
       </div>
 

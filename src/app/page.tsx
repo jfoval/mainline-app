@@ -54,6 +54,7 @@ export default function Dashboard() {
   const [isRecording, setIsRecording] = useState(false);
   const [captureStatus, setCaptureStatus] = useState<'idle' | 'listening' | 'saved'>('idle');
   const [interimText, setInterimText] = useState('');
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const transcriptRef = useRef('');
@@ -72,9 +73,10 @@ export default function Dashboard() {
       return;
     }
 
+    setVoiceError(null);
     const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognitionCtor) {
-      alert('Voice capture is not supported in this browser. Try Safari or Chrome.');
+      setVoiceError('Voice capture is not supported in this browser. Try Safari or Chrome.');
       return;
     }
 
@@ -115,7 +117,7 @@ export default function Dashboard() {
         return;
       }
       if (event.error === 'not-allowed') {
-        alert('Microphone or Speech Recognition permission denied. Check System Settings > Privacy & Security > Speech Recognition, and make sure Safari has access.');
+        setVoiceError('Microphone permission denied. Check System Settings → Privacy & Security → Speech Recognition.');
       }
       clearTimeout(timeout);
       setIsRecording(false);
@@ -252,6 +254,9 @@ export default function Dashboard() {
             <span className="text-xs text-red-500 font-medium max-w-[300px] sm:max-w-[400px] line-clamp-2">
               {interimText || 'Listening...'}
             </span>
+          )}
+          {voiceError && (
+            <span className="text-xs text-red-500 font-medium max-w-[260px] text-right">{voiceError}</span>
           )}
         </div>
       </div>

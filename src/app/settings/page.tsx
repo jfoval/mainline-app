@@ -10,6 +10,7 @@ export default function SettingsPage() {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<string | null>(null);
   const [apiKey, setApiKey] = useState('');
@@ -84,6 +85,7 @@ export default function SettingsPage() {
 
   async function exportData() {
     setExporting(true);
+    setExportError(null);
     try {
       const res = await fetch('/api/backup', { method: 'POST' });
       const data = await res.json();
@@ -95,7 +97,7 @@ export default function SettingsPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      alert('Export failed');
+      setExportError('Export failed. Please try again.');
     }
     setExporting(false);
   }
@@ -334,6 +336,9 @@ export default function SettingsPage() {
             <Download size={14} />
             {exporting ? 'Exporting...' : 'Export Data as JSON'}
           </button>
+          {exportError && (
+            <span className="self-center text-xs text-red-500">{exportError}</span>
+          )}
           <label className={`flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border text-sm hover:bg-primary/5 cursor-pointer ${importing ? 'opacity-50 pointer-events-none' : ''}`}>
             <Upload size={14} />
             {importing ? 'Importing...' : 'Import from JSON'}
