@@ -3,7 +3,7 @@ export type {
   InboxItem, NextAction, ListItem,
   Project, DailyNote, RoutineBlock, ReferenceDoc,
   Discipline, DisciplineLog, ContextList, DailyBlock,
-  JournalEntry,
+  JournalEntry, HorizonItem,
 } from './db';
 export { useOfflineStore } from './use-offline-store';
 export { useOfflineQuery } from './use-offline-query';
@@ -22,6 +22,7 @@ export {
   contextListsStore,
   dailyBlocksStore,
   journalEntriesStore,
+  horizonItemsStore,
 } from './stores';
 export { OnlineStatusProvider, useOnlineStatus } from './OnlineStatusProvider';
 export { performInitialSync } from './initial-sync';

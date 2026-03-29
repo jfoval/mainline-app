@@ -511,4 +511,28 @@ const embeddedMigrations: { version: number; name: string; statements: string[] 
       `CREATE INDEX IF NOT EXISTS idx_journal_entries_date ON journal_entries(entry_date)`,
     ],
   },
+  {
+    version: 14,
+    name: '014_inbox_checks',
+    statements: [
+      `ALTER TABLE daily_notes ADD COLUMN IF NOT EXISTS inbox_checks TEXT`,
+    ],
+  },
+  {
+    version: 15,
+    name: '015_horizon_items',
+    statements: [
+      `CREATE TABLE IF NOT EXISTS horizon_items (
+        id TEXT PRIMARY KEY,
+        horizon_type TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description TEXT,
+        sort_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TEXT DEFAULT ''
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_hi_type ON horizon_items(horizon_type)`,
+      `CREATE INDEX IF NOT EXISTS idx_hi_sort ON horizon_items(horizon_type, sort_order)`,
+    ],
+  },
 ];

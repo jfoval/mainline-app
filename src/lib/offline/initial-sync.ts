@@ -33,7 +33,7 @@ export function clearInitialSyncFailure(): void {
 
 /** Fetch all data from the server and populate IndexedDB */
 async function fetchAllData(): Promise<void> {
-  const [actions, inbox, projects, dailyNotes, routine, referenceDocs, disciplines, disciplineLogs, contextLists, dailyBlocksRes, journalEntries] = await Promise.all([
+  const [actions, inbox, projects, dailyNotes, routine, referenceDocs, disciplines, disciplineLogs, contextLists, dailyBlocksRes, journalEntries, horizonItems] = await Promise.all([
     fetchWithTimeout('/api/actions?status=active').then(r => r.ok ? r.json() : []),
     fetchWithTimeout('/api/inbox').then(r => r.ok ? r.json() : []),
     fetchWithTimeout('/api/projects').then(r => r.ok ? r.json() : []),
@@ -45,6 +45,7 @@ async function fetchAllData(): Promise<void> {
     fetchWithTimeout('/api/context-lists').then(r => r.ok ? r.json() : []),
     fetchWithTimeout('/api/daily-blocks').then(r => r.ok ? r.json() : { blocks: [] }),
     fetchWithTimeout('/api/journal').then(r => r.ok ? r.json() : []),
+    fetchWithTimeout('/api/horizon-items').then(r => r.ok ? r.json() : []),
   ]);
 
   // Fetch all list types
@@ -72,6 +73,7 @@ async function fetchAllData(): Promise<void> {
     offlineDb.context_lists,
     offlineDb.daily_blocks,
     offlineDb.journal_entries,
+    offlineDb.horizon_items,
     offlineDb.sync_meta,
   ];
   await offlineDb.transaction('rw', tables, async () => {
@@ -88,13 +90,14 @@ async function fetchAllData(): Promise<void> {
     if (Array.isArray(contextLists) && contextLists.length) await offlineDb.context_lists.bulkPut(contextLists);
     if (Array.isArray(dailyBlocks) && dailyBlocks.length) await offlineDb.daily_blocks.bulkPut(dailyBlocks);
     if (Array.isArray(journalEntries) && journalEntries.length) await offlineDb.journal_entries.bulkPut(journalEntries);
+    if (Array.isArray(horizonItems) && horizonItems.length) await offlineDb.horizon_items.bulkPut(horizonItems);
 
     // Mark all tables as synced
     const now = Date.now();
     const syncTables = [
       'next_actions', 'inbox_items', 'list_items',
       'projects', 'daily_notes', 'routine_blocks', 'reference_docs',
-      'disciplines', 'discipline_logs', 'context_lists', 'daily_blocks', 'journal_entries',
+      'disciplines', 'discipline_logs', 'context_lists', 'daily_blocks', 'journal_entries', 'horizon_items',
     ];
     await offlineDb.sync_meta.bulkPut(
       syncTables.map(table => ({ table, lastSyncedAt: now }))

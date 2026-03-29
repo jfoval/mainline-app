@@ -3,7 +3,7 @@ import type {
   InboxItem, NextAction, ListItem,
   Project, DailyNote, RoutineBlock, ReferenceDoc,
   Discipline, DisciplineLog, ContextList, DailyBlock,
-  JournalEntry,
+  JournalEntry, HorizonItem,
 } from './db';
 import { enqueue } from './sync-queue';
 import { v4 as uuid } from 'uuid';
@@ -317,6 +317,7 @@ export const dailyNotesStore: StoreConfig<DailyNote> = {
         top3_third: null,
         notes: null,
         tomorrow: null,
+        inbox_checks: null,
         created_at: nowLocal(),
       };
       await offlineDb.daily_notes.put(item);
@@ -742,6 +743,58 @@ export const journalEntriesStore: StoreConfig<JournalEntry> = {
     remove: async (id) => {
       await offlineDb.journal_entries.delete(id);
       await enqueue('DELETE', `/api/journal?id=${id}`, null);
+    },
+  },
+};
+
+// ---- Horizon Items ----
+
+export const horizonItemsStore: StoreConfig<HorizonItem> = {
+  table: 'horizon_items',
+
+  fetchUrl: (params) => {
+    if (params?.type) return `/api/horizon-items?type=${params.type}`;
+    return '/api/horizon-items';
+  },
+
+  parseResponse: (json) => json as HorizonItem[],
+
+  queryLocal: async (params) => {
+    let results = await offlineDb.horizon_items.toArray();
+    if (params?.type) {
+      results = results.filter(h => h.horizon_type === params.type);
+    }
+    return results.sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
+  },
+
+  mutate: {
+    create: async (data) => {
+      const id = uuid();
+      const now = nowLocal();
+      const item: HorizonItem = {
+        id,
+        horizon_type: data.horizon_type as string,
+        name: data.name as string,
+        description: (data.description as string) ?? null,
+        sort_order: (data.sort_order as number) || 0,
+        created_at: now,
+        updated_at: now,
+      };
+      await offlineDb.horizon_items.put(item);
+      await enqueue('POST', '/api/horizon-items', { id, ...data });
+      return item;
+    },
+
+    update: async (data) => {
+      const { id, ...updates } = data;
+      updates.updated_at = nowLocal();
+      await offlineDb.horizon_items.update(id, updates);
+      await enqueue('PATCH', '/api/horizon-items', { ...data, updated_at: updates.updated_at });
+    },
+
+    remove: async (id) => {
+      await offlineDb.horizon_items.delete(id);
+      await enqueue('DELETE', `/api/horizon-items?id=${id}`, null);
     },
   },
 };

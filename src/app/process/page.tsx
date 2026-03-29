@@ -11,6 +11,11 @@ import {
   Check,
   ChevronRight,
   Loader2,
+  Settings,
+  Plus,
+  Trash2,
+  Pencil,
+  X,
 } from 'lucide-react';
 
 // ── Types ────────────────────────────────────────────────────────────
@@ -25,6 +30,7 @@ interface DailyNote {
   top3_third: string;
   notes: string;
   tomorrow: string;
+  inbox_checks: string | null;
 }
 
 interface InboxItem {
@@ -53,6 +59,11 @@ interface DisciplineLogItem {
   completed: number;
 }
 
+interface InboxType {
+  id: string;
+  name: string;
+}
+
 // ── Steps config ─────────────────────────────────────────────────────
 const STEPS = [
   { id: 'reflection', label: 'Daily Note & Reflection', icon: Sun },
@@ -60,6 +71,12 @@ const STEPS = [
   { id: 'top3', label: 'Pick Top 3', icon: ListChecks },
   { id: 'disciplines', label: 'Disciplines', icon: Target },
   { id: 'ready', label: 'Ready to Work', icon: Rocket },
+];
+
+const DEFAULT_INBOX_TYPES: InboxType[] = [
+  { id: 'default_physical', name: 'Physical (notes, paper, etc.)' },
+  { id: 'default_work_email', name: 'Work Email' },
+  { id: 'default_personal_email', name: 'Personal Email' },
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -71,6 +88,10 @@ function yesterdayStr() {
   const d = new Date();
   d.setDate(d.getDate() - 1);
   return d.toISOString().slice(0, 10);
+}
+
+function generateId() {
+  return crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
 // ── Component ────────────────────────────────────────────────────────
@@ -97,6 +118,14 @@ export default function MorningProcessPage() {
   const [morningDisciplines, setMorningDisciplines] = useState<DisciplineItem[]>([]);
   const [disciplineLogs, setDisciplineLogs] = useState<DisciplineLogItem[]>([]);
 
+  // Inbox types
+  const [inboxTypes, setInboxTypes] = useState<InboxType[]>([]);
+  const [inboxChecks, setInboxChecks] = useState<Record<string, boolean>>({});
+  const [editingInboxTypes, setEditingInboxTypes] = useState(false);
+  const [newInboxTypeName, setNewInboxTypeName] = useState('');
+  const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
+  const [editingTypeName, setEditingTypeName] = useState('');
+
   // Loading
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -105,7 +134,7 @@ export default function MorningProcessPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [noteRes, yesterdayRes, inboxRes, actionsRes, projectsRes, discRes, discLogsRes] =
+        const [noteRes, yesterdayRes, inboxRes, actionsRes, projectsRes, discRes, discLogsRes, settingsRes] =
           await Promise.all([
             fetch(`/api/daily-notes?date=${todayStr()}`),
             fetch(`/api/daily-notes?date=${yesterdayStr()}`),
@@ -114,6 +143,7 @@ export default function MorningProcessPage() {
             fetch('/api/projects?status=active'),
             fetch('/api/disciplines'),
             fetch(`/api/disciplines/logs?date=${todayStr()}`),
+            fetch('/api/settings'),
           ]);
 
         const noteData = await noteRes.json();
@@ -127,6 +157,9 @@ export default function MorningProcessPage() {
           if (noteData.top3_first) setTop3First(noteData.top3_first);
           if (noteData.top3_second) setTop3Second(noteData.top3_second);
           if (noteData.top3_third) setTop3Third(noteData.top3_third);
+          if (noteData.inbox_checks) {
+            try { setInboxChecks(JSON.parse(noteData.inbox_checks)); } catch { /* invalid JSON */ }
+          }
         }
 
         const yData = await yesterdayRes.json();
@@ -154,12 +187,39 @@ export default function MorningProcessPage() {
         if (Array.isArray(dlData)) {
           setDisciplineLogs(dlData);
         }
+
+        // Load inbox types from settings
+        const settings = await settingsRes.json();
+        if (settings.inbox_types) {
+          try {
+            const parsed = JSON.parse(settings.inbox_types);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setInboxTypes(parsed);
+            } else {
+              await seedDefaultInboxTypes();
+            }
+          } catch {
+            await seedDefaultInboxTypes();
+          }
+        } else {
+          await seedDefaultInboxTypes();
+        }
       } catch (err) {
         console.error('Failed to load morning process data', err);
       } finally {
         setLoading(false);
       }
     }
+
+    async function seedDefaultInboxTypes() {
+      setInboxTypes(DEFAULT_INBOX_TYPES);
+      await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inbox_types: JSON.stringify(DEFAULT_INBOX_TYPES) }),
+      });
+    }
+
     load();
   }, []);
 
@@ -182,6 +242,48 @@ export default function MorningProcessPage() {
     },
     [dailyNote?.id],
   );
+
+  // ── Inbox type management ─────────────────────────────────────────
+  async function saveInboxTypes(types: InboxType[]) {
+    setInboxTypes(types);
+    await fetch('/api/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inbox_types: JSON.stringify(types) }),
+    });
+  }
+
+  function addInboxType() {
+    if (!newInboxTypeName.trim()) return;
+    const newType: InboxType = { id: generateId(), name: newInboxTypeName.trim() };
+    saveInboxTypes([...inboxTypes, newType]);
+    setNewInboxTypeName('');
+  }
+
+  function deleteInboxType(id: string) {
+    saveInboxTypes(inboxTypes.filter(t => t.id !== id));
+    const updated = { ...inboxChecks };
+    delete updated[id];
+    setInboxChecks(updated);
+    if (dailyNote?.id) {
+      patchNote({ inbox_checks: JSON.stringify(updated) });
+    }
+  }
+
+  function saveEditInboxType() {
+    if (!editingTypeId || !editingTypeName.trim()) return;
+    saveInboxTypes(inboxTypes.map(t => t.id === editingTypeId ? { ...t, name: editingTypeName.trim() } : t));
+    setEditingTypeId(null);
+    setEditingTypeName('');
+  }
+
+  function toggleInboxCheck(typeId: string) {
+    const updated = { ...inboxChecks, [typeId]: !inboxChecks[typeId] };
+    setInboxChecks(updated);
+    if (dailyNote?.id) {
+      patchNote({ inbox_checks: JSON.stringify(updated) });
+    }
+  }
 
   // ── Refresh inbox count ──────────────────────────────────────────
   const refreshInbox = useCallback(async () => {
@@ -296,26 +398,108 @@ export default function MorningProcessPage() {
               <p className="text-muted mt-1">Clarify and organize every open loop before you plan.</p>
             </div>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-              <Inbox size={18} className="text-amber-600 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-amber-800">Check your physical desk inbox too</p>
-                <p className="text-xs text-amber-600">Papers, notes, business cards — anything on your desk that needs processing.</p>
+            {/* Inbox type checkboxes */}
+            <div className="bg-card rounded-xl border border-border p-5">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-foreground">Check your inboxes</h3>
+                <button
+                  onClick={() => setEditingInboxTypes(!editingInboxTypes)}
+                  className="p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-primary/5 transition-colors"
+                  title="Manage inbox types"
+                  aria-label="Manage inbox types"
+                >
+                  <Settings size={14} />
+                </button>
               </div>
+
+              {editingInboxTypes ? (
+                <div className="space-y-2">
+                  {inboxTypes.map(t => (
+                    <div key={t.id} className="flex items-center gap-2">
+                      {editingTypeId === t.id ? (
+                        <>
+                          <input
+                            type="text"
+                            value={editingTypeName}
+                            onChange={e => setEditingTypeName(e.target.value)}
+                            className="flex-1 px-2 py-1 rounded border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                            autoFocus
+                            onKeyDown={e => { if (e.key === 'Enter') saveEditInboxType(); if (e.key === 'Escape') setEditingTypeId(null); }}
+                          />
+                          <button onClick={saveEditInboxType} className="p-1 text-green-600 hover:bg-green-50 rounded" aria-label="Save">
+                            <Check size={14} />
+                          </button>
+                          <button onClick={() => setEditingTypeId(null)} className="p-1 text-muted hover:bg-card rounded" aria-label="Cancel">
+                            <X size={14} />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <span className="flex-1 text-sm text-foreground">{t.name}</span>
+                          <button onClick={() => { setEditingTypeId(t.id); setEditingTypeName(t.name); }} className="p-1 text-muted hover:text-foreground rounded" aria-label="Edit">
+                            <Pencil size={12} />
+                          </button>
+                          <button onClick={() => deleteInboxType(t.id)} className="p-1 text-muted hover:text-red-600 rounded" aria-label="Delete">
+                            <Trash2 size={12} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="text"
+                      value={newInboxTypeName}
+                      onChange={e => setNewInboxTypeName(e.target.value)}
+                      placeholder="Add inbox type..."
+                      className="flex-1 px-2 py-1 rounded border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      onKeyDown={e => { if (e.key === 'Enter') addInboxType(); }}
+                    />
+                    <button onClick={addInboxType} disabled={!newInboxTypeName.trim()} className="p-1 text-primary hover:bg-primary/10 rounded disabled:opacity-30" aria-label="Add inbox type">
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                  <button onClick={() => setEditingInboxTypes(false)} className="text-xs text-primary hover:underline mt-1">
+                    Done editing
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {inboxTypes.map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => toggleInboxCheck(t.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
+                        inboxChecks[t.id] ? 'bg-green-50 border border-green-200' : 'bg-background border border-border hover:border-primary/30'
+                      }`}
+                    >
+                      <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${
+                        inboxChecks[t.id] ? 'bg-green-500' : 'border-2 border-border'
+                      }`}>
+                        {inboxChecks[t.id] && <Check size={10} className="text-white" />}
+                      </span>
+                      <span className={`text-sm ${inboxChecks[t.id] ? 'line-through text-muted' : 'text-foreground'}`}>
+                        {t.name}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
+            {/* App inbox count */}
             <div className="bg-card rounded-xl border border-border p-6 text-center space-y-4">
               {inboxItems.length === 0 ? (
                 <div className="py-6">
                   <Check size={48} className="mx-auto text-green-500 mb-3" />
-                  <p className="text-lg font-semibold text-foreground">0 items &mdash; inbox clear!</p>
+                  <p className="text-lg font-semibold text-foreground">0 items &mdash; app inbox clear!</p>
                   <p className="text-muted text-sm mt-1">Nothing to process. Nice work.</p>
                 </div>
               ) : (
                 <>
                   <div className="py-4">
                     <span className="text-4xl font-bold text-foreground">{inboxItems.length}</span>
-                    <p className="text-muted mt-1">pending item{inboxItems.length !== 1 ? 's' : ''} to process</p>
+                    <p className="text-muted mt-1">pending item{inboxItems.length !== 1 ? 's' : ''} in app inbox</p>
                   </div>
                   <Link
                     href="/inbox/process"
@@ -575,7 +759,7 @@ export default function MorningProcessPage() {
 
             {/* Start your day */}
             <Link
-              href="/actions"
+              href="/"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white hover:bg-primary-hover font-semibold text-lg transition-colors"
             >
               <Rocket size={20} />

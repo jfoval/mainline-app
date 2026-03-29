@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useUndoableAction } from '@/lib/toast';
 import {
   CheckCircle2, Circle, AlertTriangle, Inbox,
   FolderKanban, ListTodo, Clock, Calendar, RotateCcw,
-  Target, ArrowRight, Check, Sparkles, Plus, Trash2
+  Target, ArrowRight, Check, Sparkles
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -21,7 +20,6 @@ interface ReviewData {
   waiting_for: Array<{ id: string; content: string; waiting_on_person: string; waiting_since: string }>;
   stale_waiting: Array<{ id: string; content: string; waiting_on_person: string; waiting_since: string }>;
   agendas: Array<{ id: string; content: string; agenda_person: string }>;
-  recurring_tasks: Array<{ id: string; content: string; area: string; cadence: string; last_triggered: string }>;
   horizons?: Array<{ id: string; type: string; content: string }>;
 }
 
@@ -31,7 +29,6 @@ const WEEKLY_STEPS = [
   { id: 'actions', label: 'Review Next Action Lists', icon: ListTodo, description: 'Every @context list. Still relevant? Right next action? Anything completed but not checked?' },
   { id: 'waiting', label: 'Review @waiting-for & @agendas', icon: Clock, description: 'Follow up needed? Upcoming meetings to prep? Stale items to remove?' },
   { id: 'calendar', label: 'Review Calendar', icon: Calendar, description: 'Look back 1 week (anything fall through?). Look ahead 2 weeks (need to prepare?).' },
-  { id: 'recurring', label: 'Check Recurring Tasks', icon: RotateCcw, description: 'Any monthly, quarterly, or annual tasks due soon? Add as next actions.' },
   { id: 'areas', label: 'Review Areas of Focus', icon: Target, description: 'Review each area of focus. Are you giving it adequate attention? Need a project or next action?' },
 ];
 
@@ -44,7 +41,7 @@ const MONTHLY_EXTRA_STEPS = [
 
 const STORAGE_KEY = 'mainline_review_progress';
 
-function loadProgress(): { reviewType: 'weekly' | 'monthly'; currentStep: number; completedSteps: number[]; notes: Record<number, string> } | null {
+function loadProgress(): { reviewType: 'weekly' | 'monthly'; currentStep: number; completedSteps: number[] } | null {
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
@@ -52,13 +49,12 @@ function loadProgress(): { reviewType: 'weekly' | 'monthly'; currentStep: number
   } catch { return null; }
 }
 
-function saveProgress(reviewType: 'weekly' | 'monthly', currentStep: number, completedSteps: Set<number>, notes: Record<number, string>) {
+function saveProgress(reviewType: 'weekly' | 'monthly', currentStep: number, completedSteps: Set<number>) {
   try {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
       reviewType,
       currentStep,
       completedSteps: Array.from(completedSteps),
-      notes,
     }));
   } catch { /* storage unavailable */ }
 }
@@ -72,7 +68,6 @@ export default function ReviewPage() {
   const [data, setData] = useState<ReviewData | null>(null);
   const [currentStep, setCurrentStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
-  const [notes, setNotes] = useState<Record<number, string>>({});
   const [restored, setRestored] = useState(false);
   const [lastWeekly, setLastWeekly] = useState<string | null>(null);
   const [lastMonthly, setLastMonthly] = useState<string | null>(null);
@@ -81,10 +76,10 @@ export default function ReviewPage() {
   useEffect(() => {
     const saved = loadProgress();
     if (saved) {
+      const steps = saved.reviewType === 'monthly' ? [...WEEKLY_STEPS, ...MONTHLY_EXTRA_STEPS] : WEEKLY_STEPS;
       setReviewType(saved.reviewType);
-      setCurrentStep(saved.currentStep);
-      setCompletedSteps(new Set(saved.completedSteps));
-      setNotes(saved.notes);
+      setCurrentStep(Math.min(saved.currentStep, steps.length - 1));
+      setCompletedSteps(new Set((saved.completedSteps || []).filter((i: number) => i < steps.length)));
       fetch(`/api/review?type=${saved.reviewType}`)
         .then(r => r.json())
         .then(d => setData(d));
@@ -105,15 +100,14 @@ export default function ReviewPage() {
   useEffect(() => {
     if (!restored) return;
     if (reviewType) {
-      saveProgress(reviewType, currentStep, completedSteps, notes);
+      saveProgress(reviewType, currentStep, completedSteps);
     }
-  }, [reviewType, currentStep, completedSteps, notes, restored]);
+  }, [reviewType, currentStep, completedSteps, restored]);
 
   async function startReview(type: 'weekly' | 'monthly') {
     setReviewType(type);
     setCurrentStep(0);
     setCompletedSteps(new Set());
-    setNotes({});
     const res = await fetch(`/api/review?type=${type}`);
     setData(await res.json());
   }
@@ -122,7 +116,7 @@ export default function ReviewPage() {
     await fetch('/api/review', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: reviewType, notes }),
+      body: JSON.stringify({ type: reviewType }),
     });
     clearProgress();
     setReviewType(null);
@@ -163,7 +157,7 @@ export default function ReviewPage() {
           >
             <Calendar size={32} className="text-primary mb-3" />
             <h2 className="text-lg font-semibold">Weekly Review</h2>
-            <p className="text-sm text-muted mt-2">7-step guided walkthrough. Clear inboxes, review projects, actions, and areas of focus.</p>
+            <p className="text-sm text-muted mt-2">6-step guided walkthrough. Clear inboxes, review projects, actions, and areas of focus.</p>
             <p className="text-xs text-muted mt-3">Saturday 7:30-8:30 AM · 60-90 min</p>
             {lastWeekly ? (
               <p className={`text-xs mt-2 font-medium ${
@@ -281,17 +275,6 @@ export default function ReviewPage() {
 
           <div className="border-t border-border pt-4 mb-4">
             <StepContent stepId={step.id} data={data} />
-          </div>
-
-          {/* Notes */}
-          <div className="border-t border-border pt-4 mb-4">
-            <textarea
-              value={notes[currentStep] || ''}
-              onChange={e => setNotes(prev => ({ ...prev, [currentStep]: e.target.value }))}
-              placeholder="Notes for this step..."
-              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 min-h-[60px] resize-y"
-              rows={2}
-            />
           </div>
 
           {/* Navigation */}
@@ -471,9 +454,6 @@ function StepContent({ stepId, data }: { stepId: string; data: ReviewData }) {
         </div>
       );
 
-    case 'recurring':
-      return <RecurringTasksStep tasks={data.recurring_tasks} />;
-
     case 'areas':
       return (
         <div className="space-y-2">
@@ -571,138 +551,3 @@ function StepContent({ stepId, data }: { stepId: string; data: ReviewData }) {
   }
 }
 
-// ─── Recurring Tasks Step (with inline CRUD) ──────────────────────
-function RecurringTasksStep({ tasks: initialTasks }: { tasks: ReviewData['recurring_tasks'] }) {
-  const [tasks, setTasks] = useState(initialTasks);
-  const { undoableFetchDelete } = useUndoableAction();
-  const [showAdd, setShowAdd] = useState(false);
-  const [newContent, setNewContent] = useState('');
-  const [newArea, setNewArea] = useState('business');
-  const [newCadence, setNewCadence] = useState('monthly');
-
-  async function fetchTasks() {
-    const res = await fetch('/api/recurring-tasks');
-    setTasks(await res.json());
-  }
-
-  async function addTask(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newContent.trim()) return;
-    await fetch('/api/recurring-tasks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: newContent.trim(), area: newArea, cadence: newCadence }),
-    });
-    setNewContent('');
-    setShowAdd(false);
-    fetchTasks();
-  }
-
-  async function markTriggered(id: string) {
-    await fetch('/api/recurring-tasks', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, last_triggered: 'now' }),
-    });
-    fetchTasks();
-  }
-
-  function deleteTask(id: string) {
-    const task = tasks.find(t => t.id === id);
-    setTasks(prev => prev.filter(t => t.id !== id));
-    undoableFetchDelete(id, `/api/recurring-tasks?id=${id}`, 'Recurring task deleted', {
-      onUndo: () => {
-        if (task) setTasks(prev => [...prev, task]);
-      },
-      onSettled: () => fetchTasks(),
-    });
-  }
-
-  const grouped: Record<string, typeof tasks> = {};
-  for (const t of tasks) {
-    if (!grouped[t.cadence]) grouped[t.cadence] = [];
-    grouped[t.cadence].push(t);
-  }
-
-  function isDue(task: typeof tasks[0]): boolean {
-    if (!task.last_triggered) return true;
-    const last = new Date(task.last_triggered);
-    const now = new Date();
-    const daysSince = (now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24);
-    if (task.cadence === 'weekly') return daysSince >= 6;
-    if (task.cadence === 'monthly') return daysSince >= 25;
-    if (task.cadence === 'quarterly') return daysSince >= 80;
-    if (task.cadence === 'annual') return daysSince >= 350;
-    return false;
-  }
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <p className="text-sm">{tasks.length} recurring task{tasks.length !== 1 ? 's' : ''}</p>
-        <button onClick={() => setShowAdd(!showAdd)} className="flex items-center gap-1 text-xs text-primary hover:underline">
-          <Plus size={12} /> Add Task
-        </button>
-      </div>
-
-      {showAdd && (
-        <form onSubmit={addTask} className="p-3 rounded-lg bg-background space-y-2">
-          <input value={newContent} onChange={e => setNewContent(e.target.value)} placeholder="Task description" autoFocus
-            className="w-full px-3 py-2 rounded-lg border border-border bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/50" />
-          <div className="flex gap-2">
-            <select value={newArea} onChange={e => setNewArea(e.target.value)}
-              className="px-2 py-1.5 rounded-lg border border-border bg-card text-xs">
-              <option value="business">Business</option>
-              <option value="personal">Personal</option>
-            </select>
-            <select value={newCadence} onChange={e => setNewCadence(e.target.value)}
-              className="px-2 py-1.5 rounded-lg border border-border bg-card text-xs">
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="quarterly">Quarterly</option>
-              <option value="annual">Annual</option>
-            </select>
-            <button type="submit" className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs">Add</button>
-          </div>
-        </form>
-      )}
-
-      {tasks.length === 0 ? (
-        <p className="text-xs text-muted">No recurring tasks set up yet. Add things like invoicing, bookkeeping, transfers.</p>
-      ) : (
-        ['weekly', 'monthly', 'quarterly', 'annual'].map(cadence => {
-          const cadenceTasks = grouped[cadence];
-          if (!cadenceTasks) return null;
-          return (
-            <div key={cadence}>
-              <p className="text-xs font-medium text-muted uppercase mb-1">{cadence} ({cadenceTasks.length})</p>
-              <div className="space-y-1">
-                {cadenceTasks.map(t => {
-                  const due = isDue(t);
-                  return (
-                    <div key={t.id} className={`flex items-center justify-between p-2 rounded-lg text-xs ${due ? 'bg-yellow-50 border border-yellow-200' : 'bg-background'}`}>
-                      <div>
-                        <span className={due ? 'font-medium text-yellow-700' : ''}>{t.content}</span>
-                        <span className="text-muted ml-1">({t.area})</span>
-                        {t.last_triggered && <span className="text-muted ml-1">· last: {t.last_triggered}</span>}
-                        {due && <span className="text-yellow-600 ml-1 font-medium">DUE</span>}
-                      </div>
-                      <div className="flex gap-1">
-                        <button onClick={() => markTriggered(t.id)} className="p-1 rounded hover:bg-green-100 text-green-600" title="Mark done">
-                          <Check size={12} />
-                        </button>
-                        <button onClick={() => deleteTask(t.id)} className="p-1 rounded hover:bg-red-50 text-muted hover:text-red-600">
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          );
-        })
-      )}
-    </div>
-  );
-}

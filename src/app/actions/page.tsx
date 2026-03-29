@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Plus, Check, Trash2, Search, GripVertical } from 'lucide-react';
+import { Plus, Check, Trash2, Search, GripVertical, Settings, X, Pencil } from 'lucide-react';
 import { Suspense } from 'react';
 import { useOfflineStore, nextActionsStore, type NextAction } from '@/lib/offline';
 import { useUndoableAction, useToast } from '@/lib/toast';
@@ -11,6 +11,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, v
 import { CSS } from '@dnd-kit/utilities';
 
 interface ContextItem {
+  id?: string;
   key: string;
   name: string;
   color: string | null;
@@ -28,6 +29,8 @@ const COLOR_MAP: Record<string, string> = {
   red: 'bg-red-100 text-red-700',
   pink: 'bg-pink-100 text-pink-700',
 };
+
+const COLOR_OPTIONS = Object.keys(COLOR_MAP);
 
 function getColorClasses(color: string | null): string {
   return COLOR_MAP[color || 'gray'] || 'bg-gray-100 text-gray-700';
@@ -79,33 +82,42 @@ function ActionsContent() {
   const activeContext = searchParams.get('context') || 'work';
 
   const [contexts, setContexts] = useState<ContextItem[]>([]);
+  const [showContextManager, setShowContextManager] = useState(false);
+  const [newContextName, setNewContextName] = useState('');
+  const [newContextColor, setNewContextColor] = useState('gray');
+  const [editingContextId, setEditingContextId] = useState<string | null>(null);
+  const [editContextName, setEditContextName] = useState('');
+  const [editContextColor, setEditContextColor] = useState('gray');
 
-  useEffect(() => {
-    fetch('/api/context-lists')
-      .then(r => r.ok ? r.json() : [])
-      .then(data => {
+  async function fetchContexts() {
+    try {
+      const res = await fetch('/api/context-lists');
+      if (res.ok) {
+        const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          setContexts(data.map((c: { key: string; name: string; color: string | null }) => ({
+          setContexts(data.map((c: { id: string; key: string; name: string; color: string | null }) => ({
+            id: c.id,
             key: c.key,
             name: c.name,
             color: c.color,
           })));
-        } else {
-          // Fallback defaults if API fails or no contexts configured
-          setContexts([
-            { key: 'work', name: 'Work', color: 'blue' },
-            { key: 'errands', name: 'Errands', color: 'green' },
-            { key: 'home', name: 'Home', color: 'orange' },
-            { key: 'waiting_for', name: 'Waiting For', color: 'yellow' },
-            { key: 'agendas', name: 'Agendas', color: 'purple' },
-            { key: 'calls', name: 'Calls', color: 'teal' },
-            { key: 'computer', name: 'Computer', color: 'gray' },
-            { key: 'anywhere', name: 'Anywhere', color: 'indigo' },
-          ]);
+          return;
         }
-      })
-      .catch(() => {});
-  }, []);
+      }
+    } catch { /* fall through to defaults */ }
+    setContexts([
+      { key: 'work', name: 'Work', color: 'blue' },
+      { key: 'errands', name: 'Errands', color: 'green' },
+      { key: 'home', name: 'Home', color: 'orange' },
+      { key: 'waiting_for', name: 'Waiting For', color: 'yellow' },
+      { key: 'agendas', name: 'Agendas', color: 'purple' },
+      { key: 'calls', name: 'Calls', color: 'teal' },
+      { key: 'computer', name: 'Computer', color: 'gray' },
+      { key: 'anywhere', name: 'Anywhere', color: 'indigo' },
+    ]);
+  }
+
+  useEffect(() => { fetchContexts(); }, []);
 
   const [viewMode, setViewMode] = useState<'active' | 'completed'>('active');
   const { data: actions, create, update, remove } = useOfflineStore(
@@ -171,11 +183,48 @@ function ActionsContent() {
     if (oldIndex === -1 || newIndex === -1) return;
 
     const reordered = arrayMove(filteredActions, oldIndex, newIndex);
-    // Update sort_order for all affected items
     for (let i = 0; i < reordered.length; i++) {
       if (reordered[i].sort_order !== i) {
         await update({ id: reordered[i].id, sort_order: i });
       }
+    }
+  }
+
+  // Context management handlers
+  async function addContext() {
+    if (!newContextName.trim()) return;
+    const key = newContextName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
+    if (!key) return;
+    if (contexts.some(c => c.key === key)) return;
+
+    await fetch('/api/context-lists', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newContextName.trim(), key, color: newContextColor }),
+    });
+    setNewContextName('');
+    setNewContextColor('gray');
+    fetchContexts();
+  }
+
+  async function saveEditContext() {
+    if (!editingContextId || !editContextName.trim()) return;
+    await fetch('/api/context-lists', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: editingContextId, name: editContextName.trim(), color: editContextColor }),
+    });
+    setEditingContextId(null);
+    fetchContexts();
+  }
+
+  async function deleteContext(ctx: ContextItem) {
+    if (!ctx.id) return;
+    await fetch(`/api/context-lists?id=${ctx.id}`, { method: 'DELETE' });
+    fetchContexts();
+    if (activeContext === ctx.key && contexts.length > 1) {
+      const remaining = contexts.filter(c => c.id !== ctx.id);
+      if (remaining.length > 0) router.push(`/actions?context=${remaining[0].key}`);
     }
   }
 
@@ -216,8 +265,8 @@ function ActionsContent() {
       </div>
 
       {/* Context Tabs */}
-      <div className="relative mb-6">
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide scroll-smooth" style={{ WebkitOverflowScrolling: 'touch' }}>
+      <div className="relative mb-4">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide scroll-smooth items-center" style={{ WebkitOverflowScrolling: 'touch' }}>
           {contexts.map(ctx => (
             <button
               key={ctx.key}
@@ -231,10 +280,120 @@ function ActionsContent() {
               @{ctx.name}
             </button>
           ))}
+          <button
+            onClick={() => setShowContextManager(!showContextManager)}
+            className={`p-1.5 rounded-lg transition-colors flex-shrink-0 ${
+              showContextManager ? 'bg-primary/10 text-primary' : 'text-muted hover:text-foreground hover:bg-primary/5'
+            }`}
+            title="Manage contexts"
+            aria-label="Manage contexts"
+          >
+            <Settings size={16} />
+          </button>
         </div>
-        {/* Right fade to hint at scrollable content */}
         <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
       </div>
+
+      {/* Context Manager Panel */}
+      {showContextManager && (
+        <div className="mb-6 p-4 bg-card rounded-xl border border-border space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Manage Contexts</h3>
+            <button onClick={() => { setShowContextManager(false); setEditingContextId(null); }} className="p-1 text-muted hover:text-foreground" aria-label="Close">
+              <X size={16} />
+            </button>
+          </div>
+
+          {/* Existing contexts */}
+          <div className="space-y-2">
+            {contexts.map(ctx => (
+              <div key={ctx.key} className="flex items-center gap-2">
+                {editingContextId === ctx.id ? (
+                  <>
+                    <input
+                      type="text"
+                      value={editContextName}
+                      onChange={e => setEditContextName(e.target.value)}
+                      className="flex-1 px-2 py-1 rounded border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      autoFocus
+                      onKeyDown={e => { if (e.key === 'Enter') saveEditContext(); if (e.key === 'Escape') setEditingContextId(null); }}
+                    />
+                    <div className="flex gap-1">
+                      {COLOR_OPTIONS.map(c => (
+                        <button
+                          key={c}
+                          onClick={() => setEditContextColor(c)}
+                          className={`w-5 h-5 rounded-full border-2 ${editContextColor === c ? 'border-foreground' : 'border-transparent'} ${COLOR_MAP[c].split(' ')[0]}`}
+                          title={c}
+                          aria-label={`Color: ${c}`}
+                        />
+                      ))}
+                    </div>
+                    <button onClick={saveEditContext} className="p-1 text-green-600 hover:bg-green-50 rounded" aria-label="Save">
+                      <Check size={14} />
+                    </button>
+                    <button onClick={() => setEditingContextId(null)} className="p-1 text-muted hover:bg-card rounded" aria-label="Cancel">
+                      <X size={14} />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <span className={`w-3 h-3 rounded-full flex-shrink-0 ${COLOR_MAP[ctx.color || 'gray']?.split(' ')[0] || 'bg-gray-100'}`} />
+                    <span className="flex-1 text-sm">@{ctx.name}</span>
+                    <button
+                      onClick={() => { setEditingContextId(ctx.id || null); setEditContextName(ctx.name); setEditContextColor(ctx.color || 'gray'); }}
+                      className="p-1 text-muted hover:text-foreground rounded"
+                      aria-label="Edit context"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                    <button
+                      onClick={() => deleteContext(ctx)}
+                      className="p-1 text-muted hover:text-red-600 rounded"
+                      aria-label="Delete context"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Add new context */}
+          <div className="pt-2 border-t border-border space-y-2">
+            <p className="text-xs text-muted font-medium">Add new context</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newContextName}
+                onChange={e => setNewContextName(e.target.value)}
+                placeholder="Context name..."
+                className="flex-1 px-2 py-1.5 rounded border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                onKeyDown={e => { if (e.key === 'Enter') addContext(); }}
+              />
+              <div className="flex gap-1">
+                {COLOR_OPTIONS.slice(0, 5).map(c => (
+                  <button
+                    key={c}
+                    onClick={() => setNewContextColor(c)}
+                    className={`w-5 h-5 rounded-full border-2 ${newContextColor === c ? 'border-foreground' : 'border-transparent'} ${COLOR_MAP[c].split(' ')[0]}`}
+                    title={c}
+                    aria-label={`Color: ${c}`}
+                  />
+                ))}
+              </div>
+              <button
+                onClick={addContext}
+                disabled={!newContextName.trim()}
+                className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs disabled:opacity-30"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       {actions.length > 3 && (

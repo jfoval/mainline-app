@@ -290,55 +290,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Now / Up Next */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-card rounded-xl p-5 border-2 border-primary">
-          <div className="flex items-center gap-2 mb-2">
-            <Clock size={18} className="text-primary" />
-            <h2 className="font-semibold text-primary">Now</h2>
-          </div>
-          {data.current_block ? (
-            <>
-              <p className="text-xl font-bold">{data.current_block.label}</p>
-              <p className="text-sm text-muted mt-1">
-                {formatTime(data.current_block.start_time)} – {formatTime(data.current_block.end_time)}
-                {' · '}
-                {(() => {
-                  const remaining = timeToMinutes(data.current_block.end_time) - timeToMinutes(data.current_time);
-                  if (remaining <= 0) return 'ending';
-                  if (remaining < 60) return `${remaining}m left`;
-                  const h = Math.floor(remaining / 60);
-                  const m = remaining % 60;
-                  return m > 0 ? `${h}h ${m}m left` : `${h}h left`;
-                })()}
-              </p>
-              {data.current_block.description && (
-                <p className="text-sm mt-2 text-foreground/70">{data.current_block.description}</p>
-              )}
-            </>
-          ) : (
-            <p className="text-xl font-bold">Free time</p>
-          )}
-        </div>
-
-        <div className="bg-card rounded-xl p-5 border border-border">
-          <div className="flex items-center gap-2 mb-2">
-            <ArrowRight size={18} className="text-muted" />
-            <h2 className="font-semibold text-muted">Up Next</h2>
-          </div>
-          {data.next_block ? (
-            <>
-              <p className="text-lg font-bold">{data.next_block.label}</p>
-              <p className="text-sm text-muted mt-1">
-                {formatTime(data.next_block.start_time)} – ends {formatTime(data.next_block.end_time)}
-              </p>
-            </>
-          ) : (
-            <p className="text-lg font-bold text-muted">Nothing scheduled</p>
-          )}
-        </div>
-      </div>
-
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Link href="/inbox" className="bg-card rounded-xl p-4 border border-border hover:border-primary transition-colors">
@@ -388,6 +339,55 @@ export default function Dashboard() {
             </div>
           </div>
         </Link>
+      </div>
+
+      {/* Now / Up Next */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-card rounded-xl p-5 border-2 border-primary">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock size={18} className="text-primary" />
+            <h2 className="font-semibold text-primary">Now</h2>
+          </div>
+          {data.current_block ? (
+            <>
+              <p className="text-xl font-bold">{data.current_block.label}</p>
+              <p className="text-sm text-muted mt-1">
+                {formatTime(data.current_block.start_time)} – {formatTime(data.current_block.end_time)}
+                {' · '}
+                {(() => {
+                  const remaining = timeToMinutes(data.current_block.end_time) - timeToMinutes(data.current_time);
+                  if (remaining <= 0) return 'ending';
+                  if (remaining < 60) return `${remaining}m left`;
+                  const h = Math.floor(remaining / 60);
+                  const m = remaining % 60;
+                  return m > 0 ? `${h}h ${m}m left` : `${h}h left`;
+                })()}
+              </p>
+              {data.current_block.description && (
+                <p className="text-sm mt-2 text-foreground/70">{data.current_block.description}</p>
+              )}
+            </>
+          ) : (
+            <p className="text-xl font-bold">Free time</p>
+          )}
+        </div>
+
+        <div className="bg-card rounded-xl p-5 border border-border">
+          <div className="flex items-center gap-2 mb-2">
+            <ArrowRight size={18} className="text-muted" />
+            <h2 className="font-semibold text-muted">Up Next</h2>
+          </div>
+          {data.next_block ? (
+            <>
+              <p className="text-lg font-bold">{data.next_block.label}</p>
+              <p className="text-sm text-muted mt-1">
+                {formatTime(data.next_block.start_time)} – ends {formatTime(data.next_block.end_time)}
+              </p>
+            </>
+          ) : (
+            <p className="text-lg font-bold text-muted">Nothing scheduled</p>
+          )}
+        </div>
       </div>
 
       {/* Today's Top 3 */}

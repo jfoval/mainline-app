@@ -34,8 +34,6 @@ export async function GET(req: NextRequest) {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     const staleWaiting = waitingFor.filter(a => a.waiting_since && a.waiting_since <= sevenDaysAgo);
 
-    const recurringTasks = await sql`SELECT * FROM recurring_tasks ORDER BY cadence, area, sort_order`;
-
     const horizons = await sql`SELECT * FROM horizons ORDER BY type`;
 
     // Dynamic context counts
@@ -56,7 +54,6 @@ export async function GET(req: NextRequest) {
       waiting_for: waitingFor,
       stale_waiting: staleWaiting,
       agendas,
-      recurring_tasks: recurringTasks,
     };
 
     if (type === 'monthly') {
@@ -82,12 +79,6 @@ export async function POST(req: NextRequest) {
     const ct = nowCentral();
     const now = ct.timestamp;
     await sql`INSERT INTO settings (key, value) VALUES (${key}, ${now}) ON CONFLICT (key) DO UPDATE SET value = ${now}`;
-
-    if (body.notes) {
-      const notesKey = `${body.type}_review_notes_${ct.dateStr}`;
-      const notesJson = JSON.stringify(body.notes);
-      await sql`INSERT INTO settings (key, value) VALUES (${notesKey}, ${notesJson}) ON CONFLICT (key) DO UPDATE SET value = ${notesJson}`;
-    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
