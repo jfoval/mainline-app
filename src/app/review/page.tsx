@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useUndoableAction } from '@/lib/toast';
 import {
   CheckCircle2, Circle, AlertTriangle, Inbox,
   FolderKanban, ListTodo, Clock, Calendar, RotateCcw,
@@ -573,6 +574,7 @@ function StepContent({ stepId, data }: { stepId: string; data: ReviewData }) {
 // ─── Recurring Tasks Step (with inline CRUD) ──────────────────────
 function RecurringTasksStep({ tasks: initialTasks }: { tasks: ReviewData['recurring_tasks'] }) {
   const [tasks, setTasks] = useState(initialTasks);
+  const { undoableFetchDelete } = useUndoableAction();
   const [showAdd, setShowAdd] = useState(false);
   const [newContent, setNewContent] = useState('');
   const [newArea, setNewArea] = useState('business');
@@ -605,9 +607,15 @@ function RecurringTasksStep({ tasks: initialTasks }: { tasks: ReviewData['recurr
     fetchTasks();
   }
 
-  async function deleteTask(id: string) {
-    await fetch(`/api/recurring-tasks?id=${id}`, { method: 'DELETE' });
-    fetchTasks();
+  function deleteTask(id: string) {
+    const task = tasks.find(t => t.id === id);
+    setTasks(prev => prev.filter(t => t.id !== id));
+    undoableFetchDelete(id, `/api/recurring-tasks?id=${id}`, 'Recurring task deleted', {
+      onUndo: () => {
+        if (task) setTasks(prev => [...prev, task]);
+      },
+      onSettled: () => fetchTasks(),
+    });
   }
 
   const grouped: Record<string, typeof tasks> = {};

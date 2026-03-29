@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Plus, Check, Trash2, AlertTriangle, Archive } from 'lucide-react';
+import { useUndoableAction, useToast } from '@/lib/toast';
 
 interface Project {
   id: string;
@@ -52,6 +53,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [newAction, setNewAction] = useState('');
   const [newContext, setNewContext] = useState('work');
   const [contexts, setContexts] = useState(DEFAULT_CONTEXTS);
+  const { addToast } = useToast();
+  const { undoableFetchDelete } = useUndoableAction();
 
   useEffect(() => {
     fetchProject();
@@ -116,22 +119,34 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     fetchProject();
   }
 
-  async function completeAction(actionId: string) {
-    await fetch('/api/actions', {
+  function completeAction(actionId: string) {
+    setActions(prev => prev.map(a => a.id === actionId ? { ...a, status: 'completed' } : a));
+    fetch('/api/actions', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: actionId, status: 'completed' }),
     });
-    fetchProject();
+    addToast('Action completed', {
+      onUndo: async () => {
+        await fetch('/api/actions', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: actionId, status: 'active' }),
+        });
+        setActions(prev => prev.map(a => a.id === actionId ? { ...a, status: 'active' } : a));
+      },
+    });
   }
 
-  async function deleteAction(actionId: string) {
-    await fetch(`/api/actions?id=${actionId}`, { method: 'DELETE' });
-    fetchProject();
+  function deleteAction(actionId: string) {
+    setActions(prev => prev.filter(a => a.id !== actionId));
+    undoableFetchDelete(actionId, `/api/actions?id=${actionId}`, 'Action deleted', {
+      onUndo: () => fetchProject(),
+    });
   }
 
-  async function archiveProject() {
-    await fetch(`/api/projects/${id}`, {
+  function archiveProject() {
+    fetch(`/api/projects/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'archived' }),

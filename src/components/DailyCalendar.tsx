@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Plus, Trash2, X, Check, Edit3, GripVertical } from 'lucide-react';
 import { TIME_OPTIONS, formatTime, timeToMinutes } from '@/lib/time-utils';
+import { useUndoableAction } from '@/lib/toast';
 import MiniTimeline from '@/components/MiniTimeline';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -20,6 +21,7 @@ interface DailyBlock {
 
 export default function DailyCalendar({ date }: { date: string }) {
   const [blocks, setBlocks] = useState<DailyBlock[]>([]);
+  const { undoableFetchDelete } = useUndoableAction();
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState('');
 
@@ -114,11 +116,14 @@ export default function DailyCalendar({ date }: { date: string }) {
   };
 
   // Delete block
-  const handleDelete = async (id: string) => {
-    try {
-      await fetch(`/api/daily-blocks?id=${id}`, { method: 'DELETE' });
-      loadBlocks();
-    } catch (err) { console.error(err); }
+  const handleDelete = (id: string) => {
+    const block = blocks.find(b => b.id === id);
+    setBlocks(prev => prev.filter(b => b.id !== id));
+    undoableFetchDelete(id, `/api/daily-blocks?id=${id}`, 'Block deleted', {
+      onUndo: () => {
+        if (block) setBlocks(prev => [...prev, block].sort((a, b) => a.start_time.localeCompare(b.start_time)));
+      },
+    });
   };
 
   const startEdit = (block: DailyBlock) => {

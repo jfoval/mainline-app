@@ -6,6 +6,7 @@ import {
   Plus, Trash2, Save, Calendar, ChevronDown, ChevronRight,
   RotateCcw, Edit3, X, Check, Copy,
 } from 'lucide-react';
+import { useUndoableAction } from '@/lib/toast';
 
 // ── Types ─────────────────────────────────────────────────────
 interface Block {
@@ -48,6 +49,7 @@ export default function IdealCalendarPage() {
   const [activePatternId, setActivePatternId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { undoableFetchDelete } = useUndoableAction();
 
   // New pattern form
   const [showNewPattern, setShowNewPattern] = useState(false);
@@ -114,13 +116,20 @@ export default function IdealCalendarPage() {
   }
 
   // ── Delete pattern ────────────────────────────────────────
-  async function deletePattern(id: string) {
-    if (!confirm('Delete this week pattern and all its blocks?')) return;
-    await fetch(`/api/week-patterns?id=${id}`, { method: 'DELETE' });
+  function deletePattern(id: string) {
+    const pattern = patterns.find(p => p.id === id);
     setPatterns(prev => prev.filter(p => p.id !== id));
     if (activePatternId === id) {
       setActivePatternId(patterns.find(p => p.id !== id)?.id || null);
     }
+    undoableFetchDelete(id, `/api/week-patterns?id=${id}`, 'Pattern deleted', {
+      onUndo: () => {
+        if (pattern) {
+          setPatterns(prev => [...prev, pattern]);
+          setActivePatternId(id);
+        }
+      },
+    });
   }
 
   // ── Duplicate pattern ─────────────────────────────────────
@@ -211,12 +220,23 @@ export default function IdealCalendarPage() {
   }
 
   // ── Delete block ──────────────────────────────────────────
-  async function deleteBlock(blockId: string) {
-    await fetch(`/api/week-patterns/blocks?id=${blockId}`, { method: 'DELETE' });
+  function deleteBlock(blockId: string) {
+    const block = patterns.flatMap(p => p.blocks).find(b => b.id === blockId);
     setPatterns(prev => prev.map(p => ({
       ...p,
       blocks: p.blocks.filter(b => b.id !== blockId),
     })));
+    undoableFetchDelete(blockId, `/api/week-patterns/blocks?id=${blockId}`, 'Block deleted', {
+      onUndo: () => {
+        if (block) {
+          setPatterns(prev => prev.map(p =>
+            p.id === block.pattern_id
+              ? { ...p, blocks: [...p.blocks, block].sort((a, b) => a.start_time.localeCompare(b.start_time)) }
+              : p
+          ));
+        }
+      },
+    });
   }
 
   // ── Save rotation ─────────────────────────────────────────

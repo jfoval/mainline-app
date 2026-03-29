@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Plus, Trash2, ArrowRight, Mic, MicOff, Play, Search } from 'lucide-react';
+import { Plus, Trash2, Mic, MicOff, Play, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useOfflineStore, inboxStore } from '@/lib/offline';
 import { useUndoableAction, useToast } from '@/lib/toast';
 
 export default function InboxPage() {
-  const { data: items, create, update, remove } = useOfflineStore(inboxStore);
+  const { data: items, create, remove } = useOfflineStore(inboxStore);
   const { pendingDeletes } = useToast();
   const { undoableDelete } = useUndoableAction();
   const [newItem, setNewItem] = useState('');
@@ -29,10 +29,6 @@ export default function InboxPage() {
 
   function deleteItem(id: string) {
     undoableDelete(id, remove, 'Inbox item deleted');
-  }
-
-  async function processItem(id: string) {
-    await update({ id, status: 'processed' });
   }
 
   // Ref to track recognition instance so we can stop it
@@ -226,23 +222,14 @@ export default function InboxPage() {
                   {new Date(item.captured_at).toLocaleString()}
                 </p>
               </div>
-              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={() => processItem(item.id)}
-                  className="p-2 rounded-lg hover:bg-success/10 text-success"
-                  title="Mark processed"
-                >
-                  <ArrowRight size={16} />
-                </button>
-                <button
-                  onClick={() => deleteItem(item.id)}
-                  className="p-2 rounded-lg hover:bg-danger/10 text-danger"
-                  title="Delete"
-                  aria-label="Delete item"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
+              <button
+                onClick={() => deleteItem(item.id)}
+                className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-danger/10 text-danger transition-all"
+                title="Delete"
+                aria-label="Delete item"
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
           ))}
         </div>
