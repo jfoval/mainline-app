@@ -447,7 +447,7 @@ export default function Dashboard() {
 
       {/* Do Differently Today (from yesterday's shutdown) */}
       {data.do_differently_today && (
-        <div className="px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800 truncate">
+        <div className="px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-sm text-amber-300 truncate">
           <span className="font-medium">Do differently today:</span> {data.do_differently_today}
         </div>
       )}
