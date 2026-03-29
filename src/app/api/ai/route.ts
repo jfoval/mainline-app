@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
       case 'prioritize': return NextResponse.json(await prioritizeDay(apiKey));
       case 'ask': return NextResponse.json(await askAssistant(apiKey, data));
       case 'recovery': return NextResponse.json(await recoveryWorkflow(apiKey));
+      case 'journal_insights': return NextResponse.json(await journalInsights(apiKey, data));
       default: return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
     }
   } catch (err) {
@@ -83,6 +84,7 @@ const MODELS: Record<string, string> = {
   prioritize: DEFAULT_MODEL,
   ask: DEFAULT_MODEL,
   recovery: DEFAULT_MODEL,
+  journal_insights: DEFAULT_MODEL,
 };
 
 async function callClaude(apiKey: string, system: string, userMessage: string, action?: string): Promise<string> {
@@ -302,4 +304,58 @@ Guidelines:
       { title: 'Do a weekly review', description: 'Get the full picture of your system.', link: '/review' },
     ], encouragement: 'Every return to the system makes the system stronger.' };
   }
+}
+
+// ─── Journal Insights ──────────────────────
+async function journalInsights(apiKey: string, data: { days?: number }) {
+  const days = data?.days || 14;
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  const entries = await sql`
+    SELECT entry_date, content, tag FROM journal_entries
+    WHERE entry_date >= ${since}
+    ORDER BY entry_date ASC, created_at ASC
+  ` as Array<{ entry_date: string; content: string; tag: string | null }>;
+
+  const notes = await sql`
+    SELECT date, reflection_matters_most, reflection_who_to_be, reflection_one_action,
+           evening_did_well, evening_fell_short, evening_do_differently
+    FROM daily_notes
+    WHERE date >= ${since}
+    ORDER BY date ASC
+  ` as Array<Record<string, string | null>>;
+
+  if (entries.length === 0 && notes.length === 0) {
+    return { insights: `No journal entries or reflections found in the last ${days} days. Start writing to get personalized insights!` };
+  }
+
+  const entryLines = entries.map(e =>
+    `[${e.entry_date}]${e.tag ? ` #${e.tag}` : ''}: ${e.content}`
+  ).join('\n');
+
+  const noteLines = notes
+    .filter(n => n.reflection_matters_most || n.evening_did_well)
+    .map(n => {
+      const parts: string[] = [`[${n.date}]`];
+      if (n.reflection_matters_most) parts.push(`Matters most: ${n.reflection_matters_most}`);
+      if (n.reflection_who_to_be) parts.push(`Who to be: ${n.reflection_who_to_be}`);
+      if (n.evening_did_well) parts.push(`Did well: ${n.evening_did_well}`);
+      if (n.evening_fell_short) parts.push(`Fell short: ${n.evening_fell_short}`);
+      return parts.join(' | ');
+    }).join('\n');
+
+  const context = `JOURNAL ENTRIES (last ${days} days):\n${entryLines || 'None'}\n\nDAILY REFLECTIONS:\n${noteLines || 'None'}`;
+
+  const system = `You are a thoughtful journal analyst. Review the user's journal entries and daily reflections. Identify:
+1. Recurring themes or patterns
+2. Emotional trends (energy, mood, motivation)
+3. Progress toward stated goals or intentions
+4. Strengths being demonstrated
+5. Recurring struggles or friction points
+6. One actionable suggestion for the coming week
+
+Be warm, insightful, and specific — reference actual entries. Keep your response under 300 words. Use plain text, no markdown headers.`;
+
+  const response = await callClaude(apiKey, system, context, 'journal_insights');
+  return { insights: response };
 }

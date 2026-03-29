@@ -26,6 +26,7 @@ function tableFromUrl(url: string): string {
   if (url.includes('/api/context-lists')) return 'context_lists';
   if (url.includes('/api/daily-blocks')) return 'daily_blocks';
   if (url.includes('/api/routine')) return 'routine_blocks';
+  if (url.includes('/api/journal')) return 'journal_entries';
   return 'unknown';
 }
 

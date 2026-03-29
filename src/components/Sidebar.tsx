@@ -20,6 +20,7 @@ import {
   Compass,
   LifeBuoy,
   GitMerge,
+  NotebookPen,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -32,6 +33,7 @@ const navItems = [
   { href: '/projects', label: 'Projects', icon: FolderKanban },
   { href: '/ideal-calendar', label: 'Ideal Calendar', icon: CalendarDays },
   { href: '/disciplines', label: 'Disciplines', icon: Compass },
+  { href: '/journal', label: 'Journal', icon: NotebookPen },
   { href: '/horizons', label: 'Horizons', icon: Target },
   { href: '/reference', label: 'Reference', icon: BookOpen },
   { href: '/review', label: 'Review', icon: Calendar },

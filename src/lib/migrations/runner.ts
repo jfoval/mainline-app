@@ -496,4 +496,19 @@ const embeddedMigrations: { version: number; name: string; statements: string[] 
       `ALTER TABLE daily_notes ADD COLUMN IF NOT EXISTS evening_do_differently TEXT`,
     ],
   },
+  {
+    version: 13,
+    name: '013_journal_entries',
+    statements: [
+      `CREATE TABLE IF NOT EXISTS journal_entries (
+        id TEXT PRIMARY KEY,
+        entry_date TEXT NOT NULL,
+        content TEXT NOT NULL,
+        tag TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TEXT DEFAULT ''
+      )`,
+      `CREATE INDEX IF NOT EXISTS idx_journal_entries_date ON journal_entries(entry_date)`,
+    ],
+  },
 ];

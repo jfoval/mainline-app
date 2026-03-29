@@ -148,6 +148,15 @@ export interface DailyBlock {
   updated_at: string;
 }
 
+export interface JournalEntry {
+  id: string;
+  entry_date: string;
+  content: string;
+  tag: string | null;
+  created_at: string;
+  updated_at?: string;
+}
+
 // ---- Sync Queue ----
 
 export interface SyncQueueEntry {
@@ -192,6 +201,7 @@ class MainlineOfflineDB extends Dexie {
   discipline_logs!: Table<DisciplineLog, string>;
   context_lists!: Table<ContextList, string>;
   daily_blocks!: Table<DailyBlock, string>;
+  journal_entries!: Table<JournalEntry, string>;
   sync_queue!: Table<SyncQueueEntry, number>;
   sync_meta!: Table<SyncMeta, string>;
   conflicts!: Table<ConflictEntry, number>;
@@ -306,6 +316,25 @@ class MainlineOfflineDB extends Dexie {
       discipline_logs: 'id, discipline_id, date, [discipline_id+date]',
       context_lists: 'id, key, is_active, sort_order',
       daily_blocks: 'id, date',
+      sync_queue: '++queueId, timestamp',
+      sync_meta: 'table',
+      conflicts: '++conflictId, table, recordId, detectedAt',
+    });
+
+    // Version 8: Add journal_entries
+    this.version(8).stores({
+      inbox_items: 'id, status, captured_at',
+      next_actions: 'id, context, status, project_id, sort_order',
+      list_items: 'id, list_type, sort_order',
+      projects: 'id, status, category',
+      daily_notes: 'id, date',
+      routine_blocks: 'id, routine_type, sort_order',
+      reference_docs: 'id, category, slug',
+      disciplines: 'id, type, is_active, sort_order',
+      discipline_logs: 'id, discipline_id, date, [discipline_id+date]',
+      context_lists: 'id, key, is_active, sort_order',
+      daily_blocks: 'id, date',
+      journal_entries: 'id, entry_date',
       sync_queue: '++queueId, timestamp',
       sync_meta: 'table',
       conflicts: '++conflictId, table, recordId, detectedAt',

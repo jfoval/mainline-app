@@ -3,6 +3,7 @@ import type {
   InboxItem, NextAction, ListItem,
   Project, DailyNote, RoutineBlock, ReferenceDoc,
   Discipline, DisciplineLog, ContextList, DailyBlock,
+  JournalEntry,
 } from './db';
 import { enqueue } from './sync-queue';
 import { v4 as uuid } from 'uuid';
@@ -686,6 +687,61 @@ export const dailyBlocksStore: StoreConfig<DailyBlock> = {
     remove: async (id) => {
       await offlineDb.daily_blocks.delete(id);
       await enqueue('DELETE', `/api/daily-blocks?id=${id}`, null);
+    },
+  },
+};
+
+// ---- Journal Entries ----
+
+export const journalEntriesStore: StoreConfig<JournalEntry> = {
+  table: 'journal_entries',
+
+  fetchUrl: (params) => {
+    if (params?.date) return `/api/journal?date=${params.date}`;
+    return '/api/journal';
+  },
+
+  parseResponse: (json) => json as JournalEntry[],
+
+  queryLocal: async (params) => {
+    if (params?.date) {
+      return offlineDb.journal_entries
+        .where('entry_date').equals(params.date)
+        .toArray()
+        .then(entries => entries.sort((a, b) => a.created_at.localeCompare(b.created_at)));
+    }
+    const results = await offlineDb.journal_entries.toArray();
+    return results.sort((a, b) => b.entry_date.localeCompare(a.entry_date));
+  },
+
+  mutate: {
+    create: async (data) => {
+      const id = uuid();
+      const now = nowLocal();
+      const item: JournalEntry = {
+        id,
+        entry_date: data.entry_date as string,
+        content: data.content as string,
+        tag: (data.tag as string) ?? null,
+        created_at: now,
+      };
+      await offlineDb.journal_entries.put(item);
+      await enqueue('POST', '/api/journal', { id, ...data });
+      return item;
+    },
+
+    update: async (data) => {
+      const { id, ...updates } = data;
+      const existing = await offlineDb.journal_entries.get(id);
+      const baseUpdatedAt = existing?.updated_at;
+      updates.updated_at = nowLocal();
+      await offlineDb.journal_entries.update(id, updates);
+      await enqueue('PATCH', '/api/journal', { ...data, updated_at: updates.updated_at, _base_updated_at: baseUpdatedAt });
+    },
+
+    remove: async (id) => {
+      await offlineDb.journal_entries.delete(id);
+      await enqueue('DELETE', `/api/journal?id=${id}`, null);
     },
   },
 };
