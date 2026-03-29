@@ -2,6 +2,13 @@
 
 All notable changes to Mainline will be documented here.
 
+## [0.5.1] - 2026-03-28
+
+### Fixed
+- **Monthly review crash** — the review API still queried `health_log` and `business_health_log` tables that were dropped in migration 011. Starting a monthly review returned a 500 error, crashing the page when switching between tabs. Removed the dead queries.
+
+---
+
 ## [0.5.0] - 2026-03-28
 
 ### Added
