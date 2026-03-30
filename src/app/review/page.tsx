@@ -242,7 +242,7 @@ export default function ReviewPage() {
       {/* Header + Progress */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <button onClick={() => { clearProgress(); setReviewType(null); setData(null); }} className="text-sm text-muted hover:text-foreground transition-colors mb-1 block">
+          <button onClick={() => { setReviewType(null); setData(null); }} className="text-sm text-muted hover:text-foreground transition-colors mb-1 block">
             ← Back to Review Menu
           </button>
           <h1 className="text-2xl font-bold">{reviewType === 'monthly' ? 'Monthly Deep Review' : 'Weekly Review'}</h1>
