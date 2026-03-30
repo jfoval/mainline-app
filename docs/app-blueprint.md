@@ -102,7 +102,7 @@ A self-deployed personal productivity app. Each customer gets their own instance
 ### Reviews & AI
 - **Weekly Review** (`/review`) — **6 guided steps** (recurring tasks step removed; notes sections removed). Live system data. Tracks last completion date, shows overdue warning if >8 days. "Next Step" always marks the current step done (fixed v0.7.3 — previously toggled completion off if already marked done). "Back to Review Menu" preserves all step progress — progress is only cleared when the review is fully completed via the "Complete Review" button.
 - **Monthly Review** (`/review`) — **10 steps** (weekly 6 + Someday/Maybe review, goals check, systems check, personal pulse). Overdue warning if >35 days. Same "Next Step" fix and progress-persistence behavior as weekly.
-- **AI Assistant** (`/ai`) — 3 tabs: morning briefing, prioritize day, ask Claude (all Opus)
+- **AI Assistant** (`/ai`) — 3 tabs: morning briefing, prioritize day, ask Claude (all Opus). All three use a shared `getSystemSnapshot()` helper that queries the full database in parallel: inbox count, all active projects (with stall detection), every active next action across all contexts, horizons, today's daily note, last 7 days of journal entries, disciplines with today's completion status, and days since last weekly review. Ask Claude: 2048 max_tokens. Morning Briefing: 1500 max_tokens.
 - **Recovery** (`/recovery`) — AI-powered "get back on track" guided re-engagement
 
 ### Settings & System

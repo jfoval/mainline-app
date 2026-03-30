@@ -258,9 +258,9 @@ Do the weekly 6 steps first, then:
 
 Powered by Claude Opus. Three tools:
 
-- **Morning Briefing** — generates a daily briefing based on your system (inbox, stalled projects, waiting-for items)
-- **Prioritize Day** — suggests your Top 3 based on projects and priorities
-- **Ask Claude** — free-form chat about your system, projects, or anything
+- **Morning Briefing** — generates a daily briefing with full system context: all inbox items, every active project, all action contexts (not just @work), stalled projects, disciplines due today, recent journal themes, and your horizons goals
+- **Prioritize Day** — suggests your Top 3 based on all active actions (every context), stalled projects, today's daily note top 3, and priorities
+- **Ask Claude** — free-form chat with full access to your system: projects, actions, horizons, journal, disciplines, and review history. Ask things like "which projects are stalled?" or "what should I focus on this week?" and get specific, data-driven answers
 
 Your API key is configured in **Settings → API Key**. Get one at [console.anthropic.com](https://console.anthropic.com). Costs roughly $2–5/month for daily use.
 
