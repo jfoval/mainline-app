@@ -458,9 +458,9 @@ export default function ProcessPage() {
               <button
                 onClick={undoLastAction}
                 disabled={undoing}
-                className="flex items-center gap-1 px-2 py-0.5 rounded text-xs border border-border hover:bg-card transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs border border-border hover:bg-card transition-colors disabled:opacity-50"
               >
-                <Undo2 size={12} />
+                <Undo2 size={14} />
                 {undoing ? 'Undoing...' : 'Undo'}
               </button>
             )}
@@ -524,9 +524,9 @@ export default function ProcessPage() {
             <button
               onClick={getAiSuggestion}
               disabled={aiLoading}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border disabled:opacity-50 transition-colors ${aiError ? 'text-red-600 border-red-200 hover:bg-red-50' : 'text-purple-600 border-purple-200 hover:bg-purple-50'}`}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm border disabled:opacity-50 transition-colors ${aiError ? 'text-red-600 border-red-200 hover:bg-red-50' : 'text-purple-600 border-purple-200 hover:bg-purple-50'}`}
             >
-              {aiLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+              {aiLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
               {aiError ? 'AI unavailable — retry?' : 'AI suggest routing'}
             </button>
           )}
@@ -582,7 +582,7 @@ export default function ProcessPage() {
       {step === 'route_action' && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <button onClick={() => setStep('actionable')} aria-label="Back" className="p-1 rounded hover:bg-card">
+            <button onClick={() => setStep('actionable')} aria-label="Back" className="p-2 rounded hover:bg-card">
               <ArrowLeft size={18} />
             </button>
             <h2 className="font-semibold text-lg">Route this action</h2>
@@ -617,11 +617,11 @@ export default function ProcessPage() {
                         routeItem({ type: 'action', context: ctx.key, projectId: selectedProject || undefined });
                       }
                     }}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                    className={`px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                       selectedContext === ctx.key ? 'bg-primary text-white' : 'bg-background hover:bg-primary/10'
                     }`}
                   >
-                    {ctx.label} <kbd className="text-[10px] px-1 py-0.5 rounded bg-background/50 text-muted font-mono ml-0.5">{idx + 1}</kbd>
+                    {ctx.label} <kbd className="text-xs px-1.5 py-0.5 rounded bg-background/50 text-muted font-mono ml-1">{idx + 1}</kbd>
                   </button>
                 ))}
               </div>
@@ -637,7 +637,7 @@ export default function ProcessPage() {
                   />
                   <button
                     onClick={() => routeItem({ type: 'action', context: 'waiting_for' })}
-                    className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs"
+                    className="px-3.5 py-2.5 rounded-lg bg-primary text-white text-sm"
                   >
                     Add to @Waiting For
                   </button>
@@ -651,7 +651,7 @@ export default function ProcessPage() {
                   <select
                     value={selectedProject}
                     onChange={e => setSelectedProject(e.target.value)}
-                    className="w-full px-2 py-1.5 rounded-lg border border-border bg-background text-xs focus:outline-none"
+                    className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none"
                   >
                     <option value="">None</option>
                     {projects.map(p => (
@@ -683,7 +683,7 @@ export default function ProcessPage() {
       {step === 'route_non_action' && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <button onClick={() => setStep('actionable')} aria-label="Back" className="p-1 rounded hover:bg-card">
+            <button onClick={() => setStep('actionable')} aria-label="Back" className="p-2 rounded hover:bg-card">
               <ArrowLeft size={18} />
             </button>
             <h2 className="font-semibold text-lg">Where does this belong?</h2>
@@ -794,7 +794,7 @@ export default function ProcessPage() {
       {step === 'route_reference' && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <button onClick={() => setStep('route_non_action')} aria-label="Back" className="p-1 rounded hover:bg-card">
+            <button onClick={() => setStep('route_non_action')} aria-label="Back" className="p-2 rounded hover:bg-card">
               <ArrowLeft size={18} />
             </button>
             <h2 className="font-semibold text-lg">File as Reference</h2>
@@ -819,7 +819,7 @@ export default function ProcessPage() {
                     <button
                       key={cat}
                       onClick={() => setSelectedRefCategory(cat)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      className={`px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                         selectedRefCategory === cat ? 'bg-green-600 text-white' : 'bg-background hover:bg-green-50 border border-border'
                       }`}
                     >
@@ -835,9 +835,9 @@ export default function ProcessPage() {
                     setShowNewRefCategory(true);
                     setSelectedRefCategory('');
                   }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-green-700 border border-green-200 hover:bg-green-50 transition-colors"
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-sm text-green-700 border border-green-200 hover:bg-green-50 transition-colors"
                 >
-                  <Plus size={12} /> New category
+                  <Plus size={14} /> New category
                 </button>
               ) : (
                 <div className="space-y-2">
@@ -883,7 +883,7 @@ export default function ProcessPage() {
       {step === 'create_project' && (
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <button onClick={() => setStep('route_action')} aria-label="Back" className="p-1 rounded hover:bg-card">
+            <button onClick={() => setStep('route_action')} aria-label="Back" className="p-2 rounded hover:bg-card">
               <ArrowLeft size={18} />
             </button>
             <h2 className="font-semibold text-lg">Create Project</h2>
@@ -932,7 +932,7 @@ export default function ProcessPage() {
                   <button
                     key={ctx.key}
                     onClick={() => setFirstActionContext(ctx.key)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${
+                    className={`px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                       firstActionContext === ctx.key ? 'bg-primary text-white' : 'bg-background hover:bg-primary/10'
                     }`}
                   >

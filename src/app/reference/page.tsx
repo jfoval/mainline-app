@@ -180,8 +180,8 @@ export default function ReferencePage() {
                   {doc.content && <p className="text-xs text-muted mt-1 whitespace-pre-wrap">{doc.content}</p>}
                   <p className="text-xs text-muted mt-1">{new Date(doc.created_at).toLocaleDateString()}</p>
                 </div>
-                <button onClick={() => deleteRefDoc(doc.id)} className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 text-muted hover:text-red-600 transition-all">
-                  <Trash2 size={14} />
+                <button onClick={() => deleteRefDoc(doc.id)} className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 text-muted hover:text-red-600 transition-all">
+                  <Trash2 size={16} />
                 </button>
               </div>
             ))}
@@ -242,16 +242,16 @@ export default function ReferencePage() {
                       className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-green-500/50"
                     />
                     <div className="flex gap-1">
-                      <button onClick={() => renameCategory(cat, editCategoryName)} className="p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/30 text-green-600"><Check size={14} /></button>
-                      <button onClick={() => setEditingCategory(null)} className="p-1 rounded hover:bg-muted/20 text-muted"><X size={14} /></button>
+                      <button onClick={() => renameCategory(cat, editCategoryName)} className="p-2 rounded hover:bg-green-50 dark:hover:bg-green-900/30 text-green-600"><Check size={16} /></button>
+                      <button onClick={() => setEditingCategory(null)} className="p-2 rounded hover:bg-muted/20 text-muted"><X size={16} /></button>
                     </div>
                   </div>
                 ) : deletingCategory === cat ? (
                   <div className="p-4 rounded-xl bg-card border-2 border-red-400 space-y-2">
                     <p className="text-xs text-red-700 dark:text-red-400 font-medium">Delete &ldquo;{cat}&rdquo; and all its items?</p>
                     <div className="flex gap-2">
-                      <button onClick={() => deleteCategory(cat)} className="px-3 py-1 rounded-lg bg-red-600 text-white text-xs hover:bg-red-700">Delete</button>
-                      <button onClick={() => setDeletingCategory(null)} className="px-3 py-1 rounded-lg text-muted text-xs hover:text-foreground">Cancel</button>
+                      <button onClick={() => deleteCategory(cat)} className="px-3.5 py-2 rounded-lg bg-red-600 text-white text-sm hover:bg-red-700">Delete</button>
+                      <button onClick={() => setDeletingCategory(null)} className="px-3.5 py-2 rounded-lg text-muted text-sm hover:text-foreground">Cancel</button>
                     </div>
                   </div>
                 ) : (
@@ -267,15 +267,15 @@ export default function ReferencePage() {
                   <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditingCategory(cat); setEditCategoryName(cat); }}
-                      className="p-1 rounded hover:bg-muted/20 text-muted hover:text-foreground"
+                      className="p-2 rounded hover:bg-muted/20 text-muted hover:text-foreground"
                     >
-                      <Pencil size={12} />
+                      <Pencil size={14} />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setDeletingCategory(cat); }}
-                      className="p-1 rounded hover:bg-red-50 text-muted hover:text-red-600"
+                      className="p-2 rounded hover:bg-red-50 text-muted hover:text-red-600"
                     >
-                      <Trash2 size={12} />
+                      <Trash2 size={14} />
                     </button>
                   </div>
                 )}
@@ -288,9 +288,9 @@ export default function ReferencePage() {
         {!showNewCategoryInput ? (
           <button
             onClick={() => setShowNewCategoryInput(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-green-700 border border-green-200 hover:bg-green-50 transition-colors"
+            className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-sm text-green-700 border border-green-200 hover:bg-green-50 transition-colors"
           >
-            <Plus size={12} /> New folder
+            <Plus size={14} /> New folder
           </button>
         ) : (
           <div className="flex gap-2 items-center">

@@ -283,16 +283,16 @@ export default function DailyCalendar({ date, initialBlocks }: { date: string; i
                     <button
                       onClick={e => { e.stopPropagation(); startEdit(block); }}
                       aria-label="Edit block"
-                      className="p-1.5 rounded hover:bg-primary/10 text-primary"
+                      className="p-2 rounded hover:bg-primary/10 text-primary"
                     >
-                      <Edit3 size={14} />
+                      <Edit3 size={16} />
                     </button>
                     <button
                       onClick={e => { e.stopPropagation(); handleDelete(block.id); }}
                       aria-label="Delete block"
-                      className="p-1.5 rounded hover:bg-red-100 text-red-500"
+                      className="p-2 rounded hover:bg-red-100 text-red-500"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </div>
@@ -363,15 +363,15 @@ function BlockForm({
         <select
           value={values.start_time}
           onChange={e => onChange({ ...values, start_time: e.target.value })}
-          className="flex-1 px-2 py-1.5 rounded-lg border border-border bg-background text-xs"
+          className="flex-1 px-3 py-2.5 rounded-lg border border-border bg-background text-sm"
         >
           {TIME_OPTIONS.map(t => <option key={t} value={t}>{formatTime(t)}</option>)}
         </select>
-        <span className="text-xs text-muted self-center">to</span>
+        <span className="text-sm text-muted self-center">to</span>
         <select
           value={values.end_time}
           onChange={e => onChange({ ...values, end_time: e.target.value })}
-          className="flex-1 px-2 py-1.5 rounded-lg border border-border bg-background text-xs"
+          className="flex-1 px-3 py-2.5 rounded-lg border border-border bg-background text-sm"
         >
           {TIME_OPTIONS.map(t => <option key={t} value={t}>{formatTime(t)}</option>)}
         </select>
@@ -399,14 +399,14 @@ function BlockForm({
         </label>
         <div className="flex gap-2">
           {onDelete && (
-            <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500">
-              <Trash2 size={14} />
+            <button onClick={onDelete} className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500">
+              <Trash2 size={16} />
             </button>
           )}
-          <button onClick={onCancel} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-muted">
-            <X size={14} />
+          <button onClick={onCancel} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-muted">
+            <X size={16} />
           </button>
-          <button onClick={onSave} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white text-xs hover:bg-primary/90">
+          <button onClick={onSave} className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary text-white text-sm hover:bg-primary/90">
             <Check size={14} />
             {saveLabel}
           </button>

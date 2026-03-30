@@ -71,9 +71,9 @@ function SortableActionItem({ action, onComplete, onDelete }: { action: NextActi
       <button
         onClick={() => onDelete(action.id)}
         aria-label="Delete action"
-        className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-danger/10 text-danger transition-all"
+        className="p-2 rounded-lg opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-danger/10 text-danger transition-all"
       >
-        <Trash2 size={14} />
+        <Trash2 size={16} />
       </button>
     </div>
   );
