@@ -235,7 +235,7 @@ Your personal reference lists:
 
 ### Review (`/review`)
 
-Guided weekly and monthly review workflow. The app tracks when you last completed each and shows overdue warnings.
+Guided weekly and monthly review workflow. The app tracks when you last completed each and shows overdue warnings. Clicking "Next Step" always marks the current step as done before advancing (it will never toggle a completed step back to incomplete).
 
 **Weekly Review (6 steps):**
 1. Clear ALL inboxes — app inbox, email, physical desk, phone notifications

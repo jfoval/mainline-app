@@ -100,8 +100,8 @@ A self-deployed personal productivity app. Each customer gets their own instance
 - **Reference** (`/reference`) — Someday/Maybe (Personal), Someday/Maybe (Work), and user-managed reference folders with add/edit/delete
 
 ### Reviews & AI
-- **Weekly Review** (`/review`) — **6 guided steps** (recurring tasks step removed; notes sections removed). Live system data. Tracks last completion date, shows overdue warning if >8 days.
-- **Monthly Review** (`/review`) — **10 steps** (weekly 6 + Someday/Maybe review, goals check, systems check, personal pulse). Overdue warning if >35 days.
+- **Weekly Review** (`/review`) — **6 guided steps** (recurring tasks step removed; notes sections removed). Live system data. Tracks last completion date, shows overdue warning if >8 days. "Next Step" always marks the current step done (fixed v0.7.3 — previously toggled completion off if already marked done).
+- **Monthly Review** (`/review`) — **10 steps** (weekly 6 + Someday/Maybe review, goals check, systems check, personal pulse). Overdue warning if >35 days. Same "Next Step" fix as weekly.
 - **AI Assistant** (`/ai`) — 3 tabs: morning briefing, prioritize day, ask Claude (all Opus)
 - **Recovery** (`/recovery`) — AI-powered "get back on track" guided re-engagement
 
