@@ -5,8 +5,8 @@ A personal productivity system built on capture, organize, act. Deploy your own 
 ## What You Get
 
 - **Inbox capture** — voice or text, from anywhere
-- **Morning Process** — daily reflection, inbox processing, top 3 priorities, discipline check-in
-- **Shutdown Routine** — capture sweep, discipline review, tomorrow planning
+- **Morning Process** — top 3 priorities, morning reflection (what could hold me back, who I want to be), inbox processing
+- **Shutdown Routine** — morning review, capture sweep, evening reflection
 - **Next Actions** — organized by user-configurable context lists (@Work, @Errands, @Home, etc.)
 - **Projects** — multi-step outcomes with linked actions and stalled project alerts
 - **Ideal Calendar** — multi-week pattern rotation (e.g., alternating A/B week schedules)

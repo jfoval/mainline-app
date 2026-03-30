@@ -51,9 +51,10 @@ The app is designed around three daily touchpoints.
 
 Open **Morning Process** from the sidebar. It walks you through 3 steps:
 
-1. **Daily Note & Reflection** — Two forward-looking reflection questions (What matters most today? Who do I want to be today?) followed by your Top 3 priorities: #1 asks "What one action, if completed today, would move my life forward most?" with a reminder to "do the hardest thing first", then #2 and #3 for second and third most important outcomes. Stalled projects (no next action) are flagged here too.
-2. **Process Inbox** — Work through every inbox item using the decision tree. A checklist shows your configured inbox types (Physical, Work Email, Personal Email, etc.) — check each one off as you clear it. Tap the gear icon to add, edit, or delete inbox types. The check state saves daily so you can see what you've cleared.
-3. **Done** — An animated checkmark celebration plays, then you're taken back to the dashboard automatically.
+1. **Top 3 Priorities** — #1 "Top thing to do" (do the hardest thing first), #2 "Second thing to do", #3 "Third thing to do". Stalled projects (no next action) are flagged here too.
+2. **Morning Reflection** — "What could hold me back today?" (with prompts: Fear, Self-doubt, Distraction, Ego, Excuses, Limiting beliefs) and "Who do I want to be today?" (with prompts: Mindset, Energy, Character, How I treat people, How I handle adversity, What I model, What I build).
+3. **Process Inbox** — Work through every inbox item using the decision tree. A checklist shows your configured inbox types (Physical, Work Email, Personal Email, etc.) — check each one off as you clear it. Tap the gear icon to add, edit, or delete inbox types. The check state saves daily so you can see what you've cleared.
+4. **Done** — An animated checkmark celebration plays, then you're taken back to the dashboard automatically.
 
 ### During the Day
 
@@ -64,11 +65,12 @@ Open **Morning Process** from the sidebar. It walks you through 3 steps:
 
 ### Shutdown (10–15 minutes)
 
-Open **Shutdown** from the sidebar. 3 steps:
+Open **Shutdown** from the sidebar. 4 steps:
 
-1. **Capture Sweep** — Add anything still in your head from today
-2. **Evening Reflection** — What did I do well? Where did I fall short? What will I do differently tomorrow?
-3. **Done** — An animated checkmark celebration plays, then you're taken back to the dashboard automatically.
+1. **Morning Review** — Shows your morning's Top 3 priorities, "What could hold me back today?" answer, and "Who do I want to be today?" answer so you can reflect on what you set out to do.
+2. **Capture Sweep** — Add anything still in your head from today
+3. **Evening Reflection** — What did I do well? Where did I fall short? What will I do differently tomorrow?
+4. **Done** — An animated checkmark celebration plays, then you're taken back to the dashboard automatically.
 
 ---
 

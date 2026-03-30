@@ -298,33 +298,11 @@ export default function MorningProcessPage() {
               </div>
             )}
 
-            {/* Morning reflection fields */}
+            {/* Today's Top 3 */}
             <div className="bg-card rounded-xl border border-border p-6 space-y-5">
-              <h3 className="font-semibold text-foreground">Morning Reflection</h3>
-
+              <h3 className="font-semibold text-foreground">Today&apos;s Top 3</h3>
               <div>
-                <label className="block text-sm font-medium text-muted mb-1">What matters most today?</label>
-                <textarea
-                  rows={2}
-                  value={reflection.matters_most}
-                  onChange={(e) => setReflection((r) => ({ ...r, matters_most: e.target.value }))}
-                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
-                  placeholder="Cut through the noise — what's the priority?"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-muted mb-1">Who do I want to be today?</label>
-                <textarea
-                  rows={2}
-                  value={reflection.who_to_be}
-                  onChange={(e) => setReflection((r) => ({ ...r, who_to_be: e.target.value }))}
-                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
-                  placeholder="Calm, disciplined, courageous, generous, focused..."
-                />
-              </div>
-              <h3 className="font-semibold text-foreground pt-2">Today&apos;s Top 3</h3>
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-1">#1 — What one action, if completed today, would move my life forward most? <span className="font-normal text-muted-foreground">(do the hardest thing first)</span></label>
+                <label className="block text-sm font-semibold text-foreground mb-1">#1 — Top thing to do <span className="font-normal text-muted-foreground">(do the hardest thing first)</span></label>
                 <textarea
                   rows={2}
                   value={top3First}
@@ -334,7 +312,7 @@ export default function MorningProcessPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-1">#2 — Second most important</label>
+                <label className="block text-sm font-semibold text-foreground mb-1">#2 — Second thing to do</label>
                 <textarea
                   rows={2}
                   value={top3Second}
@@ -344,13 +322,41 @@ export default function MorningProcessPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-1">#3 — Third most important</label>
+                <label className="block text-sm font-semibold text-foreground mb-1">#3 — Third thing to do</label>
                 <textarea
                   rows={2}
                   value={top3Third}
                   onChange={(e) => setTop3Third(e.target.value)}
                   className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
                   placeholder="Third most important outcome for today..."
+                />
+              </div>
+            </div>
+
+            {/* Reflection questions */}
+            <div className="bg-card rounded-xl border border-border p-6 space-y-5">
+              <h3 className="font-semibold text-foreground">Morning Reflection</h3>
+
+              <div>
+                <label className="block text-sm font-medium text-muted mb-1">What could hold me back today?</label>
+                <p className="text-xs text-muted mb-2">Fear &middot; Self-doubt &middot; Distraction &middot; Ego &middot; Excuses &middot; Limiting beliefs</p>
+                <textarea
+                  rows={2}
+                  value={reflection.matters_most}
+                  onChange={(e) => setReflection((r) => ({ ...r, matters_most: e.target.value }))}
+                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                  placeholder="Name it so you can beat it..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-muted mb-1">Who do I want to be today?</label>
+                <p className="text-xs text-muted mb-2">Mindset &middot; Energy &middot; Character &middot; How I treat people &middot; How I handle adversity &middot; What I model &middot; What I build</p>
+                <textarea
+                  rows={2}
+                  value={reflection.who_to_be}
+                  onChange={(e) => setReflection((r) => ({ ...r, who_to_be: e.target.value }))}
+                  className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                  placeholder="Be specific about who you're choosing to be..."
                 />
               </div>
             </div>
