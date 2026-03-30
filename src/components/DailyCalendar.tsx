@@ -196,7 +196,7 @@ export default function DailyCalendar({ date }: { date: string }) {
 
       {/* Add form */}
       {showAddForm && (
-        <div className="px-5 py-4 border-b border-border bg-blue-50/50">
+        <div className="px-5 py-4 border-b border-border bg-blue-50/50 dark:bg-blue-900/20">
           <BlockForm
             values={newBlock}
             onChange={setNewBlock}
@@ -399,11 +399,11 @@ function BlockForm({
         </label>
         <div className="flex gap-2">
           {onDelete && (
-            <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-red-100 text-red-500">
+            <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-500">
               <Trash2 size={14} />
             </button>
           )}
-          <button onClick={onCancel} className="p-1.5 rounded-lg hover:bg-gray-100 text-muted">
+          <button onClick={onCancel} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-muted">
             <X size={14} />
           </button>
           <button onClick={onSave} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white text-xs hover:bg-primary/90">

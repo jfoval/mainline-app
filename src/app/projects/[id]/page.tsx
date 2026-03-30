@@ -202,11 +202,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
 
       {/* Stalled Warning */}
       {actionsLoaded && activeActions.length === 0 && (
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 mb-6">
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 dark:bg-red-900/30 dark:border-red-700 mb-6">
           <AlertTriangle size={20} className="text-red-600" />
           <div>
-            <p className="text-sm font-medium text-red-700">This project is stalled</p>
-            <p className="text-xs text-red-600">Every active project needs at least one next action. Add one below.</p>
+            <p className="text-sm font-medium text-red-700 dark:text-red-200">This project is stalled</p>
+            <p className="text-xs text-red-600 dark:text-red-200">Every active project needs at least one next action. Add one below.</p>
           </div>
         </div>
       )}

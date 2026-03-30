@@ -148,16 +148,16 @@ export default function JournalPage() {
       <div className="flex items-center justify-between">
         <button
           onClick={() => setSelectedDate(d => shiftDate(d, -1))}
-          className="p-2 rounded-lg hover:bg-[var(--color-surface-alt)] transition-colors"
+          className="p-2 rounded-lg hover:bg-muted/30 transition-colors"
           aria-label="Previous day"
         >
-          <ChevronLeft className="w-5 h-5 text-[var(--color-text-secondary)]" />
+          <ChevronLeft className="w-5 h-5 text-muted-foreground" />
         </button>
 
         <div className="flex items-center gap-3">
           <button
             onClick={() => dateInputRef.current?.showPicker()}
-            className="text-lg font-semibold text-[var(--color-text-primary)] hover:text-[var(--color-accent)] transition-colors"
+            className="text-lg font-semibold text-foreground hover:text-primary transition-colors"
           >
             {formatDateDisplay(selectedDate)}
           </button>
@@ -172,7 +172,7 @@ export default function JournalPage() {
           {!isToday && (
             <button
               onClick={() => setSelectedDate(getToday())}
-              className="text-xs px-2 py-1 rounded-full bg-[var(--color-accent)] text-white font-medium"
+              className="text-xs px-2 py-1 rounded-full bg-primary text-primary-foreground font-medium"
             >
               Today
             </button>
@@ -181,29 +181,29 @@ export default function JournalPage() {
 
         <button
           onClick={() => setSelectedDate(d => shiftDate(d, 1))}
-          className="p-2 rounded-lg hover:bg-[var(--color-surface-alt)] transition-colors"
+          className="p-2 rounded-lg hover:bg-muted/30 transition-colors"
           aria-label="Next day"
         >
-          <ChevronRight className="w-5 h-5 text-[var(--color-text-secondary)]" />
+          <ChevronRight className="w-5 h-5 text-muted-foreground" />
         </button>
       </div>
 
       {/* Morning Reflections */}
       {morningFields.length > 0 && (
-        <div className="bg-[var(--color-surface)] rounded-xl p-5 border-l-4 border-amber-400">
+        <div className="bg-card rounded-xl p-5 border-l-4 border-amber-400">
           <div className="flex items-center gap-2 mb-3">
             <Sun className="w-5 h-5 text-amber-500" />
-            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Morning Reflection</h2>
+            <h2 className="text-base font-semibold text-foreground">Morning Reflection</h2>
           </div>
           <div className="space-y-3">
             {morningFields.map((f) => (
               <div key={f.label}>
-                <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-0.5">{f.label}</p>
-                <p className="text-sm text-[var(--color-text-primary)]">{f.value}</p>
+                <p className="text-xs font-medium text-muted-foreground mb-0.5">{f.label}</p>
+                <p className="text-sm text-foreground">{f.value}</p>
               </div>
             ))}
           </div>
-          <a href="/process" className="inline-block mt-3 text-xs text-[var(--color-accent)] hover:underline">
+          <a href="/process" className="inline-block mt-3 text-xs text-primary hover:underline">
             Edit in Morning Process
           </a>
         </div>
@@ -212,10 +212,10 @@ export default function JournalPage() {
       {/* Journal Entries Section */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
+          <h2 className="text-base font-semibold text-foreground">
             Journal Entries
             {journalEntries.length > 0 && (
-              <span className="ml-2 text-sm font-normal text-[var(--color-text-secondary)]">
+              <span className="ml-2 text-sm font-normal text-muted-foreground">
                 ({journalEntries.length})
               </span>
             )}
@@ -223,7 +223,7 @@ export default function JournalPage() {
           {!showAdd && (
             <button
               onClick={() => setShowAdd(true)}
-              className="flex items-center gap-1.5 text-sm text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors"
+              className="flex items-center gap-1.5 text-sm text-primary hover:text-primary/90 transition-colors"
             >
               <Plus className="w-4 h-4" />
               Add Entry
@@ -233,17 +233,17 @@ export default function JournalPage() {
 
         {/* Add Form */}
         {showAdd && (
-          <div className="bg-[var(--color-surface)] rounded-xl p-4 mb-4 space-y-3">
+          <div className="bg-card rounded-xl p-4 mb-4 space-y-3">
             <textarea
               autoFocus
               value={newContent}
               onChange={(e) => setNewContent(e.target.value)}
               placeholder="What's on your mind?"
               rows={3}
-              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] text-[var(--color-text-primary)] p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] resize-none"
+              className="w-full rounded-lg border border-border bg-background text-foreground p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
             />
             <div>
-              <p className="text-xs text-[var(--color-text-secondary)] mb-1.5">Tag (optional)</p>
+              <p className="text-xs text-muted-foreground mb-1.5">Tag (optional)</p>
               <div className="flex flex-wrap gap-1.5">
                 {TAG_OPTIONS.map((t) => (
                   <button
@@ -252,7 +252,7 @@ export default function JournalPage() {
                     className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
                       newTag === t
                         ? TAG_COLORS[t] || 'bg-gray-200 text-gray-700'
-                        : 'bg-[var(--color-surface-alt)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]'
+                        : 'bg-muted/30 text-muted-foreground hover:bg-border'
                     }`}
                   >
                     {t}
@@ -262,21 +262,21 @@ export default function JournalPage() {
                   value={TAG_OPTIONS.includes(newTag) ? '' : newTag}
                   onChange={(e) => setNewTag(e.target.value)}
                   placeholder="custom..."
-                  className="text-xs px-2.5 py-1 rounded-full bg-[var(--color-surface-alt)] text-[var(--color-text-primary)] border-none focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] w-20"
+                  className="text-xs px-2.5 py-1 rounded-full bg-muted/30 text-foreground border-none focus:outline-none focus:ring-1 focus:ring-primary w-20"
                 />
               </div>
             </div>
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => { setShowAdd(false); setNewContent(''); setNewTag(''); }}
-                className="text-sm px-3 py-1.5 rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-alt)]"
+                className="text-sm px-3 py-1.5 rounded-lg text-muted-foreground hover:bg-muted/30"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAdd}
                 disabled={!newContent.trim()}
-                className="text-sm px-3 py-1.5 rounded-lg bg-[var(--color-accent)] text-white hover:bg-[var(--color-accent-hover)] disabled:opacity-50 transition-colors"
+                className="text-sm px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
               >
                 Save
               </button>
@@ -286,13 +286,13 @@ export default function JournalPage() {
 
         {/* Entries List */}
         {journalEntries.length === 0 && !showAdd ? (
-          <div className="bg-[var(--color-surface)] rounded-xl p-8 text-center">
-            <p className="text-sm text-[var(--color-text-secondary)]">
+          <div className="bg-card rounded-xl p-8 text-center">
+            <p className="text-sm text-muted-foreground">
               No journal entries for this date.
             </p>
             <button
               onClick={() => setShowAdd(true)}
-              className="mt-2 text-sm text-[var(--color-accent)] hover:underline"
+              className="mt-2 text-sm text-primary hover:underline"
             >
               Start writing
             </button>
@@ -300,7 +300,7 @@ export default function JournalPage() {
         ) : (
           <div className="space-y-3">
             {journalEntries.map((entry) => (
-              <div key={entry.id} className="bg-[var(--color-surface)] rounded-xl p-4">
+              <div key={entry.id} className="bg-card rounded-xl p-4">
                 {editingId === entry.id ? (
                   <div className="space-y-3">
                     <textarea
@@ -308,7 +308,7 @@ export default function JournalPage() {
                       value={editContent}
                       onChange={(e) => setEditContent(e.target.value)}
                       rows={3}
-                      className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-input-bg)] text-[var(--color-text-primary)] p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] resize-none"
+                      className="w-full rounded-lg border border-border bg-background text-foreground p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary resize-none"
                     />
                     <div className="flex flex-wrap gap-1.5">
                       {TAG_OPTIONS.map((t) => (
@@ -318,7 +318,7 @@ export default function JournalPage() {
                           className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
                             editTag === t
                               ? TAG_COLORS[t] || 'bg-gray-200 text-gray-700'
-                              : 'bg-[var(--color-surface-alt)] text-[var(--color-text-secondary)] hover:bg-[var(--color-border)]'
+                              : 'bg-muted/30 text-muted-foreground hover:bg-border'
                           }`}
                         >
                           {t}
@@ -328,13 +328,13 @@ export default function JournalPage() {
                         value={TAG_OPTIONS.includes(editTag) ? '' : editTag}
                         onChange={(e) => setEditTag(e.target.value)}
                         placeholder="custom..."
-                        className="text-xs px-2.5 py-1 rounded-full bg-[var(--color-surface-alt)] text-[var(--color-text-primary)] border-none focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] w-20"
+                        className="text-xs px-2.5 py-1 rounded-full bg-muted/30 text-foreground border-none focus:outline-none focus:ring-1 focus:ring-primary w-20"
                       />
                     </div>
                     <div className="flex gap-2 justify-end">
                       <button
                         onClick={() => setEditingId(null)}
-                        className="p-1.5 rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-alt)]"
+                        className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted/30"
                         aria-label="Cancel edit"
                       >
                         <X className="w-4 h-4" />
@@ -342,7 +342,7 @@ export default function JournalPage() {
                       <button
                         onClick={handleSaveEdit}
                         disabled={!editContent.trim()}
-                        className="p-1.5 rounded-lg text-[var(--color-accent)] hover:bg-[var(--color-surface-alt)] disabled:opacity-50"
+                        className="p-1.5 rounded-lg text-primary hover:bg-muted/30 disabled:opacity-50"
                         aria-label="Save edit"
                       >
                         <Check className="w-4 h-4" />
@@ -351,7 +351,7 @@ export default function JournalPage() {
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm text-[var(--color-text-primary)] whitespace-pre-wrap">{entry.content}</p>
+                    <p className="text-sm text-foreground whitespace-pre-wrap">{entry.content}</p>
                     <div className="flex items-center justify-between mt-2">
                       <div className="flex items-center gap-2">
                         {entry.tag && (
@@ -359,21 +359,21 @@ export default function JournalPage() {
                             {entry.tag}
                           </span>
                         )}
-                        <span className="text-xs text-[var(--color-text-secondary)]">
+                        <span className="text-xs text-muted-foreground">
                           {formatTime(entry.created_at)}
                         </span>
                       </div>
                       <div className="flex gap-1">
                         <button
                           onClick={() => startEdit(entry)}
-                          className="p-1.5 rounded-lg text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-alt)] hover:text-[var(--color-text-primary)] transition-colors"
+                          className="p-1.5 rounded-lg text-muted-foreground hover:bg-muted/30 hover:text-foreground transition-colors"
                           aria-label="Edit entry"
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleDelete(entry.id)}
-                          className="p-1.5 rounded-lg text-[var(--color-text-secondary)] hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 transition-colors"
+                          className="p-1.5 rounded-lg text-muted-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 transition-colors"
                           aria-label="Delete entry"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -390,20 +390,20 @@ export default function JournalPage() {
 
       {/* Evening Reflections */}
       {eveningFields.length > 0 && (
-        <div className="bg-[var(--color-surface)] rounded-xl p-5 border-l-4 border-indigo-400">
+        <div className="bg-card rounded-xl p-5 border-l-4 border-indigo-400">
           <div className="flex items-center gap-2 mb-3">
             <Moon className="w-5 h-5 text-indigo-500" />
-            <h2 className="text-base font-semibold text-[var(--color-text-primary)]">Evening Reflection</h2>
+            <h2 className="text-base font-semibold text-foreground">Evening Reflection</h2>
           </div>
           <div className="space-y-3">
             {eveningFields.map((f) => (
               <div key={f.label}>
-                <p className="text-xs font-medium text-[var(--color-text-secondary)] mb-0.5">{f.label}</p>
-                <p className="text-sm text-[var(--color-text-primary)]">{f.value}</p>
+                <p className="text-xs font-medium text-muted-foreground mb-0.5">{f.label}</p>
+                <p className="text-sm text-foreground">{f.value}</p>
               </div>
             ))}
           </div>
-          <a href="/shutdown" className="inline-block mt-3 text-xs text-[var(--color-accent)] hover:underline">
+          <a href="/shutdown" className="inline-block mt-3 text-xs text-primary hover:underline">
             Edit in Shutdown Routine
           </a>
         </div>
@@ -414,9 +414,9 @@ export default function JournalPage() {
         <button
           onClick={handleAiInsights}
           disabled={loadingInsights}
-          className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl bg-[var(--color-surface)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-alt)] border border-[var(--color-border)] transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 text-sm px-4 py-2.5 rounded-xl bg-card text-foreground hover:bg-muted/30 border border-border transition-colors disabled:opacity-50"
         >
-          <Sparkles className={`w-4 h-4 text-[var(--color-accent)] ${loadingInsights ? 'motion-safe:animate-pulse' : ''}`} />
+          <Sparkles className={`w-4 h-4 text-primary ${loadingInsights ? 'motion-safe:animate-pulse' : ''}`} />
           {loadingInsights ? 'Analyzing...' : 'Analyze Recent Entries'}
         </button>
 
@@ -427,12 +427,12 @@ export default function JournalPage() {
         )}
 
         {aiInsights && (
-          <div className="mt-3 bg-[var(--color-surface)] rounded-xl p-5 border border-[var(--color-border)]">
+          <div className="mt-3 bg-card rounded-xl p-5 border border-border">
             <div className="flex items-center gap-2 mb-3">
-              <Sparkles className="w-4 h-4 text-[var(--color-accent)]" />
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">AI Insights (Last 14 Days)</h3>
+              <Sparkles className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-semibold text-foreground">AI Insights (Last 14 Days)</h3>
             </div>
-            <div className="text-sm text-[var(--color-text-primary)] whitespace-pre-wrap leading-relaxed">
+            <div className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
               {aiInsights}
             </div>
           </div>

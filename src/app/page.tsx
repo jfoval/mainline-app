@@ -258,7 +258,7 @@ export default function Dashboard() {
           </div>
           <p className="text-muted mt-1">{displayDate}</p>
           {data.pattern_name && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 mt-2">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 mt-2">
               {data.pattern_name}
             </span>
           )}
