@@ -268,17 +268,18 @@ export default function Dashboard() {
         <div className="flex flex-col items-end gap-1">
           <button
             onClick={toggleVoiceCapture}
-            className={`p-3 rounded-full transition-all ${
+            className={`p-3 rounded-xl border transition-colors ${
               captureStatus === 'saved'
-                ? 'bg-green-500 text-white'
+                ? 'bg-green-500 text-white border-green-500'
                 : isRecording
-                  ? 'bg-red-500 text-white motion-safe:animate-pulse'
-                  : 'bg-primary text-white hover:bg-primary/90'
+                  ? 'bg-red-500 text-white border-red-500 motion-safe:animate-pulse'
+                  : 'border-border bg-card hover:bg-primary/5'
             }`}
             title={isRecording ? 'Tap to stop & save (V)' : 'Quick capture to inbox (V)'}
             aria-label={isRecording ? 'Stop recording and save' : 'Voice capture to inbox'}
           >
-            {captureStatus === 'saved' ? <Check size={22} /> : isRecording ? <MicOff size={22} /> : <Mic size={22} />}
+            {captureStatus === 'saved' ? <Check size={20} /> : isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+            {captureStatus === 'idle' && !isRecording && <kbd className="text-[10px] px-1 py-0.5 rounded bg-background/50 text-muted font-mono">V</kbd>}
           </button>
           {captureStatus === 'saved' ? (
             <span className="text-xs text-green-600 font-medium">Saved to inbox</span>
@@ -288,9 +289,7 @@ export default function Dashboard() {
             </span>
           ) : voiceError ? (
             <span className="text-xs text-red-500 font-medium max-w-[260px] text-right">{voiceError}</span>
-          ) : (
-            <kbd className="text-[10px] px-1 py-0.5 rounded bg-background text-muted font-mono">V</kbd>
-          )}
+          ) : null}
         </div>
       </div>
 
