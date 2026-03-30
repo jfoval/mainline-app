@@ -482,6 +482,10 @@ export default function ProcessPage() {
             type="text"
             value={editedContent}
             onChange={e => setEditedContent(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') { e.preventDefault(); contentInputRef.current?.blur(); }
+              if (e.key === 'Escape') { e.preventDefault(); setEditedContent(currentItem.content); contentInputRef.current?.blur(); }
+            }}
             className="flex-1 text-lg font-medium bg-transparent border-none outline-none text-foreground focus:ring-2 focus:ring-primary/40 focus:rounded-lg focus:px-2 focus:-mx-2"
           />
           <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-background text-muted font-mono shrink-0 border border-border">E</kbd>
