@@ -141,7 +141,11 @@ export default function ReviewPage() {
   }
 
   function nextStep() {
-    markStepDone(currentStep);
+    setCompletedSteps(prev => {
+      const next = new Set(prev);
+      next.add(currentStep);
+      return next;
+    });
     const steps = reviewType === 'monthly' ? [...WEEKLY_STEPS, ...MONTHLY_EXTRA_STEPS] : WEEKLY_STEPS;
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
