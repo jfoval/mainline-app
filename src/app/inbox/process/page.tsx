@@ -79,6 +79,8 @@ export default function ProcessPage() {
   const [newRefCategory, setNewRefCategory] = useState('');
   const [showNewRefCategory, setShowNewRefCategory] = useState(false);
   const [refTitle, setRefTitle] = useState('');
+  const [showInlineNewFolder, setShowInlineNewFolder] = useState(false);
+  const [inlineNewFolderName, setInlineNewFolderName] = useState('');
 
   // AI suggestion
   const [aiSuggestion, setAiSuggestion] = useState<{ suggestion?: string; context?: string; project_match?: string; category?: string; two_minute?: boolean; concrete?: boolean; reworded?: string } | null>(null);
@@ -367,6 +369,8 @@ export default function ProcessPage() {
     setRefTitle('');
     setAiSuggestion(null);
     setAiError(false);
+    setShowInlineNewFolder(false);
+    setInlineNewFolderName('');
   }
 
   async function enterNonAction() {
@@ -708,6 +712,54 @@ export default function ProcessPage() {
                 </div>
               </button>
             ))}
+
+            {!showInlineNewFolder ? (
+              <button
+                onClick={() => setShowInlineNewFolder(true)}
+                className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-green-300 hover:border-green-500 hover:bg-green-500/5 transition-colors text-left"
+              >
+                <Plus size={18} className="text-green-600" />
+                <div>
+                  <p className="text-sm font-medium text-green-700">New Folder</p>
+                  <p className="text-xs text-muted">Create & file here</p>
+                </div>
+              </button>
+            ) : (
+              <div className="p-3 rounded-xl border-2 border-green-400 bg-card space-y-2">
+                <input
+                  value={inlineNewFolderName}
+                  onChange={e => setInlineNewFolderName(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && inlineNewFolderName.trim()) {
+                      routeItem({ type: 'ref_category', category: inlineNewFolderName.trim() });
+                    }
+                    if (e.key === 'Escape') { setShowInlineNewFolder(false); setInlineNewFolderName(''); }
+                  }}
+                  placeholder="Folder name..."
+                  autoFocus
+                  className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-green-500/50"
+                />
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => {
+                      if (inlineNewFolderName.trim()) {
+                        routeItem({ type: 'ref_category', category: inlineNewFolderName.trim() });
+                      }
+                    }}
+                    disabled={!inlineNewFolderName.trim()}
+                    className="px-3 py-1 rounded-lg bg-green-600 text-white text-xs hover:bg-green-700 disabled:opacity-50"
+                  >
+                    File Here
+                  </button>
+                  <button
+                    onClick={() => { setShowInlineNewFolder(false); setInlineNewFolderName(''); }}
+                    className="px-3 py-1 rounded-lg text-muted text-xs hover:text-foreground"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
 
           </div>
         </div>
