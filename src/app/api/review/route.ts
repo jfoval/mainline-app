@@ -19,8 +19,6 @@ export async function GET(req: NextRequest) {
 
     const stalledProjects = activeProjects.filter(p => Number(p.active_action_count) === 0);
 
-    const somedayProjects = await sql`SELECT * FROM projects WHERE status = 'someday_maybe' ORDER BY category, title`;
-
     const allActions = await sql`
       SELECT * FROM next_actions WHERE status = 'active' ORDER BY context, added_at
     ` as Array<{
@@ -47,7 +45,6 @@ export async function GET(req: NextRequest) {
       inbox_count: inboxCount,
       active_projects: activeProjects,
       stalled_projects: stalledProjects,
-      someday_projects: somedayProjects,
       all_actions: allActions,
       action_counts: actionCounts,
       total_actions: allActions.length,
@@ -61,6 +58,8 @@ export async function GET(req: NextRequest) {
 
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
       result.recent_daily_notes = await sql`SELECT * FROM daily_notes WHERE date >= ${thirtyDaysAgo} ORDER BY date DESC`;
+
+      result.someday_maybe = await sql`SELECT id, title, content, created_at FROM reference_docs WHERE category = 'Someday/Maybe' ORDER BY created_at DESC`;
     }
 
     return NextResponse.json(result);

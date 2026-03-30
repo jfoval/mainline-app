@@ -227,13 +227,12 @@ export default function ProcessPage() {
         break;
       }
       case 'someday': {
-        const res = await fetch('/api/projects', {
+        const res = await fetch('/api/reference', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: currentItem.content,
-            category: 'personal',
-            status: 'someday_maybe',
+            category: 'Someday/Maybe',
           }),
         });
         const created = await res.json();
@@ -312,8 +311,8 @@ export default function ProcessPage() {
       }
       if (undoEntry.createdId) {
         const endpoint = undoEntry.createdType === 'action' ? '/api/actions'
-          : undoEntry.createdType === 'project' || undoEntry.createdType === 'someday' ? '/api/projects'
-          : undoEntry.createdType === 'reference' ? '/api/reference'
+          : undoEntry.createdType === 'project' ? '/api/projects'
+          : undoEntry.createdType === 'reference' || undoEntry.createdType === 'someday' ? '/api/reference'
           : undoEntry.createdType === 'list' ? '/api/lists'
           : null;
         if (endpoint) {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import {
   CheckCircle2, Circle, AlertTriangle, Inbox,
   FolderKanban, ListTodo, Clock, Calendar, RotateCcw,
-  Target, ArrowRight, Check, Sparkles
+  Target, ArrowRight, Check, Sparkles, Archive
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -13,7 +13,6 @@ interface ReviewData {
   inbox_count: number;
   active_projects: Array<{ id: string; title: string; category: string; active_action_count: number; updated_at: string }>;
   stalled_projects: Array<{ id: string; title: string; category: string }>;
-  someday_projects: Array<{ id: string; title: string; category: string }>;
   all_actions: Array<{ id: string; content: string; context: string; waiting_on_person: string; waiting_since: string; agenda_person: string }>;
   action_counts: Record<string, number>;
   total_actions: number;
@@ -21,6 +20,7 @@ interface ReviewData {
   stale_waiting: Array<{ id: string; content: string; waiting_on_person: string; waiting_since: string }>;
   agendas: Array<{ id: string; content: string; agenda_person: string }>;
   horizons?: Array<{ id: string; type: string; content: string }>;
+  someday_maybe?: Array<{ id: string; title: string; content: string; created_at: string }>;
 }
 
 const WEEKLY_STEPS = [
@@ -33,6 +33,7 @@ const WEEKLY_STEPS = [
 ];
 
 const MONTHLY_EXTRA_STEPS = [
+  { id: 'someday_maybe', label: 'Someday/Maybe Review', icon: Archive, description: 'Review your someday/maybe list. Activate, delete, or leave for next month.' },
   { id: 'thinking', label: 'Thinking Doc Connections', icon: Sparkles, description: 'Scan for clusters, orphans, redundancy. Any docs to consolidate?' },
   { id: 'goals', label: 'Goals Check', icon: Target, description: 'Are active projects aligned with your 1-2 year goals? Any misalignment?' },
   { id: 'systems', label: 'Systems Check', icon: RotateCcw, description: 'Pick 1-2 areas. What is working? What is friction? What could improve?' },
@@ -364,16 +365,6 @@ function StepContent({ stepId, data }: { stepId: string; data: ReviewData }) {
               </Link>
             ))}
           </div>
-          {data.someday_projects.length > 0 && (
-            <div className="pt-2 border-t border-border">
-              <p className="text-xs text-muted font-medium mb-1">Someday/Maybe ({(data.someday_projects as Array<{id: string; title: string}>).length}) — anything ready to activate?</p>
-              <div className="max-h-[150px] overflow-y-auto space-y-1">
-                {(data.someday_projects as Array<{id: string; title: string; category: string}>).map(p => (
-                  <p key={p.id} className="text-xs text-muted">{p.title} ({p.category})</p>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       );
 
@@ -479,6 +470,29 @@ function StepContent({ stepId, data }: { stepId: string; data: ReviewData }) {
       );
 
     // Monthly extra steps
+    case 'someday_maybe':
+      return (
+        <div className="space-y-3">
+          <p className="text-sm">Review each item. Activate anything you are ready to commit to, delete what no longer interests you.</p>
+          {data.someday_maybe && data.someday_maybe.length > 0 ? (
+            <div className="max-h-[400px] overflow-y-auto space-y-2">
+              {data.someday_maybe.map(item => (
+                <div key={item.id} className="p-3 rounded-lg bg-background">
+                  <p className="text-sm font-medium">{item.title}</p>
+                  {item.content && <p className="text-xs text-muted mt-1">{item.content}</p>}
+                  <p className="text-xs text-muted mt-1">Added {new Date(item.created_at).toLocaleDateString()}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted">No someday/maybe items. Items routed here from inbox processing will appear during monthly review.</p>
+          )}
+          <Link href="/reference" className="flex items-center gap-1 text-xs text-primary hover:underline">
+            <ArrowRight size={12} /> Open Reference (Someday/Maybe)
+          </Link>
+        </div>
+      );
+
     case 'thinking':
       return (
         <div className="space-y-3 text-sm">

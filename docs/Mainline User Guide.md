@@ -109,7 +109,7 @@ The decision tree, one item at a time. For each item:
 
 - **Is it actionable?** Choose Yes, No, or "Under 2 minutes — do it now"
 - **If actionable:** refine the action text, pick a context list (@Work, @Home, @Errands, etc.), or create a multi-step project
-- **If not actionable:** route it to Trash, Someday/Maybe, Reference, Wish List, Reading List, Movie, Show, Album, or Travel Idea
+- **If not actionable:** route it to Trash, Someday/Maybe (stored in Reference), Reference, Wish List, Reading List, Movie, Show, Album, or Travel Idea
 
 The **AI assistant** can suggest routing and flag vague actions (like "handle taxes") with concrete rewrites (like "Call accountant to confirm Q1 estimate deadline").
 
@@ -147,7 +147,6 @@ Any outcome requiring more than one action step.
 - Create projects with a title and category
 - Each project shows its linked next actions
 - **Stalled projects** (no next action) show a red alert
-- Toggle between **Active** and **Someday/Maybe** views
 - Click a project to see its detail page with purpose, milestones, and all linked actions
 
 ---
@@ -221,6 +220,7 @@ Five levels — each shows a list of named items you create:
 
 Your personal reference lists:
 
+- **Someday/Maybe** — ideas and projects you might pursue later (routed here from inbox processing, reviewed monthly)
 - **Wish List** — 3 tiers (want, would be nice, someday)
 - **Reading List** — 3 statuses (to read, reading, finished)
 - **Movies / Shows / Albums** — to watch or listen to
@@ -235,18 +235,19 @@ Guided weekly and monthly review workflow. The app tracks when you last complete
 
 **Weekly Review (6 steps):**
 1. Clear ALL inboxes — app inbox, email, physical desk, phone notifications
-2. Review every active project — still active? has next action? Scan Someday/Maybe too
+2. Review every active project — still active? has next action?
 3. Review all context lists — still relevant? right wording? already done?
 4. Review @Waiting-For — follow up needed? stale items highlighted
 5. Review calendar — look back 1 week, forward 2 weeks
 6. Review areas of focus — are all areas represented in your projects?
 
-**Monthly Deep Review (extends to 2–3 hours):**
+**Monthly Deep Review (11 steps, extends to 2–3 hours):**
 Do the weekly 6 steps first, then:
-1. Goals check — are your goals aligned with your active projects?
-2. Horizons review — scan for connections and gaps
-3. Systems check — pick 1–2 areas to evaluate
-4. Personal pulse — are you spending time on what matters?
+7. Someday/Maybe review — activate, delete, or leave for next month
+8. Thinking doc connections — clusters, orphans, consolidation
+9. Goals check — are your goals aligned with your active projects?
+10. Systems check — pick 1–2 areas to evaluate
+11. Personal pulse — are you spending time on what matters?
 
 ---
 
@@ -336,7 +337,7 @@ Hints are shown next to each sidebar item.
 | `D` | Do it now (under 2 minutes) |
 | `1`–`8` | Route to context 1–8 (shown on screen) |
 | `T` | Route to Trash |
-| `S` | Route to Someday/Maybe |
+| `S` | Route to Someday/Maybe (stored in Reference) |
 | `R` | Route to Reference |
 | `Esc` | Go back / Undo last decision |
 

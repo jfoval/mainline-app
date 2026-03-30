@@ -16,11 +16,9 @@ export default function ProjectsPage() {
   const [newTitle, setNewTitle] = useState('');
   const [newCategory, setNewCategory] = useState('personal');
   const [newPurpose, setNewPurpose] = useState('');
-  const [viewStatus, setViewStatus] = useState<'active' | 'someday_maybe'>('active');
-
   const { data: projects, create, update } = useOfflineStore(
     projectsStore,
-    { status: viewStatus }
+    { status: 'active' }
   );
   const { undoableStatusChange } = useUndoableAction();
 
@@ -39,7 +37,7 @@ export default function ProjectsPage() {
   }
 
   async function archiveProject(id: string) {
-    await undoableStatusChange(id, 'archived', viewStatus, update, 'Project archived');
+    await undoableStatusChange(id, 'archived', 'active', update, 'Project archived');
   }
 
   // Group projects by category
@@ -54,15 +52,9 @@ export default function ProjectsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold">Projects</h1>
-          <p className="text-sm text-muted mt-1">{projects.length} {viewStatus === 'active' ? 'active' : 'someday/maybe'}</p>
+          <p className="text-sm text-muted mt-1">{projects.length} active</p>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={() => setViewStatus(viewStatus === 'active' ? 'someday_maybe' : 'active')}
-            className="px-3 py-2 rounded-xl text-sm border border-border hover:bg-primary/5 transition-colors"
-          >
-            {viewStatus === 'active' ? 'Someday/Maybe' : 'Active'}
-          </button>
           <button
             onClick={() => setShowAdd(!showAdd)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary-hover transition-colors"
@@ -116,7 +108,7 @@ export default function ProjectsPage() {
       {/* Projects by Category */}
       {Object.keys(grouped).length === 0 ? (
         <div className="text-center py-12 text-muted">
-          <p className="text-lg font-medium">No {viewStatus === 'active' ? 'active' : 'someday/maybe'} projects</p>
+          <p className="text-lg font-medium">No active projects</p>
           <p className="text-sm mt-1">Create a project or process your inbox.</p>
         </div>
       ) : (

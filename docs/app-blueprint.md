@@ -85,10 +85,10 @@ A self-deployed personal productivity app. Each customer gets their own instance
 
 ### Core Productivity
 - **Inbox** (`/inbox`) — text + voice capture (Web Speech API, `V` hotkey hint on mic button, `P` hotkey hint on Process button). Capture input not autofocused so hotkeys work on page load. Search filter for 5+ items.
-- **Inbox Processing** (`/inbox/process`) — decision tree, one item at a time, AI-assisted routing. Keyboard shortcuts (Y/N/D, 1-8 for contexts, T/S/R, Esc). Undo last routing decision. Quick-route: trash, someday/maybe, reference, wish list, reading, movie, show, album, travel.
+- **Inbox Processing** (`/inbox/process`) — decision tree, one item at a time, AI-assisted routing. Keyboard shortcuts (Y/N/D, 1-8 for contexts, T/S/R, Esc). Undo last routing decision. Quick-route: trash, someday/maybe (→ reference), reference, wish list, reading, movie, show, album, travel.
 - **Global hotkeys** — two-key chord system (`g` then a letter) for sidebar navigation to any page. Shift+key shortcuts for quick-launching flows (Shift+M morning, Shift+S shutdown, Shift+R review). Dashboard has single-key shortcuts (V/I/A/P/W/R) with inline kbd hints on stat cards and mic button. Inbox has V/P hotkeys with kbd hints on mic and Process buttons. Next Actions page supports 1-9 to switch context tabs with number badges. All hotkeys disabled in input fields. Visual kbd hints shown in sidebar and on context tabs.
 - **Next Actions** (`/actions`) — user-configurable context lists. **Gear icon opens inline context manager**: add/edit/delete contexts with color picker (key auto-gen from name). Active/Completed toggle. Search filter. Drag-to-reorder via @dnd-kit.
-- **Projects** (`/projects`, `/projects/[id]`) — CRUD with categories, Active/Someday-Maybe toggle, stalled project detection
+- **Projects** (`/projects`, `/projects/[id]`) — CRUD with categories (active projects only), stalled project detection
 
 ### Schedule System
 - **Ideal Calendar** (`/ideal-calendar`) — week pattern editor with bi-weekly rotation (e.g., Girls Week / Non-Girls Week). Create named patterns with blocks per day.
@@ -250,7 +250,7 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 6 steps (recurring tasks step and per-step notes removed in v0.6.0):
 
 1. Clear ALL inboxes (app inbox, email, physical, phone notifications)
-2. Review every active project + scan Someday/Maybe
+2. Review every active project
 3. Review all context lists
 4. Review @waiting-for and @agendas (stale items highlighted)
 5. Review calendar (look back 1 week, forward 2 weeks)
@@ -262,10 +262,11 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 
 Weekly review steps 1-6 first, then:
 
-7. Goals check (goals vs active projects — aligned?)
-8. Horizons review (scan for connections and gaps)
-9. Systems check (pick 1-2 areas to evaluate)
-10. Personal pulse (spending time on what matters?)
+7. Someday/Maybe review (activate, delete, or leave — items stored in Reference)
+8. Thinking doc connections (clusters, orphans, consolidation)
+9. Goals check (goals vs active projects — aligned?)
+10. Systems check (pick 1-2 areas to evaluate)
+11. Personal pulse (spending time on what matters?)
 
 ---
 
