@@ -535,4 +535,14 @@ const embeddedMigrations: { version: number; name: string; statements: string[] 
       `CREATE INDEX IF NOT EXISTS idx_hi_sort ON horizon_items(horizon_type, sort_order)`,
     ],
   },
+  {
+    version: 16,
+    name: '016_cleanup_indexes',
+    statements: [
+      // Partial indexes to speed up retention cleanup DELETE queries
+      `CREATE INDEX IF NOT EXISTS idx_inbox_processed ON inbox_items(processed_at) WHERE status = 'processed'`,
+      `CREATE INDEX IF NOT EXISTS idx_actions_completed ON next_actions(completed_at) WHERE status IN ('completed', 'archived')`,
+      `CREATE INDEX IF NOT EXISTS idx_projects_completed ON projects(completed_at) WHERE status IN ('completed', 'archived')`,
+    ],
+  },
 ];

@@ -1,6 +1,7 @@
 import { initializeDatabase } from './schema';
 import sql from './db';
 import { setTimezone } from './api-helpers';
+import { runCleanupIfDue } from './maintenance';
 
 let initialized = false;
 
@@ -17,5 +18,7 @@ export async function ensureDb() {
       // Settings table may not exist yet — use env var or default
     }
     initialized = true;
+    // Fire-and-forget: auto-purge stale data once per day without blocking requests
+    runCleanupIfDue().catch(err => console.error('[cleanup] failed:', err));
   }
 }

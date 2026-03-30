@@ -6,6 +6,8 @@ const ALLOWED_SETTINGS_KEYS = [
   'anthropic_api_key', 'theme', 'timezone', 'user_name', 'user_email',
   'review_day', 'morning_time', 'shutdown_time', 'notification_enabled',
   'inbox_types', 'alert_inbox_threshold', 'alert_waiting_days',
+  'retention_inbox_days', 'retention_actions_days', 'retention_projects_days',
+  'retention_discipline_logs_days', 'retention_daily_blocks_days', 'retention_backup_log_days',
 ];
 
 // Keys that should never be returned via the settings GET endpoint
