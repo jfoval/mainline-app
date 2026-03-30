@@ -9,14 +9,14 @@ interface ThemeContextValue {
   setTheme: (theme: Theme) => void;
 }
 
-const ThemeContext = createContext<ThemeContextValue>({ theme: 'light', setTheme: () => {} });
+const ThemeContext = createContext<ThemeContextValue>({ theme: 'dark', setTheme: () => {} });
 
 export function useTheme() {
   return useContext(ThemeContext);
 }
 
 export default function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>('dark');
 
   useEffect(() => {
     // Read from localStorage (set by inline script for flash prevention)

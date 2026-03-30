@@ -46,7 +46,7 @@ export default function RootLayout({
       <head>
         <link rel="icon" href="/favicon.png" sizes="32x32" type="image/png" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <script dangerouslySetInnerHTML={{ __html: `try{if(localStorage.getItem('mainline-theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}` }} />
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('mainline-theme');if(t!=='light')document.documentElement.classList.add('dark')}catch(e){document.documentElement.classList.add('dark')}` }} />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
