@@ -198,7 +198,7 @@ export default function AIPage() {
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-hover disabled:opacity-50 transition-colors"
             >
               {loading ? <Loader2 size={16} className="animate-spin" /> : <Target size={16} />}
-              Get Today's Priorities
+              Get Today&apos;s Priorities
             </button>
           )}
           {priorities && (
@@ -235,7 +235,7 @@ export default function AIPage() {
                       onClick={() => { sendChatMessage(q); }}
                       className="block mx-auto text-xs text-primary hover:underline"
                     >
-                      "{q}"
+                      &quot;{q}&quot;
                     </button>
                   ))}
                 </div>

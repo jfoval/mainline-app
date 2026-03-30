@@ -35,11 +35,6 @@ export default function ReferencePage() {
 
   const { undoableFetchDelete } = useUndoableAction();
 
-  // Load reference categories on mount
-  useEffect(() => {
-    fetchRefCategories();
-  }, []);
-
   async function fetchRefCategories() {
     try {
       const res = await fetch('/api/reference?categories=true');
@@ -47,6 +42,13 @@ export default function ReferencePage() {
       setRefCategories(cats);
     } catch { /* offline */ }
   }
+
+  // Load reference categories on mount
+  /* eslint-disable react-hooks/set-state-in-effect -- setState is inside async callback, not synchronous */
+  useEffect(() => {
+    fetchRefCategories();
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Separate fixed and user categories
   const userCategories = refCategories.filter(c => !FIXED_CATEGORIES.includes(c));

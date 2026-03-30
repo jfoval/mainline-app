@@ -84,7 +84,16 @@ function ActionsContent() {
   const router = useRouter();
   const activeContext = searchParams.get('context') || 'work';
 
-  const [contexts, setContexts] = useState<ContextItem[]>([]);
+  const [contexts, setContexts] = useState<ContextItem[]>(() => [
+    { key: 'work', name: 'Work', color: 'blue' },
+    { key: 'errands', name: 'Errands', color: 'green' },
+    { key: 'home', name: 'Home', color: 'orange' },
+    { key: 'waiting_for', name: 'Waiting For', color: 'yellow' },
+    { key: 'agendas', name: 'Agendas', color: 'purple' },
+    { key: 'calls', name: 'Calls', color: 'teal' },
+    { key: 'computer', name: 'Computer', color: 'gray' },
+    { key: 'anywhere', name: 'Anywhere', color: 'indigo' },
+  ]);
   const [showContextManager, setShowContextManager] = useState(false);
   const [newContextName, setNewContextName] = useState('');
   const [newContextColor, setNewContextColor] = useState('gray');
@@ -121,6 +130,7 @@ function ActionsContent() {
     ]);
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- setState is inside async callback, not synchronous
   useEffect(() => { fetchContexts(); }, []);
 
   // 1-9 hotkeys to switch context tabs

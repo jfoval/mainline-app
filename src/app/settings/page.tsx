@@ -19,7 +19,9 @@ export default function SettingsPage() {
   const [apiKeySaveResult, setApiKeySaveResult] = useState<string | null>(null);
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() =>
+    typeof window !== 'undefined' ? localStorage.getItem('mainline-notifications') === 'true' : false
+  );
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [updateStatus, setUpdateStatus] = useState<string | null>(null);
   const [timezone, setTimezone] = useState('');
@@ -31,7 +33,6 @@ export default function SettingsPage() {
   const [thresholdsSaved, setThresholdsSaved] = useState(false);
 
   useEffect(() => {
-    setNotificationsEnabled(localStorage.getItem('mainline-notifications') === 'true');
     // Load settings
     fetch('/api/settings')
       .then(r => r.json())

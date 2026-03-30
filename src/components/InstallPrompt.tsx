@@ -10,7 +10,12 @@ interface BeforeInstallPromptEvent extends Event {
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showIOSPrompt, setShowIOSPrompt] = useState(false);
+  const [showIOSPrompt, setShowIOSPrompt] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
+    return isIOS && isSafari;
+  });
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
@@ -26,13 +31,6 @@ export default function InstallPrompt() {
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
     window.addEventListener('beforeinstallprompt', handler);
-
-    // iOS Safari: detect and show manual instructions
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
-    if (isIOS && isSafari) {
-      setShowIOSPrompt(true);
-    }
 
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);

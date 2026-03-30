@@ -16,16 +16,17 @@ export function useTheme() {
 }
 
 export default function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('dark');
+  const [theme, setThemeState] = useState<Theme>(() => {
+    // Read from localStorage on init (set by inline script for flash prevention)
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('mainline-theme') as Theme | null;
+      if (stored === 'dark' || stored === 'light') return stored;
+    }
+    return 'dark';
+  });
 
   useEffect(() => {
-    // Read from localStorage (set by inline script for flash prevention)
-    const stored = localStorage.getItem('mainline-theme') as Theme | null;
-    if (stored === 'dark' || stored === 'light') {
-      setThemeState(stored);
-    }
-
-    // Also check server settings for authoritative value
+    // Check server settings for authoritative value
     fetch('/api/settings')
       .then(r => r.ok ? r.json() : null)
       .then(data => {

@@ -47,6 +47,7 @@ export default function ConflictsPage() {
     setConflicts(await getConflicts());
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- setState is inside async callback, not synchronous
   useEffect(() => { load(); }, [load]);
 
   async function handleResolve(conflictId: number, keep: 'client' | 'server') {

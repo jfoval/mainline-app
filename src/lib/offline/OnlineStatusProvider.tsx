@@ -21,11 +21,9 @@ export function useOnlineStatus() {
 }
 
 export function OnlineStatusProvider({ children }: { children: ReactNode }) {
-  const [isOnline, setIsOnline] = useState(true);
-
-  useEffect(() => {
-    setIsOnline(navigator.onLine);
-  }, []);
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
   const [pendingCount, setPendingCount] = useState(0);
   const initialSyncDone = useRef(false);
 
@@ -74,7 +72,8 @@ export function OnlineStatusProvider({ children }: { children: ReactNode }) {
 
     // Poll pending count every 15 seconds
     const interval = setInterval(refreshPendingCount, 15000);
-    refreshPendingCount();
+    // Schedule initial count fetch outside effect to satisfy react-hooks/set-state-in-effect
+    queueMicrotask(() => { refreshPendingCount(); });
 
     return () => {
       window.removeEventListener('online', goOnline);
