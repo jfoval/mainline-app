@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Plus, Check, Trash2, Search, GripVertical, Settings, X, Pencil } from 'lucide-react';
 import { Suspense } from 'react';
 import { useOfflineStore, nextActionsStore, type NextAction } from '@/lib/offline';
 import { useUndoableAction, useToast } from '@/lib/toast';
+import { useHotkeys } from '@/hooks/useGlobalHotkeys';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -118,6 +119,18 @@ function ActionsContent() {
   }
 
   useEffect(() => { fetchContexts(); }, []);
+
+  // 1-9 hotkeys to switch context tabs
+  const contextHotkeys = useMemo(() => {
+    const map: Record<string, () => void> = {};
+    contexts.forEach((ctx, i) => {
+      if (i < 9) {
+        map[String(i + 1)] = () => router.push(`/actions?context=${ctx.key}`);
+      }
+    });
+    return map;
+  }, [contexts, router]);
+  useHotkeys(contextHotkeys);
 
   const [viewMode, setViewMode] = useState<'active' | 'completed'>('active');
   const { data: actions, create, update, remove } = useOfflineStore(
@@ -267,17 +280,22 @@ function ActionsContent() {
       {/* Context Tabs */}
       <div className="relative mb-4">
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide scroll-smooth items-center" style={{ WebkitOverflowScrolling: 'touch' }}>
-          {contexts.map(ctx => (
+          {contexts.map((ctx, idx) => (
             <button
               key={ctx.key}
               onClick={() => router.push(`/actions?context=${ctx.key}`)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 flex items-center gap-1.5 ${
                 activeContext === ctx.key
                   ? getColorClasses(ctx.color)
                   : 'bg-card text-muted hover:bg-primary/5'
               }`}
             >
               @{ctx.name}
+              {idx < 9 && (
+                <kbd className="text-[10px] font-mono px-1 py-0.5 rounded bg-black/10 dark:bg-white/10 leading-none opacity-50">
+                  {idx + 1}
+                </kbd>
+              )}
             </button>
           ))}
           <button

@@ -25,22 +25,22 @@ import {
 import { useState } from 'react';
 
 const navItems = [
-  { href: '/', label: 'Dashboard', icon: Clock },
-  { href: '/process', label: 'Morning Process', icon: Sun },
-  { href: '/shutdown', label: 'Shutdown', icon: Moon },
-  { href: '/inbox', label: 'Inbox', icon: Inbox },
-  { href: '/actions', label: 'Next Actions', icon: CheckSquare },
-  { href: '/projects', label: 'Projects', icon: FolderKanban },
-  { href: '/ideal-calendar', label: 'Ideal Calendar', icon: CalendarDays },
-  { href: '/disciplines', label: 'Disciplines', icon: Compass },
-  { href: '/journal', label: 'Journal', icon: NotebookPen },
-  { href: '/horizons', label: 'Horizons', icon: Target },
-  { href: '/reference', label: 'Reference', icon: BookOpen },
-  { href: '/review', label: 'Review', icon: Calendar },
-  { href: '/ai', label: 'AI Assistant', icon: Bot },
+  { href: '/', label: 'Dashboard', icon: Clock, hotkey: 'D' },
+  { href: '/process', label: 'Morning Process', icon: Sun, hotkey: 'M' },
+  { href: '/shutdown', label: 'Shutdown', icon: Moon, hotkey: 'S' },
+  { href: '/inbox', label: 'Inbox', icon: Inbox, hotkey: 'I' },
+  { href: '/actions', label: 'Next Actions', icon: CheckSquare, hotkey: 'A' },
+  { href: '/projects', label: 'Projects', icon: FolderKanban, hotkey: 'P' },
+  { href: '/ideal-calendar', label: 'Ideal Calendar', icon: CalendarDays, hotkey: 'C' },
+  { href: '/disciplines', label: 'Disciplines', icon: Compass, hotkey: 'L' },
+  { href: '/journal', label: 'Journal', icon: NotebookPen, hotkey: 'J' },
+  { href: '/horizons', label: 'Horizons', icon: Target, hotkey: 'H' },
+  { href: '/reference', label: 'Reference', icon: BookOpen, hotkey: 'F' },
+  { href: '/review', label: 'Review', icon: Calendar, hotkey: 'R' },
+  { href: '/ai', label: 'AI Assistant', icon: Bot, hotkey: 'T' },
   { href: '/recovery', label: 'Recovery', icon: LifeBuoy },
   { href: '/conflicts', label: 'Sync Conflicts', icon: GitMerge },
-  { href: '/settings', label: 'Settings', icon: Settings },
+  { href: '/settings', label: 'Settings', icon: Settings, hotkey: 'E' },
 ];
 
 export default function Sidebar() {
@@ -97,7 +97,12 @@ export default function Sidebar() {
                 }`}
               >
                 <Icon size={18} />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {item.hotkey && (
+                  <kbd className="hidden md:inline text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-sidebar-text/50 leading-none">
+                    g {item.hotkey}
+                  </kbd>
+                )}
               </Link>
             );
           })}

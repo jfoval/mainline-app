@@ -86,6 +86,7 @@ A self-deployed personal productivity app. Each customer gets their own instance
 ### Core Productivity
 - **Inbox** (`/inbox`) — text + voice capture (Web Speech API). Search filter for 5+ items.
 - **Inbox Processing** (`/inbox/process`) — decision tree, one item at a time, AI-assisted routing. Keyboard shortcuts (Y/N/D, 1-8 for contexts, T/S/R, Esc). Undo last routing decision. Quick-route: trash, someday/maybe, reference, wish list, reading, movie, show, album, travel.
+- **Global hotkeys** — two-key chord system (`g` then a letter) for sidebar navigation to any page. Shift+key shortcuts for quick-launching flows (Shift+M morning, Shift+S shutdown, Shift+R review). Dashboard has single-key shortcuts (V/I/A/P/W/R). Next Actions page supports 1-9 to switch context tabs. All hotkeys disabled in input fields. Visual kbd hints shown in sidebar and on context tabs.
 - **Next Actions** (`/actions`) — user-configurable context lists. **Gear icon opens inline context manager**: add/edit/delete contexts with color picker (key auto-gen from name). Active/Completed toggle. Search filter. Drag-to-reorder via @dnd-kit.
 - **Projects** (`/projects`, `/projects/[id]`) — CRUD with categories, Active/Someday-Maybe toggle, stalled project detection
 

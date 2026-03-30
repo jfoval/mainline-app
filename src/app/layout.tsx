@@ -7,6 +7,7 @@ import InstallPrompt from "@/components/InstallPrompt";
 import Providers from "@/components/Providers";
 import SyncStatus from "@/components/SyncStatus";
 import MainContent from "@/components/MainContent";
+import GlobalHotkeys from "@/components/GlobalHotkeys";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -53,6 +54,7 @@ export default function RootLayout({
         <ServiceWorkerRegistrar />
         <InstallPrompt />
         <Providers>
+          <GlobalHotkeys />
           <Sidebar />
           <MainContent>{children}</MainContent>
           <SyncStatus />

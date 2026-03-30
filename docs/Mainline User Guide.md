@@ -275,6 +275,57 @@ When offline edits can't be auto-merged (e.g., you edited the same action on two
 
 ## Keyboard Shortcuts
 
+All hotkeys are disabled when typing in an input, textarea, or select field.
+
+### Global Navigation (two-key chord)
+
+Press `g` then a letter within 1 second to navigate to any page:
+
+| Chord | Page |
+|-------|------|
+| `g d` | Dashboard |
+| `g m` | Morning Process |
+| `g s` | Shutdown |
+| `g i` | Inbox |
+| `g a` | Next Actions |
+| `g p` | Projects |
+| `g c` | Ideal Calendar |
+| `g l` | Disciplines |
+| `g j` | Journal |
+| `g h` | Horizons |
+| `g f` | Reference |
+| `g r` | Review |
+| `g t` | AI Assistant |
+| `g e` | Settings |
+
+Hints are shown next to each sidebar item.
+
+### Flow Quick-Launch
+
+| Key | Flow |
+|-----|------|
+| `Shift+M` | Morning Process |
+| `Shift+S` | Shutdown |
+| `Shift+R` | Review |
+
+### Dashboard
+
+| Key | Action |
+|-----|--------|
+| `V` | Toggle voice capture |
+| `I` | Navigate to Inbox |
+| `A` | Navigate to Actions |
+| `P` | Navigate to Projects |
+| `W` | Navigate to Waiting For |
+| `R` | Refresh dashboard |
+
+### Inbox
+
+| Key | Action |
+|-----|--------|
+| `V` | Toggle voice capture |
+| `P` | Navigate to inbox processing |
+
 ### Inbox Processing
 
 | Key | Action |
@@ -287,6 +338,14 @@ When offline edits can't be auto-merged (e.g., you edited the same action on two
 | `S` | Route to Someday/Maybe |
 | `R` | Route to Reference |
 | `Esc` | Go back / Undo last decision |
+
+### Next Actions
+
+| Key | Action |
+|-----|--------|
+| `1`–`9` | Switch to context tab 1–9 (by position) |
+
+Number hints are shown on each context tab.
 
 ---
 
