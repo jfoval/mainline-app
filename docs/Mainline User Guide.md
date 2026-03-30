@@ -372,6 +372,8 @@ Both the **Inbox** and **Next Actions** pages have a search bar that filters ite
 
 ## Offline & Mobile
 
+The app is designed for comfortable mobile use. Buttons, chips, selects, and icon actions across inbox processing, actions, reference, and calendar pages use enlarged touch targets so they are easy to tap on phone screens.
+
 The app works offline on your iPhone for the most common tasks.
 
 ### What works offline
