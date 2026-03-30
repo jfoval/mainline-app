@@ -109,7 +109,7 @@ The decision tree, one item at a time. For each item:
 
 - **Is it actionable?** Choose Yes, No, or "Under 2 minutes — do it now"
 - **If actionable:** refine the action text, pick a context list (@Work, @Home, @Errands, etc.), or create a multi-step project
-- **If not actionable:** route it to Trash, Someday/Maybe (stored in Reference), Reference, Wish List, Reading List, Movie, Show, Album, or Travel Idea
+- **If not actionable:** route it to Trash, Someday/Maybe Personal (`S`), Someday/Maybe Work (`W`), Reference (`R`), or any of your reference folders
 
 The **AI assistant** can suggest routing and flag vague actions (like "handle taxes") with concrete rewrites (like "Call accountant to confirm Q1 estimate deadline").
 
@@ -220,12 +220,9 @@ Five levels — each shows a list of named items you create:
 
 Your personal reference lists:
 
-- **Someday/Maybe** — ideas and projects you might pursue later (routed here from inbox processing, reviewed monthly)
-- **Wish List** — 3 tiers (want, would be nice, someday)
-- **Reading List** — 3 statuses (to read, reading, finished)
-- **Movies / Shows / Albums** — to watch or listen to
-- **Travel** — places you want to go
-- **Reference Docs** — notes and links you want to keep
+- **Someday/Maybe (Personal)** — personal ideas for later (reviewed monthly)
+- **Someday/Maybe (Work)** — business ideas for later (reviewed monthly)
+- **Reference Folders** — user-created folders for filing notes and links. Add, rename, and delete folders from the overview page.
 
 ---
 
@@ -337,7 +334,8 @@ Hints are shown next to each sidebar item.
 | `D` | Do it now (under 2 minutes) |
 | `1`–`8` | Route to context 1–8 (shown on screen) |
 | `T` | Route to Trash |
-| `S` | Route to Someday/Maybe (stored in Reference) |
+| `S` | Route to Someday/Maybe (Personal) |
+| `W` | Route to Someday/Maybe (Work) |
 | `R` | Route to Reference |
 | `Esc` | Go back / Undo last decision |
 

@@ -125,7 +125,7 @@ async function processInboxItem(apiKey: string, data: { content: string }) {
   const system = `You are an inbox processing assistant for a personal productivity system.
 
 Your job is to help route inbox items through the decision tree:
-1. Is it actionable? If no: trash, someday/maybe, or reference.
+1. Is it actionable? If no: trash, someday/maybe (personal or work), or reference.
 2. If actionable: Is it a 2-minute task? If yes, do it now.
 3. If longer: What context list? (${contextList || '@work, @errands, @home, @waiting_for, @agendas'})
 4. Does it belong to an existing project? Or need a new one?
@@ -138,7 +138,7 @@ Vague: "Handle taxes", "Deal with email", "Work on proposal"
 Concrete: "Call accountant about quarterly estimate deadline", "Reply to Sarah's email about project timeline", "Draft introduction section of proposal"
 If the action seems vague, set "concrete": false and provide a "reworded" field with a more specific version.
 
-Respond with a JSON object (no markdown): {"actionable": boolean, "suggestion": "brief routing suggestion", "context": "${contextList ? contextList.split(', ')[0] : '@work'}|...|null", "project_match": "project title or null", "two_minute": boolean, "category": "action|trash|someday|reference|thinking|list", "concrete": true, "reworded": null}`;
+Respond with a JSON object (no markdown): {"actionable": boolean, "suggestion": "brief routing suggestion", "context": "${contextList ? contextList.split(', ')[0] : '@work'}|...|null", "project_match": "project title or null", "two_minute": boolean, "category": "action|trash|someday_personal|someday_work|reference|thinking", "concrete": true, "reworded": null}`;
 
   const response = await callClaude(apiKey, system, `Route this inbox item: "${data.content}"`);
 

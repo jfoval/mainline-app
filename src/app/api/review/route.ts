@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
       result.recent_daily_notes = await sql`SELECT * FROM daily_notes WHERE date >= ${thirtyDaysAgo} ORDER BY date DESC`;
 
-      result.someday_maybe = await sql`SELECT id, title, content, created_at FROM reference_docs WHERE category = 'Someday/Maybe' ORDER BY created_at DESC`;
+      result.someday_maybe = await sql`SELECT id, title, content, category, created_at FROM reference_docs WHERE category IN ('Someday/Maybe (Personal)', 'Someday/Maybe (Work)') ORDER BY category, created_at DESC`;
     }
 
     return NextResponse.json(result);

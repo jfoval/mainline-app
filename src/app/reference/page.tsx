@@ -1,10 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, ChevronDown, ChevronRight, BookOpen, Film, Tv, Music, Plane, Gift, FileText, FolderOpen } from 'lucide-react';
-import { useOfflineStore, listItemsStore } from '@/lib/offline';
-import type { ListItem } from '@/lib/offline';
-import { useUndoableAction, useToast } from '@/lib/toast';
+import { Plus, Trash2, FolderOpen, Archive, Briefcase, Pencil, X, Check } from 'lucide-react';
+import { useUndoableAction } from '@/lib/toast';
 
 interface ReferenceDoc {
   id: string;
@@ -17,27 +15,9 @@ interface ReferenceDoc {
   updated_at: string;
 }
 
-const LISTS = [
-  { type: 'wish_list', label: 'Wish List', icon: Gift, tiers: ['need_soon', 'want', 'someday'] },
-  { type: 'reading', label: 'Reading List', icon: BookOpen, statuses: ['up_next', 'reading', 'read'] },
-  { type: 'movies', label: 'Movies', icon: Film },
-  { type: 'shows', label: 'Shows', icon: Tv },
-  { type: 'albums', label: 'Albums', icon: Music },
-  { type: 'travel', label: 'Travel', icon: Plane },
-];
-
-type ListConfig = typeof LISTS[0];
-type ActiveList = ListConfig | null;
+const FIXED_CATEGORIES = ['Someday/Maybe (Personal)', 'Someday/Maybe (Work)'];
 
 export default function ReferencePage() {
-  const [activeList, setActiveList] = useState<ActiveList>(null);
-  const [showAdd, setShowAdd] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newTier, setNewTier] = useState('want');
-  const [newStatus, setNewStatus] = useState('up_next');
-  const [newUrl, setNewUrl] = useState('');
-  const [newNotes, setNewNotes] = useState('');
-
   // Reference docs state
   const [activeRefCategory, setActiveRefCategory] = useState<string | null>(null);
   const [refDocs, setRefDocs] = useState<ReferenceDoc[]>([]);
@@ -48,11 +28,12 @@ export default function ReferencePage() {
   const [newRefCategoryInput, setNewRefCategoryInput] = useState('');
   const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
 
-  // When a list is active, query its items from the offline store
-  const listParams = activeList ? { type: activeList.type } : { type: '__none__' };
-  const { data: items, create, remove } = useOfflineStore(listItemsStore, listParams);
-  const { pendingDeletes } = useToast();
-  const { undoableDelete, undoableFetchDelete } = useUndoableAction();
+  // Category management
+  const [editingCategory, setEditingCategory] = useState<string | null>(null);
+  const [editCategoryName, setEditCategoryName] = useState('');
+  const [deletingCategory, setDeletingCategory] = useState<string | null>(null);
+
+  const { undoableFetchDelete } = useUndoableAction();
 
   // Load reference categories on mount
   useEffect(() => {
@@ -62,10 +43,14 @@ export default function ReferencePage() {
   async function fetchRefCategories() {
     try {
       const res = await fetch('/api/reference?categories=true');
-      const cats = await res.json();
+      const cats: string[] = await res.json();
       setRefCategories(cats);
     } catch { /* offline */ }
   }
+
+  // Separate fixed and user categories
+  const userCategories = refCategories.filter(c => !FIXED_CATEGORIES.includes(c));
+  const activeFixedCategories = FIXED_CATEGORIES.filter(c => refCategories.includes(c));
 
   async function openRefCategory(category: string) {
     setActiveRefCategory(category);
@@ -121,31 +106,32 @@ export default function ReferencePage() {
     openRefCategory(cat);
   }
 
-  function openList(list: ListConfig) {
-    setActiveList(list);
-    setActiveRefCategory(null);
-    setShowAdd(false);
+  async function renameCategory(oldName: string, newName: string) {
+    if (!newName.trim() || newName.trim() === oldName) {
+      setEditingCategory(null);
+      return;
+    }
+    try {
+      await fetch('/api/reference/rename-category', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldCategory: oldName, newCategory: newName.trim() }),
+      });
+      setEditingCategory(null);
+      fetchRefCategories();
+    } catch { /* offline */ }
   }
 
-  async function addItem(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newTitle.trim() || !activeList) return;
-    await create({
-      title: newTitle.trim(),
-      list_type: activeList.type,
-      tier: activeList.tiers ? newTier : null,
-      status: activeList.statuses ? newStatus : null,
-      url: newUrl.trim() || null,
-      notes: newNotes.trim() || null,
-    });
-    setNewTitle('');
-    setNewUrl('');
-    setNewNotes('');
-    setShowAdd(false);
-  }
-
-  function deleteItem(id: string) {
-    undoableDelete(id, remove, 'List item deleted');
+  async function deleteCategory(category: string) {
+    try {
+      await fetch('/api/reference/delete-category', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category }),
+      });
+      setDeletingCategory(null);
+      fetchRefCategories();
+    } catch { /* offline */ }
   }
 
   // ─── Reference Docs Category View ──────────────────────
@@ -204,141 +190,118 @@ export default function ReferencePage() {
     );
   }
 
-  // ─── List Detail View ──────────────────────
-  if (activeList) {
-    const Icon = activeList.icon;
-    const visibleItems = items.filter(i => !pendingDeletes.has(i.id));
-
-    let groupedItems: Record<string, ListItem[]> | null = null;
-    if (activeList.tiers) {
-      groupedItems = {};
-      for (const tier of activeList.tiers) {
-        const tierItems = visibleItems.filter(i => i.tier === tier);
-        if (tierItems.length > 0) groupedItems[tier] = tierItems;
-      }
-      const noTier = visibleItems.filter(i => !i.tier || !activeList.tiers!.includes(i.tier));
-      if (noTier.length > 0) groupedItems['other'] = noTier;
-    } else if (activeList.statuses) {
-      groupedItems = {};
-      for (const status of activeList.statuses) {
-        const statusItems = visibleItems.filter(i => i.status === status);
-        if (statusItems.length > 0) groupedItems[status] = statusItems;
-      }
-      const noStatus = visibleItems.filter(i => !i.status || !activeList.statuses!.includes(i.status));
-      if (noStatus.length > 0) groupedItems['other'] = noStatus;
-    }
-
-    return (
-      <div className="max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <button onClick={() => setActiveList(null)} className="text-sm text-muted hover:text-foreground transition-colors mb-2 block">
-              ← All Lists
-            </button>
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-              <Icon size={24} /> {activeList.label}
-            </h1>
-            <p className="text-sm text-muted mt-1">{visibleItems.length} item{visibleItems.length !== 1 ? 's' : ''}</p>
-          </div>
-          <button onClick={() => setShowAdd(!showAdd)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary-hover transition-colors">
-            <Plus size={18} /> Add
-          </button>
-        </div>
-
-        {showAdd && (
-          <form onSubmit={addItem} className="mb-6 p-4 bg-card rounded-xl border border-border space-y-3">
-            <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Title" autoFocus
-              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50" />
-            <div className="flex gap-3">
-              {activeList.tiers && (
-                <select value={newTier} onChange={e => setNewTier(e.target.value)}
-                  className="px-3 py-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50">
-                  {activeList.tiers.map(t => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
-                </select>
-              )}
-              {activeList.statuses && (
-                <select value={newStatus} onChange={e => setNewStatus(e.target.value)}
-                  className="px-3 py-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50">
-                  {activeList.statuses.map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
-                </select>
-              )}
-              <input value={newUrl} onChange={e => setNewUrl(e.target.value)} placeholder="URL (optional)"
-                className="flex-1 px-4 py-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50" />
-            </div>
-            <input value={newNotes} onChange={e => setNewNotes(e.target.value)} placeholder="Notes (optional)"
-              className="w-full px-4 py-2.5 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/50" />
-            <div className="flex gap-2">
-              <button type="submit" className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary-hover text-sm">Add</button>
-              <button type="button" onClick={() => setShowAdd(false)} className="px-4 py-2 rounded-lg text-muted hover:text-foreground text-sm">Cancel</button>
-            </div>
-          </form>
-        )}
-
-        {visibleItems.length === 0 ? (
-          <div className="text-center py-12 text-muted">
-            <p>No items yet. Add your first one.</p>
-          </div>
-        ) : groupedItems ? (
-          <div className="space-y-6">
-            {Object.entries(groupedItems).map(([group, groupItems]) => (
-              <GroupSection key={group} label={group.replace(/_/g, ' ')} items={groupItems} onDelete={deleteItem} />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {visibleItems.map(item => (
-              <ItemCard key={item.id} item={item} onDelete={deleteItem} />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
   // ─── Overview ──────────────────────
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Reference</h1>
-        <p className="text-sm text-muted mt-1">Personal lists and reference material. Not actionable — just stuff to look up.</p>
+        <p className="text-sm text-muted mt-1">Not actionable — things to file, review later, or look up.</p>
       </div>
 
-      {/* Reference Docs by Category */}
-      {(refCategories.length > 0 || showNewCategoryInput) && (
-        <div className="mb-8">
-          <h2 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">Filed Reference</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {refCategories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => openRefCategory(cat)}
-                className="p-5 rounded-xl bg-card border border-border hover:border-green-400/50 transition-colors text-left"
-              >
-                <FolderOpen size={24} className="text-green-600 mb-3" />
-                <p className="font-medium text-sm">{cat}</p>
-              </button>
+      {/* Someday/Maybe */}
+      <div className="mb-8">
+        <h2 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">Someday / Maybe</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <button
+            onClick={() => openRefCategory('Someday/Maybe (Personal)')}
+            className="p-5 rounded-xl bg-card border border-border hover:border-purple-400/50 transition-colors text-left"
+          >
+            <Archive size={24} className="text-purple-600 mb-3" />
+            <p className="font-medium text-sm">Personal</p>
+            <p className="text-xs text-muted mt-1">Not now, but maybe later</p>
+          </button>
+          <button
+            onClick={() => openRefCategory('Someday/Maybe (Work)')}
+            className="p-5 rounded-xl bg-card border border-border hover:border-blue-400/50 transition-colors text-left"
+          >
+            <Briefcase size={24} className="text-blue-600 mb-3" />
+            <p className="font-medium text-sm">Work</p>
+            <p className="text-xs text-muted mt-1">Business ideas for later</p>
+          </button>
+        </div>
+      </div>
+
+      {/* Reference Folders */}
+      <div className="mb-8">
+        <h2 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">Reference Folders</h2>
+        {userCategories.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+            {userCategories.map(cat => (
+              <div key={cat} className="relative group">
+                {editingCategory === cat ? (
+                  <div className="p-4 rounded-xl bg-card border-2 border-green-400 space-y-2">
+                    <input
+                      value={editCategoryName}
+                      onChange={e => setEditCategoryName(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') renameCategory(cat, editCategoryName);
+                        if (e.key === 'Escape') setEditingCategory(null);
+                      }}
+                      autoFocus
+                      className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-green-500/50"
+                    />
+                    <div className="flex gap-1">
+                      <button onClick={() => renameCategory(cat, editCategoryName)} className="p-1 rounded hover:bg-green-50 text-green-600"><Check size={14} /></button>
+                      <button onClick={() => setEditingCategory(null)} className="p-1 rounded hover:bg-muted/20 text-muted"><X size={14} /></button>
+                    </div>
+                  </div>
+                ) : deletingCategory === cat ? (
+                  <div className="p-4 rounded-xl bg-card border-2 border-red-400 space-y-2">
+                    <p className="text-xs text-red-700 font-medium">Delete &ldquo;{cat}&rdquo; and all its items?</p>
+                    <div className="flex gap-2">
+                      <button onClick={() => deleteCategory(cat)} className="px-3 py-1 rounded-lg bg-red-600 text-white text-xs hover:bg-red-700">Delete</button>
+                      <button onClick={() => setDeletingCategory(null)} className="px-3 py-1 rounded-lg text-muted text-xs hover:text-foreground">Cancel</button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => openRefCategory(cat)}
+                    className="w-full p-5 rounded-xl bg-card border border-border hover:border-green-400/50 transition-colors text-left"
+                  >
+                    <FolderOpen size={24} className="text-green-600 mb-3" />
+                    <p className="font-medium text-sm">{cat}</p>
+                  </button>
+                )}
+                {editingCategory !== cat && deletingCategory !== cat && (
+                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setEditingCategory(cat); setEditCategoryName(cat); }}
+                      className="p-1 rounded hover:bg-muted/20 text-muted hover:text-foreground"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setDeletingCategory(cat); }}
+                      className="p-1 rounded hover:bg-red-50 text-muted hover:text-red-600"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                )}
+              </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Add new category */}
-      <div className="mb-8">
+        {/* Add new category */}
         {!showNewCategoryInput ? (
           <button
             onClick={() => setShowNewCategoryInput(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-green-700 border border-green-200 hover:bg-green-50 transition-colors"
           >
-            <Plus size={12} /> New reference category
+            <Plus size={12} /> New folder
           </button>
         ) : (
           <div className="flex gap-2 items-center">
             <input
               value={newRefCategoryInput}
               onChange={e => setNewRefCategoryInput(e.target.value)}
-              placeholder="Category name..."
+              placeholder="Folder name..."
               autoFocus
-              onKeyDown={e => e.key === 'Enter' && addNewCategory()}
+              onKeyDown={e => {
+                if (e.key === 'Enter') addNewCategory();
+                if (e.key === 'Escape') { setShowNewCategoryInput(false); setNewRefCategoryInput(''); }
+              }}
               className="px-4 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-green-500/50 text-sm"
             />
             <button onClick={addNewCategory} className="px-3 py-2 rounded-lg bg-green-600 text-white text-xs hover:bg-green-700">Create</button>
@@ -346,58 +309,6 @@ export default function ReferencePage() {
           </div>
         )}
       </div>
-
-      {/* Personal Lists */}
-      <h2 className="text-sm font-semibold text-muted uppercase tracking-wide mb-3">Personal Lists</h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        {LISTS.map(list => {
-          const Icon = list.icon;
-          return (
-            <button
-              key={list.type}
-              onClick={() => openList(list)}
-              className="p-5 rounded-xl bg-card border border-border hover:border-primary/30 transition-colors text-left"
-            >
-              <Icon size={24} className="text-primary mb-3" />
-              <p className="font-medium text-sm">{list.label}</p>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function GroupSection({ label, items, onDelete }: { label: string; items: ListItem[]; onDelete: (id: string) => void }) {
-  const [isOpen, setIsOpen] = useState(true);
-
-  return (
-    <div>
-      <button onClick={() => setIsOpen(!isOpen)} className="flex items-center gap-2 mb-2 text-sm font-semibold text-muted uppercase tracking-wide">
-        {isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-        {label} ({items.length})
-      </button>
-      {isOpen && (
-        <div className="space-y-2">
-          {items.map(item => <ItemCard key={item.id} item={item} onDelete={onDelete} />)}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ItemCard({ item, onDelete }: { item: ListItem; onDelete: (id: string) => void }) {
-  return (
-    <div className="p-3 rounded-xl bg-card border border-border group flex items-start justify-between">
-      <div className="flex-1">
-        <p className="text-sm font-medium">
-          {item.url ? <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{item.title}</a> : item.title}
-        </p>
-        {item.notes && <p className="text-xs text-muted mt-1">{item.notes}</p>}
-      </div>
-      <button onClick={() => onDelete(item.id)} className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-50 text-muted hover:text-red-600 transition-all">
-        <Trash2 size={14} />
-      </button>
     </div>
   );
 }

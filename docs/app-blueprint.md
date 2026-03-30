@@ -85,7 +85,7 @@ A self-deployed personal productivity app. Each customer gets their own instance
 
 ### Core Productivity
 - **Inbox** (`/inbox`) — text + voice capture (Web Speech API, `V` hotkey hint on mic button, `P` hotkey hint on Process button). Capture input not autofocused so hotkeys work on page load. Search filter for 5+ items.
-- **Inbox Processing** (`/inbox/process`) — decision tree, one item at a time, AI-assisted routing. Keyboard shortcuts (Y/N/D, 1-8 for contexts, T/S/R, Esc). Undo last routing decision. Quick-route: trash, someday/maybe (→ reference), reference, wish list, reading, movie, show, album, travel.
+- **Inbox Processing** (`/inbox/process`) — decision tree, one item at a time, AI-assisted routing. Keyboard shortcuts (Y/N/D, 1-8 for contexts, T/S/W/R, Esc). Undo last routing decision. Quick-route: trash, someday/maybe personal (S), someday/maybe work (W), reference (R), plus dynamic buttons for all user reference folders.
 - **Global hotkeys** — two-key chord system (`g` then a letter) for sidebar navigation to any page. Shift+key shortcuts for quick-launching flows (Shift+M morning, Shift+S shutdown, Shift+R review). Dashboard has single-key shortcuts (V/I/A/P/W/R) with inline kbd hints on stat cards and mic button. Inbox has V/P hotkeys with kbd hints on mic and Process buttons. Next Actions page supports 1-9 to switch context tabs with number badges. All hotkeys disabled in input fields. Visual kbd hints shown in sidebar and on context tabs.
 - **Next Actions** (`/actions`) — user-configurable context lists. **Gear icon opens inline context manager**: add/edit/delete contexts with color picker (key auto-gen from name). Active/Completed toggle. Search filter. Drag-to-reorder via @dnd-kit.
 - **Projects** (`/projects`, `/projects/[id]`) — CRUD with categories (active projects only), stalled project detection
@@ -98,7 +98,7 @@ A self-deployed personal productivity app. Each customer gets their own instance
 ### Life System
 - **Journal** (`/journal`) — combined daily view: morning reflections (read-only), free-form journal entries (create/edit/delete with tags), evening reflections (read-only). Date navigation. AI Insights analyzes last 14 days for patterns and themes.
 - **Horizons** (`/horizons`) — purpose, vision, goals, areas of focus, growth intentions. **Named item blocks**: each section shows a list of user-created named items (with optional description) that can be added, edited, and deleted. Data stored in `horizon_items` table and synced via `/api/horizon-items`.
-- **Reference/Lists** (`/reference`) — wish list (3 tiers), reading (3 statuses), movies, shows, albums, travel
+- **Reference** (`/reference`) — Someday/Maybe (Personal), Someday/Maybe (Work), and user-managed reference folders with add/edit/delete
 
 ### Reviews & AI
 - **Weekly Review** (`/review`) — **6 guided steps** (recurring tasks step removed; notes sections removed). Live system data. Tracks last completion date, shows overdue warning if >8 days.

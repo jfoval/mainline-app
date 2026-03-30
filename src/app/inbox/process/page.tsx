@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Trash2, CheckSquare, FolderKanban, BookOpen, Lightbulb,
-  ShoppingBag, Book, Film, Tv, Music, Plane, Users,
+  Briefcase, FolderOpen,
   ArrowRight, ArrowLeft, Zap, Archive, Sparkles, Loader2, Plus, Undo2
 } from 'lucide-react';
 
@@ -47,8 +47,9 @@ type RouteDestination =
   | { type: 'project'; category: string; title: string; firstAction: string; context: string }
   | { type: 'reference'; category: string; title: string }
   | { type: 'thinking' }
-  | { type: 'list'; listType: string }
-  | { type: 'someday' }
+  | { type: 'someday_personal' }
+  | { type: 'someday_work' }
+  | { type: 'ref_category'; category: string }
   | { type: 'trash' }
   | { type: 'do_now' };
 
@@ -142,7 +143,7 @@ export default function ProcessPage() {
 
     if (step === 'actionable') {
       if (e.key === 'y' || e.key === 'Y') { e.preventDefault(); if (currentItem) { setActionText(currentItem.content); setStep('route_action'); } }
-      else if (e.key === 'n' || e.key === 'N') { e.preventDefault(); setStep('route_non_action'); }
+      else if (e.key === 'n' || e.key === 'N') { e.preventDefault(); enterNonAction(); }
       else if (e.key === 'd' || e.key === 'D') { e.preventDefault(); routeItem({ type: 'do_now' }); }
     } else if (step === 'route_action') {
       if (e.key === 'Escape') { e.preventDefault(); setStep('actionable'); }
@@ -157,7 +158,8 @@ export default function ProcessPage() {
     } else if (step === 'route_non_action') {
       if (e.key === 'Escape') { e.preventDefault(); setStep('actionable'); }
       else if (e.key === 't' || e.key === 'T') { e.preventDefault(); routeItem({ type: 'trash' }); }
-      else if (e.key === 's' || e.key === 'S') { e.preventDefault(); routeItem({ type: 'someday' }); }
+      else if (e.key === 's' || e.key === 'S') { e.preventDefault(); routeItem({ type: 'someday_personal' }); }
+      else if (e.key === 'w' || e.key === 'W') { e.preventDefault(); routeItem({ type: 'someday_work' }); }
       else if (e.key === 'r' || e.key === 'R') { e.preventDefault(); setStep('route_reference'); }
     } else if (step === 'route_reference' || step === 'create_project') {
       if (e.key === 'Escape') { e.preventDefault(); setStep(step === 'route_reference' ? 'route_non_action' : 'route_action'); }
@@ -226,13 +228,13 @@ export default function ProcessPage() {
         }
         break;
       }
-      case 'someday': {
+      case 'someday_personal': {
         const res = await fetch('/api/reference', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: currentItem.content,
-            category: 'Someday/Maybe',
+            category: 'Someday/Maybe (Personal)',
           }),
         });
         const created = await res.json();
@@ -240,18 +242,31 @@ export default function ProcessPage() {
         createdId = created.id;
         break;
       }
-      case 'list': {
-        const res = await fetch('/api/lists', {
+      case 'someday_work': {
+        const res = await fetch('/api/reference', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             title: currentItem.content,
-            list_type: destination.listType,
-            url: currentItem.url,
+            category: 'Someday/Maybe (Work)',
           }),
         });
         const created = await res.json();
-        createdType = 'list';
+        createdType = 'someday';
+        createdId = created.id;
+        break;
+      }
+      case 'ref_category': {
+        const res = await fetch('/api/reference', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: currentItem.content,
+            category: destination.category,
+          }),
+        });
+        const created = await res.json();
+        createdType = 'reference';
         createdId = created.id;
         break;
       }
@@ -313,7 +328,6 @@ export default function ProcessPage() {
         const endpoint = undoEntry.createdType === 'action' ? '/api/actions'
           : undoEntry.createdType === 'project' ? '/api/projects'
           : undoEntry.createdType === 'reference' || undoEntry.createdType === 'someday' ? '/api/reference'
-          : undoEntry.createdType === 'list' ? '/api/lists'
           : null;
         if (endpoint) {
           await fetch(`${endpoint}?id=${undoEntry.createdId}`, { method: 'DELETE' });
@@ -353,6 +367,15 @@ export default function ProcessPage() {
     setRefTitle('');
     setAiSuggestion(null);
     setAiError(false);
+  }
+
+  async function enterNonAction() {
+    try {
+      const res = await fetch('/api/reference?categories=true');
+      const cats: string[] = await res.json();
+      setReferenceCategories(cats.filter(c => c !== 'Someday/Maybe (Personal)' && c !== 'Someday/Maybe (Work)'));
+    } catch { /* offline */ }
+    setStep('route_non_action');
   }
 
   async function getAiSuggestion() {
@@ -502,13 +525,13 @@ export default function ProcessPage() {
             </button>
 
             <button
-              onClick={() => setStep('route_non_action')}
+              onClick={enterNonAction}
               className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:border-primary transition-colors text-left"
             >
               <Archive size={20} className="text-muted shrink-0" />
               <div>
                 <p className="font-medium text-sm">No, not actionable <kbd className="text-[10px] px-1 py-0.5 rounded bg-background text-muted font-mono ml-1">N</kbd></p>
-                <p className="text-xs text-muted">Reference, idea, list, or trash</p>
+                <p className="text-xs text-muted">Reference, someday, or trash</p>
               </div>
             </button>
           </div>
@@ -646,25 +669,28 @@ export default function ProcessPage() {
               </div>
             </button>
 
-            <button onClick={() => routeItem({ type: 'someday' })} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors text-left">
-              <Archive size={18} className="text-muted" />
+            <button onClick={() => routeItem({ type: 'someday_personal' })} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-purple-400/50 transition-colors text-left">
+              <Archive size={18} className="text-purple-600" />
               <div>
-                <p className="text-sm font-medium">Someday/Maybe <kbd className="text-[10px] px-1 py-0.5 rounded bg-background text-muted font-mono ml-1">S</kbd></p>
-                <p className="text-xs text-muted">Not now, but maybe later</p>
+                <p className="text-sm font-medium">Someday (Personal) <kbd className="text-[10px] px-1 py-0.5 rounded bg-background text-muted font-mono ml-1">S</kbd></p>
+                <p className="text-xs text-muted">Maybe later — personal</p>
+              </div>
+            </button>
+
+            <button onClick={() => routeItem({ type: 'someday_work' })} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-blue-400/50 transition-colors text-left">
+              <Briefcase size={18} className="text-blue-600" />
+              <div>
+                <p className="text-sm font-medium">Someday (Work) <kbd className="text-[10px] px-1 py-0.5 rounded bg-background text-muted font-mono ml-1">W</kbd></p>
+                <p className="text-xs text-muted">Maybe later — business</p>
               </div>
             </button>
 
             <button
-              onClick={async () => {
+              onClick={() => {
                 setRefTitle(currentItem.content);
-                try {
-                  const res = await fetch('/api/reference?categories=true');
-                  const cats = await res.json();
-                  setReferenceCategories(cats);
-                } catch { /* offline — will use empty list */ }
                 setStep('route_reference');
               }}
-              className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors text-left"
+              className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-green-400/50 transition-colors text-left"
             >
               <BookOpen size={18} className="text-green-600" />
               <div>
@@ -673,49 +699,15 @@ export default function ProcessPage() {
               </div>
             </button>
 
-            <button onClick={() => routeItem({ type: 'list', listType: 'wish_list' })} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors text-left">
-              <ShoppingBag size={18} className="text-pink-600" />
-              <div>
-                <p className="text-sm font-medium">Wish List</p>
-                <p className="text-xs text-muted">Something to buy</p>
-              </div>
-            </button>
-
-            <button onClick={() => routeItem({ type: 'list', listType: 'reading' })} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors text-left">
-              <Book size={18} className="text-blue-600" />
-              <div>
-                <p className="text-sm font-medium">Reading List</p>
-                <p className="text-xs text-muted">Book to read</p>
-              </div>
-            </button>
-
-            <button onClick={() => routeItem({ type: 'list', listType: 'movies' })} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors text-left">
-              <Film size={18} className="text-red-600" />
-              <div>
-                <p className="text-sm font-medium">Movie</p>
-              </div>
-            </button>
-
-            <button onClick={() => routeItem({ type: 'list', listType: 'shows' })} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors text-left">
-              <Tv size={18} className="text-purple-600" />
-              <div>
-                <p className="text-sm font-medium">Show</p>
-              </div>
-            </button>
-
-            <button onClick={() => routeItem({ type: 'list', listType: 'albums' })} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors text-left">
-              <Music size={18} className="text-green-600" />
-              <div>
-                <p className="text-sm font-medium">Album</p>
-              </div>
-            </button>
-
-            <button onClick={() => routeItem({ type: 'list', listType: 'travel' })} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors text-left">
-              <Plane size={18} className="text-blue-600" />
-              <div>
-                <p className="text-sm font-medium">Travel Idea</p>
-              </div>
-            </button>
+            {referenceCategories.map(cat => (
+              <button key={cat} onClick={() => routeItem({ type: 'ref_category', category: cat })} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-green-400/50 transition-colors text-left">
+                <FolderOpen size={18} className="text-green-600" />
+                <div>
+                  <p className="text-sm font-medium">{cat}</p>
+                  <p className="text-xs text-muted">File to reference</p>
+                </div>
+              </button>
+            ))}
 
           </div>
         </div>

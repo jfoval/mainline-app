@@ -20,7 +20,7 @@ interface ReviewData {
   stale_waiting: Array<{ id: string; content: string; waiting_on_person: string; waiting_since: string }>;
   agendas: Array<{ id: string; content: string; agenda_person: string }>;
   horizons?: Array<{ id: string; type: string; content: string }>;
-  someday_maybe?: Array<{ id: string; title: string; content: string; created_at: string }>;
+  someday_maybe?: Array<{ id: string; title: string; content: string; category: string; created_at: string }>;
 }
 
 const WEEKLY_STEPS = [
@@ -478,7 +478,12 @@ function StepContent({ stepId, data }: { stepId: string; data: ReviewData }) {
             <div className="max-h-[400px] overflow-y-auto space-y-2">
               {data.someday_maybe.map(item => (
                 <div key={item.id} className="p-3 rounded-lg bg-background">
-                  <p className="text-sm font-medium">{item.title}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">{item.title}</p>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${item.category.includes('Personal') ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                      {item.category.includes('Personal') ? 'Personal' : 'Work'}
+                    </span>
+                  </div>
                   {item.content && <p className="text-xs text-muted mt-1">{item.content}</p>}
                   <p className="text-xs text-muted mt-1">Added {new Date(item.created_at).toLocaleDateString()}</p>
                 </div>
