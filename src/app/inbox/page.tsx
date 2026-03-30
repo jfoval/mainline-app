@@ -173,7 +173,6 @@ export default function InboxPage() {
           onChange={e => setNewItem(e.target.value)}
           placeholder="Capture something..."
           className="flex-1 px-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-          autoFocus
         />
         <button
           type="button"
@@ -187,6 +186,7 @@ export default function InboxPage() {
           aria-label={isRecording ? 'Stop recording' : 'Voice capture'}
         >
           {isRecording ? <MicOff size={20} /> : <Mic size={20} />}
+          {!isRecording && <kbd className="text-[10px] px-1 py-0.5 rounded bg-background/50 text-muted font-mono">V</kbd>}
         </button>
         <button
           type="submit"
