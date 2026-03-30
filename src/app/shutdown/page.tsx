@@ -35,7 +35,6 @@ interface InboxItem {
 
 // ── Steps config ─────────────────────────────────────────────────────
 const STEPS = [
-  { id: 'morning-review', label: 'Morning Review', icon: Sun },
   { id: 'capture', label: 'Capture Sweep', icon: Inbox },
   { id: 'reflection', label: 'Evening Reflection', icon: Sun },
   { id: 'complete', label: 'Day Complete', icon: Moon },
@@ -159,8 +158,8 @@ export default function ShutdownPage() {
 
   // ── Mark final step complete when reached ───────────────────────────
   useEffect(() => {
-    if (step === 3) {
-      setCompletedSteps((prev) => new Set(prev).add(3));
+    if (step === 2) {
+      setCompletedSteps((prev) => new Set(prev).add(2));
     }
   }, [step]);
 
@@ -176,66 +175,8 @@ export default function ShutdownPage() {
   // ── Render steps ───────────────────────────────────────────────────
   function renderStepContent() {
     switch (step) {
-      // ── Step 0: Morning Review ────────────────────────────────────
+      // ── Step 0: Capture Sweep ────────────────────────────────────
       case 0:
-        return (
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                <Sun size={24} className="text-amber-500" />
-                Morning Review
-              </h2>
-              <p className="text-muted mt-1">
-                Look back at what you set out to do this morning.
-              </p>
-            </div>
-
-            {/* Top 3 */}
-            <div className="bg-card rounded-xl border border-border p-6 space-y-4">
-              <h3 className="font-semibold text-foreground">Today&apos;s Top 3</h3>
-              {dailyNote?.top3_first ? (
-                <ol className="list-decimal list-inside space-y-2 text-foreground text-sm">
-                  <li className="font-semibold">{dailyNote.top3_first}</li>
-                  {dailyNote.top3_second && <li>{dailyNote.top3_second}</li>}
-                  {dailyNote.top3_third && <li>{dailyNote.top3_third}</li>}
-                </ol>
-              ) : (
-                <p className="text-muted text-sm italic">No top 3 recorded this morning.</p>
-              )}
-            </div>
-
-            {/* What could hold me back */}
-            <div className="bg-card rounded-xl border border-border p-6 space-y-2">
-              <h3 className="font-semibold text-foreground">What could hold me back today?</h3>
-              {dailyNote?.reflection_matters_most ? (
-                <p className="text-foreground text-sm">{dailyNote.reflection_matters_most}</p>
-              ) : (
-                <p className="text-muted text-sm italic">Not answered this morning.</p>
-              )}
-            </div>
-
-            {/* Who do I want to be */}
-            <div className="bg-card rounded-xl border border-border p-6 space-y-2">
-              <h3 className="font-semibold text-foreground">Who do I want to be today?</h3>
-              {dailyNote?.reflection_who_to_be ? (
-                <p className="text-foreground text-sm">{dailyNote.reflection_who_to_be}</p>
-              ) : (
-                <p className="text-muted text-sm italic">Not answered this morning.</p>
-              )}
-            </div>
-
-            <button
-              onClick={() => advance()}
-              className="px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-hover flex items-center gap-2 font-medium transition-colors"
-            >
-              <ChevronRight size={16} />
-              Continue
-            </button>
-          </div>
-        );
-
-      // ── Step 1: Capture Sweep ────────────────────────────────────
-      case 1:
         return (
           <div className="space-y-6">
             <div>
@@ -304,8 +245,8 @@ export default function ShutdownPage() {
           </div>
         );
 
-      // ── Step 2: Evening Reflection ──────────────────────────────
-      case 2:
+      // ── Step 1: Evening Reflection ──────────────────────────────
+      case 1:
         return (
           <div className="space-y-6">
             <div>
@@ -317,6 +258,38 @@ export default function ShutdownPage() {
                 Look back on your day with honesty and self-respect.
               </p>
             </div>
+
+            {/* Morning Review — read-only context */}
+            {(dailyNote?.top3_first || dailyNote?.reflection_matters_most || dailyNote?.reflection_who_to_be) && (
+              <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+                <h3 className="text-sm font-semibold text-muted uppercase tracking-wide">This morning you said:</h3>
+
+                {dailyNote?.top3_first && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-muted uppercase tracking-wide mb-1">Top 3</h4>
+                    <ol className="list-decimal list-inside space-y-1 text-foreground text-sm">
+                      <li className="font-semibold">{dailyNote.top3_first}</li>
+                      {dailyNote.top3_second && <li>{dailyNote.top3_second}</li>}
+                      {dailyNote.top3_third && <li>{dailyNote.top3_third}</li>}
+                    </ol>
+                  </div>
+                )}
+
+                {dailyNote?.reflection_matters_most && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-muted uppercase tracking-wide mb-1">What could hold me back</h4>
+                    <p className="text-foreground text-sm italic">&ldquo;{dailyNote.reflection_matters_most}&rdquo;</p>
+                  </div>
+                )}
+
+                {dailyNote?.reflection_who_to_be && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-muted uppercase tracking-wide mb-1">Who I wanted to be</h4>
+                    <p className="text-foreground text-sm italic">&ldquo;{dailyNote.reflection_who_to_be}&rdquo;</p>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="bg-card rounded-xl border border-border p-6 space-y-5">
               <div>
@@ -373,8 +346,8 @@ export default function ShutdownPage() {
           </div>
         );
 
-      // ── Step 3: Day Complete ─────────────────────────────────────
-      case 3:
+      // ── Step 2: Day Complete ─────────────────────────────────────
+      case 2:
         return (
           <CompletionCelebration
             title="Shutdown Complete"

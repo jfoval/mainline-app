@@ -65,12 +65,11 @@ Open **Morning Process** from the sidebar. It walks you through 3 steps:
 
 ### Shutdown (10–15 minutes)
 
-Open **Shutdown** from the sidebar. 4 steps:
+Open **Shutdown** from the sidebar. 3 steps:
 
-1. **Morning Review** — Shows your morning's Top 3 priorities, "What could hold me back today?" answer, and "Who do I want to be today?" answer so you can reflect on what you set out to do.
-2. **Capture Sweep** — Add anything still in your head from today
-3. **Evening Reflection** — What did I do well? Where did I fall short? What will I do differently tomorrow?
-4. **Done** — An animated checkmark celebration plays, then you're taken back to the dashboard automatically.
+1. **Capture Sweep** — Add anything still in your head from today
+2. **Evening Reflection** — At the top you'll see a read-only "This morning you said" section showing your Top 3, what could hold you back, and who you wanted to be. Below that, answer: What did I do well? Where did I fall short? What will I do differently tomorrow?
+3. **Done** — An animated checkmark celebration plays, then you're taken back to the dashboard automatically.
 
 ---
 
