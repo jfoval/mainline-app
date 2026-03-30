@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { SignJWT } from 'jose';
 import sql from '@/lib/db';
+import { ensureDb } from '@/lib/init';
 import { getJwtSecret } from '@/lib/jwt-secret';
 
 // Hybrid rate limiting: in-memory (fast) + database (survives cold starts)
@@ -79,6 +80,7 @@ async function clearAttempts(ip: string): Promise<void> {
 
 export async function POST(req: NextRequest) {
   try {
+    await ensureDb();
     const { password } = await req.json();
 
     if (!password) {

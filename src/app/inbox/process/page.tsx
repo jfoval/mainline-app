@@ -506,7 +506,7 @@ export default function ProcessPage() {
       {step === 'actionable' && (
         <div className="mb-4">
           {aiSuggestion ? (
-            <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/30 border border-purple-200 text-sm">
+            <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 text-sm">
               <p className="font-medium text-purple-700 flex items-center gap-1 mb-1"><Sparkles size={14} /> AI Suggestion</p>
               <p className="text-purple-900 dark:text-purple-200">{aiSuggestion.suggestion}</p>
 
@@ -524,7 +524,7 @@ export default function ProcessPage() {
             <button
               onClick={getAiSuggestion}
               disabled={aiLoading}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm border disabled:opacity-50 transition-colors ${aiError ? 'text-red-600 border-red-200 hover:bg-red-50' : 'text-purple-600 border-purple-200 hover:bg-purple-50'}`}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm border disabled:opacity-50 transition-colors ${aiError ? 'text-red-600 border-red-200 hover:bg-red-50 dark:hover:bg-red-900/30' : 'text-purple-600 border-purple-200 dark:border-purple-700 hover:bg-purple-50'}`}
             >
               {aiLoading ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
               {aiError ? 'AI unavailable — retry?' : 'AI suggest routing'}
@@ -721,7 +721,7 @@ export default function ProcessPage() {
               }}
               className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-green-400/50 transition-colors text-left"
             >
-              <BookOpen size={18} className="text-green-600" />
+              <BookOpen size={18} className="text-green-600 dark:text-green-400" />
               <div>
                 <p className="text-sm font-medium">Reference <kbd className="text-[10px] px-1 py-0.5 rounded bg-background text-muted font-mono ml-1">R</kbd></p>
                 <p className="text-xs text-muted">File for later lookup</p>
@@ -730,7 +730,7 @@ export default function ProcessPage() {
 
             {referenceCategories.map(cat => (
               <button key={cat} onClick={() => routeItem({ type: 'ref_category', category: cat })} className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-green-400/50 transition-colors text-left">
-                <FolderOpen size={18} className="text-green-600" />
+                <FolderOpen size={18} className="text-green-600 dark:text-green-400" />
                 <div>
                   <p className="text-sm font-medium">{cat}</p>
                   <p className="text-xs text-muted">File to reference</p>
@@ -743,9 +743,9 @@ export default function ProcessPage() {
                 onClick={() => setShowInlineNewFolder(true)}
                 className="flex items-center gap-3 p-3 rounded-xl border border-dashed border-green-300 hover:border-green-500 hover:bg-green-500/5 transition-colors text-left"
               >
-                <Plus size={18} className="text-green-600" />
+                <Plus size={18} className="text-green-600 dark:text-green-400" />
                 <div>
-                  <p className="text-sm font-medium text-green-700">New Folder</p>
+                  <p className="text-sm font-medium text-green-700 dark:text-green-400">New Folder</p>
                   <p className="text-xs text-muted">Create & file here</p>
                 </div>
               </button>
@@ -820,7 +820,7 @@ export default function ProcessPage() {
                       key={cat}
                       onClick={() => setSelectedRefCategory(cat)}
                       className={`px-3.5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                        selectedRefCategory === cat ? 'bg-green-600 text-white' : 'bg-background hover:bg-green-50 border border-border'
+                        selectedRefCategory === cat ? 'bg-green-600 text-white' : 'bg-background hover:bg-green-50 dark:hover:bg-green-900/30 border border-border'
                       }`}
                     >
                       {cat}
@@ -835,7 +835,7 @@ export default function ProcessPage() {
                     setShowNewRefCategory(true);
                     setSelectedRefCategory('');
                   }}
-                  className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-sm text-green-700 border border-green-200 hover:bg-green-50 transition-colors"
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg text-sm text-green-700 dark:text-green-400 border border-green-200 dark:border-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 transition-colors"
                 >
                   <Plus size={14} /> New category
                 </button>

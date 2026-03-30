@@ -1,7 +1,7 @@
 import { offlineDb } from './db';
 import type {
-  InboxItem, NextAction, ListItem,
-  Project, DailyNote, RoutineBlock, ReferenceDoc,
+  InboxItem, NextAction,
+  Project, DailyNote, ReferenceDoc,
   Discipline, DisciplineLog, ContextList, DailyBlock,
   JournalEntry, HorizonItem,
 } from './db';
@@ -152,63 +152,6 @@ export const inboxStore: StoreConfig<InboxItem> = {
   },
 };
 
-// ---- List Items ----
-
-export const listItemsStore: StoreConfig<ListItem> = {
-  table: 'list_items',
-
-  fetchUrl: (params) => {
-    if (params?.type) return `/api/lists?type=${params.type}`;
-    return '/api/lists';
-  },
-
-  parseResponse: (json) => {
-    // API returns items array when type param given, counts array otherwise
-    if (Array.isArray(json) && json.length > 0 && 'title' in json[0]) {
-      return json as ListItem[];
-    }
-    return [];
-  },
-
-  queryLocal: async (params) => {
-    if (!params?.type) return [];
-    return offlineDb.list_items
-      .where('list_type').equals(params.type)
-      .sortBy('sort_order');
-  },
-
-  mutate: {
-    create: async (data) => {
-      const id = uuid();
-      const item: ListItem = {
-        id,
-        list_type: data.list_type as string,
-        title: data.title as string,
-        tier: (data.tier as string) ?? null,
-        status: (data.status as string) ?? null,
-        url: (data.url as string) ?? null,
-        notes: (data.notes as string) ?? null,
-        sort_order: 0,
-        created_at: nowLocal(),
-      };
-      await offlineDb.list_items.put(item);
-      await enqueue('POST', '/api/lists', { id, ...data });
-      return item;
-    },
-
-    update: async (data) => {
-      const { id, ...updates } = data;
-      await offlineDb.list_items.update(id, updates);
-      await enqueue('PATCH', '/api/lists', data);
-    },
-
-    remove: async (id) => {
-      await offlineDb.list_items.delete(id);
-      await enqueue('DELETE', `/api/lists?id=${id}`, null);
-    },
-  },
-};
-
 // ---- Projects ----
 
 export const projectsStore: StoreConfig<Project> = {
@@ -341,74 +284,6 @@ export const dailyNotesStore: StoreConfig<DailyNote> = {
     remove: async (id) => {
       await offlineDb.daily_notes.delete(id);
       await enqueue('DELETE', `/api/daily-notes?id=${id}`, null);
-    },
-  },
-};
-
-// ---- Routine Blocks ----
-
-export const routineBlocksStore: StoreConfig<RoutineBlock> = {
-  table: 'routine_blocks',
-
-  fetchUrl: (params) => {
-    if (params?.type) return `/api/routine?type=${params.type}`;
-    return '/api/routine';
-  },
-
-  parseResponse: (json) => {
-    // API returns { blocks, ... } object or plain array
-    if (Array.isArray(json)) return json as RoutineBlock[];
-    const obj = json as Record<string, unknown>;
-    if (obj.blocks) return obj.blocks as RoutineBlock[];
-    return [];
-  },
-
-  queryLocal: async (params) => {
-    if (params?.type) {
-      return offlineDb.routine_blocks
-        .where('routine_type').equals(params.type)
-        .sortBy('sort_order');
-    }
-    // Default: figure out today's routine type
-    // Will be replaced by week patterns in Phase 3
-    const now = new Date();
-    const day = now.getDay();
-    let routineType: string;
-    if (day === 0) routineType = 'sunday';
-    else if (day === 6) routineType = 'saturday';
-    else routineType = 'non_girls_week'; // temporary default until week patterns
-    return offlineDb.routine_blocks
-      .where('routine_type').equals(routineType)
-      .sortBy('sort_order');
-  },
-
-  mutate: {
-    create: async (data) => {
-      const id = (data.id as string) || uuid();
-      const item: RoutineBlock = {
-        id,
-        routine_type: (data.routine_type as string) || 'weekday',
-        start_time: data.start_time as string,
-        end_time: data.end_time as string,
-        label: data.label as string,
-        description: (data.description as string) ?? null,
-        is_non_negotiable: (data.is_non_negotiable as number) || 0,
-        sort_order: (data.sort_order as number) || 0,
-      };
-      await offlineDb.routine_blocks.put(item);
-      await enqueue('POST', '/api/routine', { id, ...data });
-      return item;
-    },
-
-    update: async (data) => {
-      const { id, ...updates } = data;
-      await offlineDb.routine_blocks.update(id, updates);
-      await enqueue('PATCH', '/api/routine', data);
-    },
-
-    remove: async (id) => {
-      await offlineDb.routine_blocks.delete(id);
-      await enqueue('DELETE', `/api/routine?id=${id}`, null);
     },
   },
 };

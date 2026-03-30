@@ -15,7 +15,7 @@ const PUBLIC_PATHS = [
   '/manifest.json',
   '/sw.js',
   '/icons',
-  '/favicon.ico',
+  '/favicon.png',
   '/branding',
   '/robots.txt',
 ];

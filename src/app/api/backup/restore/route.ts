@@ -22,6 +22,8 @@ const TABLE_ORDER = [
   'routine_blocks',
   'reference_docs',
   'list_items',
+  'journal_entries',
+  'horizon_items',
 ];
 
 const PROTECTED_TABLES = new Set(['schema_version', 'backup_log']);

@@ -1,4 +1,5 @@
 import sql from './db';
+import { daysAgoStr, nowCentral } from './api-helpers';
 
 // Default retention periods in days
 const DEFAULT_RETENTION: Record<string, number> = {
@@ -11,15 +12,13 @@ const DEFAULT_RETENTION: Record<string, number> = {
 };
 
 function daysAgo(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
+  const ct = nowCentral();
+  const d = new Date(ct.date.getTime() - days * 24 * 60 * 60 * 1000);
   return d.toISOString();
 }
 
 function dateDaysAgo(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  return d.toISOString().slice(0, 10); // YYYY-MM-DD
+  return daysAgoStr(days);
 }
 
 async function getRetentionSettings(): Promise<Record<string, number>> {

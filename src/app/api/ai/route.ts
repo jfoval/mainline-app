@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
-import { nowCentral } from '@/lib/api-helpers';
+import { nowCentral, daysAgoStr } from '@/lib/api-helpers';
 
 // Cache the API key lookup with a 60-second TTL
 let cachedApiKey: string | null | undefined = undefined;
@@ -108,7 +108,7 @@ interface SystemSnapshot {
   actions: Array<{ content: string; context: string; projectTitle: string | null; waiting_on_person: string | null; waiting_since: string | null; agenda_person: string | null }>;
   actionCounts: Record<string, number>;
   waitingFor: Array<{ content: string; waiting_on_person: string; waiting_since: string }>;
-  horizons: Array<{ type: string; content: string }>;
+  horizons: Array<{ horizon_type: string; name: string; description: string | null }>;
   dailyNote: Record<string, string | null> | null;
   recentJournal: Array<{ entry_date: string; content: string; tag: string | null }>;
   disciplines: Array<{ name: string; completed: boolean }>;
@@ -119,7 +119,7 @@ async function getSystemSnapshot(): Promise<SystemSnapshot> {
   const ct = nowCentral();
   const today = ct.dateStr;
   const dayName = ct.weekday;
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const sevenDaysAgo = daysAgoStr(7);
 
   const [
     inboxResult,
@@ -139,7 +139,7 @@ async function getSystemSnapshot(): Promise<SystemSnapshot> {
     sql`SELECT na.content, na.context, p.title as project_title, na.waiting_on_person, na.waiting_since, na.agenda_person
          FROM next_actions na LEFT JOIN projects p ON na.project_id = p.id
          WHERE na.status = 'active' ORDER BY na.context, na.sort_order`,
-    sql`SELECT type, content FROM horizons ORDER BY type`,
+    sql`SELECT horizon_type, name, description FROM horizon_items ORDER BY horizon_type, sort_order`,
     sql`SELECT * FROM daily_notes WHERE date = ${today}`,
     sql`SELECT entry_date, content, tag FROM journal_entries WHERE entry_date >= ${sevenDaysAgo} ORDER BY entry_date DESC, created_at DESC LIMIT 20`,
     sql`SELECT id, name FROM disciplines WHERE is_active = 1 ORDER BY sort_order`,
@@ -178,7 +178,7 @@ async function getSystemSnapshot(): Promise<SystemSnapshot> {
 
   return {
     today, dayName, inboxCount, projects: projectList, stalledProjects,
-    actions: actionList, actionCounts, waitingFor, horizons: horizonList,
+    actions: actionList, actionCounts, waitingFor, horizons: horizonList as SystemSnapshot['horizons'],
     dailyNote, recentJournal, disciplines, daysSinceReview,
   };
 }
@@ -242,8 +242,13 @@ function formatSnapshotForPrompt(s: SystemSnapshot): string {
   // Horizons
   if (s.horizons.length > 0) {
     sections.push(`\nHORIZONS:`);
+    const grouped = new Map<string, string[]>();
     for (const h of s.horizons) {
-      if (h.content) sections.push(`${h.type}: ${h.content.slice(0, 200)}`);
+      if (!grouped.has(h.horizon_type)) grouped.set(h.horizon_type, []);
+      grouped.get(h.horizon_type)!.push(h.description ? `${h.name}: ${h.description.slice(0, 100)}` : h.name);
+    }
+    for (const [type, items] of grouped) {
+      sections.push(`${type}: ${items.join(', ')}`);
     }
   }
 
@@ -267,7 +272,7 @@ function formatSnapshotForPrompt(s: SystemSnapshot): string {
   return sections.join('\n');
 }
 
-const DEFAULT_MODEL = 'claude-sonnet-4-6';
+const DEFAULT_MODEL = 'claude-opus-4-6';
 const DEFAULT_MAX_TOKENS = 1024;
 const MODELS: Record<string, string> = {
   process_inbox: DEFAULT_MODEL,
@@ -299,6 +304,7 @@ async function callClaude(apiKey: string, system: string, userMessage: string, a
       system,
       messages: [{ role: 'user', content: userMessage }],
     }),
+    signal: AbortSignal.timeout(55000),
   });
 
   if (!res.ok) {
@@ -451,7 +457,7 @@ async function recoveryWorkflow(apiKey: string) {
   `;
   const stalledCount = Number(stalledCountResult[0].count);
 
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const sevenDaysAgo = daysAgoStr(7);
   const staleWaitingResult = await sql`
     SELECT COUNT(*) as count FROM next_actions WHERE context = 'waiting_for' AND status = 'active' AND waiting_since IS NOT NULL AND waiting_since <= ${sevenDaysAgo}
   `;
@@ -509,7 +515,7 @@ Guidelines:
 // ─── Journal Insights ──────────────────────
 async function journalInsights(apiKey: string, data: { days?: number }) {
   const days = data?.days || 14;
-  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const since = daysAgoStr(days);
 
   const entries = await sql`
     SELECT entry_date, content, tag FROM journal_entries

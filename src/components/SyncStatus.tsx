@@ -7,17 +7,23 @@ import { getConflictCount } from '@/lib/offline/sync-queue';
 export default function SyncStatus() {
   const { isOnline, pendingCount, syncNow } = useOnlineStatus();
   const [conflictCount, setConflictCount] = useState(0);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
+    if (!mounted) return;
     getConflictCount().then(setConflictCount);
     // Re-check conflicts periodically
     const interval = setInterval(() => {
       getConflictCount().then(setConflictCount);
     }, 10000);
     return () => clearInterval(interval);
-  }, [pendingCount]); // Re-check when pending count changes (sync just happened)
+  }, [pendingCount, mounted]); // Re-check when pending count changes (sync just happened)
 
   const showConflictBadge = conflictCount > 0;
+
+  if (!mounted) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2">

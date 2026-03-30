@@ -20,40 +20,43 @@ async function ensureDailyBlocks(date: string, dayOfWeek: number) {
     }
 
     hydrationInProgress = (async () => {
-      // Re-check after acquiring "lock" to handle race
-      const recheck = await sql`SELECT COUNT(*) as count FROM daily_blocks WHERE date = ${date}`;
-      if (Number(recheck[0].count) > 0) return;
+      try {
+        // Re-check after acquiring "lock" to handle race
+        const recheck = await sql`SELECT COUNT(*) as count FROM daily_blocks WHERE date = ${date}`;
+        if (Number(recheck[0].count) > 0) return;
 
-      const weekStart = getMonday(new Date(date + 'T12:00:00'));
-      const patternId = await resolvePatternId(weekStart);
+        const weekStart = getMonday(new Date(date + 'T12:00:00'));
+        const patternId = await resolvePatternId(weekStart);
 
-      if (patternId) {
-        const templateBlocks = await sql`
-          SELECT * FROM week_pattern_blocks
-          WHERE pattern_id = ${patternId} AND day_of_week = ${dayOfWeek}
-          ORDER BY start_time, sort_order
-        `;
+        if (patternId) {
+          const templateBlocks = await sql`
+            SELECT * FROM week_pattern_blocks
+            WHERE pattern_id = ${patternId} AND day_of_week = ${dayOfWeek}
+            ORDER BY start_time, sort_order
+          `;
 
-        if (templateBlocks.length > 0) {
-          const placeholders: string[] = [];
-          const values: unknown[] = [];
-          let idx = 1;
-          for (const tb of templateBlocks) {
-            const id = uuid();
-            placeholders.push(`($${idx}, $${idx+1}, $${idx+2}, $${idx+3}, $${idx+4}, $${idx+5}, $${idx+6}, $${idx+7})`);
-            values.push(id, date, tb.start_time, tb.end_time, tb.label, tb.description || null, tb.is_non_negotiable || 0, tb.id);
-            idx += 8;
+          if (templateBlocks.length > 0) {
+            const placeholders: string[] = [];
+            const values: unknown[] = [];
+            let idx = 1;
+            for (const tb of templateBlocks) {
+              const id = uuid();
+              placeholders.push(`($${idx}, $${idx+1}, $${idx+2}, $${idx+3}, $${idx+4}, $${idx+5}, $${idx+6}, $${idx+7})`);
+              values.push(id, date, tb.start_time, tb.end_time, tb.label, tb.description || null, tb.is_non_negotiable || 0, tb.id);
+              idx += 8;
+            }
+            await sql.query(
+              `INSERT INTO daily_blocks (id, date, start_time, end_time, label, description, is_non_negotiable, source_block_id) VALUES ${placeholders.join(', ')}`,
+              values
+            );
           }
-          await sql.query(
-            `INSERT INTO daily_blocks (id, date, start_time, end_time, label, description, is_non_negotiable, source_block_id) VALUES ${placeholders.join(', ')}`,
-            values
-          );
         }
+      } finally {
+        hydrationInProgress = null;
       }
     })();
 
     await hydrationInProgress;
-    hydrationInProgress = null;
     blocks = await sql`SELECT * FROM daily_blocks WHERE date = ${date} ORDER BY start_time`;
   }
 
@@ -107,7 +110,6 @@ export async function GET() {
       thresholdRows,
       activeDisciplines,
       logsToday,
-      lastReviewRows,
     ] = await Promise.all([
       sql`SELECT COUNT(*) as count FROM inbox_items WHERE status = 'pending'`,
       sql`SELECT context, COUNT(*) as count FROM next_actions WHERE status = 'active' GROUP BY context`,
@@ -124,7 +126,6 @@ export async function GET() {
       sql`SELECT key, value FROM settings WHERE key IN ('alert_inbox_threshold', 'alert_waiting_days', 'last_weekly_review')`,
       sql`SELECT id, name FROM disciplines WHERE is_active = 1 ORDER BY sort_order, name`,
       sql`SELECT discipline_id, completed FROM discipline_logs WHERE date = ${today}`,
-      sql`SELECT value FROM settings WHERE key = 'last_weekly_review'`,
     ]);
 
     const inboxCount = Number(inboxCountResult[0].count);
@@ -168,10 +169,11 @@ export async function GET() {
       disciplinesDone = disciplineItems.filter(d => d.completed).length;
     }
 
-    // Weekly review overdue check
+    // Weekly review overdue check (uses last_weekly_review already fetched in thresholdRows)
     let daysSinceWeeklyReview: number | null = null;
-    if ((lastReviewRows as Array<{ value: string }>).length > 0 && (lastReviewRows as Array<{ value: string }>)[0].value) {
-      const lastReview = new Date((lastReviewRows as Array<{ value: string }>)[0].value);
+    const lastReviewValue = thresholdMap.get('last_weekly_review');
+    if (lastReviewValue) {
+      const lastReview = new Date(lastReviewValue);
       daysSinceWeeklyReview = Math.floor((ct.date.getTime() - lastReview.getTime()) / (24 * 60 * 60 * 1000));
     }
 

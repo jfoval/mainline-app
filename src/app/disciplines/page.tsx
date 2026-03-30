@@ -172,16 +172,7 @@ export default function DisciplinesPage() {
   const toggleTodayLog = async (disciplineId: string) => {
     const existing = todayLogs.find(l => l.discipline_id === disciplineId);
     const newCompleted = existing?.completed === 1 ? 0 : 1;
-
-    await fetch('/api/disciplines/logs', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        discipline_id: disciplineId,
-        date: todayStr(),
-        completed: newCompleted,
-      }),
-    });
+    const previousLogs = [...todayLogs];
 
     // Update local state optimistically
     if (existing) {
@@ -197,6 +188,18 @@ export default function DisciplinesPage() {
         notes: null,
       }]);
     }
+
+    fetch('/api/disciplines/logs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        discipline_id: disciplineId,
+        date: todayStr(),
+        completed: newCompleted,
+      }),
+    }).catch(() => {
+      setTodayLogs(previousLogs);
+    });
   };
 
   if (loading) {

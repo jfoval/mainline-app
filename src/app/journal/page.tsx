@@ -15,7 +15,7 @@ const TAG_COLORS: Record<string, string> = {
   gratitude: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
   idea: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
   lesson: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
-  goal: 'bg-green-100 text-green-800 dark:bg-green-100/80 dark:text-green-300',
+  goal: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
   win: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
   struggle: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
 };

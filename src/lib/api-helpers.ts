@@ -140,3 +140,11 @@ export function nowCentral() {
 export function nowLocal(): string {
   return nowCentral().timestamp;
 }
+
+/** Get a "YYYY-MM-DD" date string for N days ago in the configured timezone.
+ *  Use this instead of `new Date(Date.now() - N * 86400000).toISOString().slice(0, 10)` which returns UTC. */
+export function daysAgoStr(days: number): string {
+  const ct = nowCentral();
+  const d = new Date(ct.date.getTime() - days * 24 * 60 * 60 * 1000);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+}

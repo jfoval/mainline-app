@@ -368,7 +368,6 @@ export default function MorningProcessPage() {
                 await patchNote({
                   reflection_matters_most: reflection.matters_most,
                   reflection_who_to_be: reflection.who_to_be,
-                  reflection_one_action: top3First.trim(),
                   top3_first: top3First.trim(),
                   top3_second: top3Second.trim(),
                   top3_third: top3Third.trim(),

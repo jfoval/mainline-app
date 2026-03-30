@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
-import { nowCentral } from '@/lib/api-helpers';
+import { nowCentral, daysAgoStr } from '@/lib/api-helpers';
 
 export async function GET(req: NextRequest) {
   try {
@@ -29,10 +29,10 @@ export async function GET(req: NextRequest) {
     const waitingFor = allActions.filter(a => a.context === 'waiting_for');
     const agendas = allActions.filter(a => a.context === 'agendas');
 
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const sevenDaysAgo = daysAgoStr(7);
     const staleWaiting = waitingFor.filter(a => a.waiting_since && a.waiting_since <= sevenDaysAgo);
 
-    const horizons = await sql`SELECT * FROM horizons ORDER BY type`;
+    const horizons = await sql`SELECT id, horizon_type, name, description FROM horizon_items ORDER BY horizon_type, sort_order`;
 
     // Dynamic context counts
     const actionCounts: Record<string, number> = {};
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
     if (type === 'monthly') {
       result.horizons = horizons;
 
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const thirtyDaysAgo = daysAgoStr(30);
       result.recent_daily_notes = await sql`SELECT * FROM daily_notes WHERE date >= ${thirtyDaysAgo} ORDER BY date DESC`;
 
       result.someday_maybe = await sql`SELECT id, title, content, category, created_at FROM reference_docs WHERE category IN ('Someday/Maybe (Personal)', 'Someday/Maybe (Work)') ORDER BY category, created_at DESC`;

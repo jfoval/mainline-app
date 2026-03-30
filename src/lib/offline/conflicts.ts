@@ -77,9 +77,7 @@ function urlForTable(table: string, data: Record<string, unknown>): string | nul
     case 'next_actions': return '/api/actions';
     case 'projects': return '/api/projects';
     case 'daily_notes': return '/api/daily-notes';
-    case 'list_items': return '/api/lists';
     case 'inbox_items': return '/api/inbox';
-    case 'routine_blocks': return '/api/routine';
     case 'disciplines': return '/api/disciplines';
     case 'discipline_logs': return '/api/disciplines/logs';
     case 'context_lists': return '/api/context-lists';

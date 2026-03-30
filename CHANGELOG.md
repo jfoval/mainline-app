@@ -2,6 +2,43 @@
 
 All notable changes to Mainline will be documented here.
 
+## [0.8.0] - 2026-03-30
+
+### Fixed
+- **Backup restore data loss** — `journal_entries` and `horizon_items` were missing from restore whitelist, causing silent data loss on import.
+- **Hydration mismatch error** — SyncStatus component caused React hydration error on every page load (client/server state mismatch). Now defers rendering until mounted.
+- **AI model** — Changed from Claude Sonnet to Claude Opus per user preference.
+- **AI horizon data stale** — AI system snapshot and review now query `horizon_items` (current) instead of legacy `horizons` table (empty).
+- **UTC date bug (12 locations)** — Server-side date calculations used `toISOString().slice(0,10)` which returns UTC (wrong after 6 PM Central on Vercel). Created `daysAgoStr()` helper using configured timezone. Fixed in AI, disciplines stats/logs, review, and maintenance routes.
+- **Login cold start crash** — Added `ensureDb()` to login route; first request after cold start could fail if login was hit before any other route.
+- **Dashboard hydration deadlock** — Daily block hydration lock was never released on error, potentially deadlocking all subsequent dashboard requests. Added try/finally.
+- **Duplicate dashboard query** — `last_weekly_review` was queried twice (once in batch settings, once separately). Removed duplicate.
+- **Project reactivation** — `completed_at` was never cleared when a project was changed back to `active`, corrupting data retention timing.
+- **Disciplines toggle rollback** — Optimistic UI update now reverts on server failure instead of persisting incorrect state.
+- **Review abandon progress** — Clicking "Back to Review Menu" now clears sessionStorage progress so old state doesn't persist.
+- **Notification disable** — Disabling notifications now persists to server (was only updating localStorage).
+- **Anthropic API timeout** — Added 55-second timeout to Claude API calls to prevent hanging requests.
+- **WCAG zoom** — Removed `maximumScale: 1` from viewport config to allow pinch-to-zoom on mobile.
+- **Legacy reflection field** — Stopped silently copying Top 3 #1 into the legacy `reflection_one_action` field.
+- **Review page personal text** — Changed hardcoded "Saturday 7:30-8:30 AM" to generic "Weekly · 60-90 min".
+- **Favicon public path** — Changed `/favicon.ico` to `/favicon.png` in auth public paths to match actual file.
+
+### Fixed (Dark Mode)
+- Journal `goal` tag used light green background in dark mode.
+- Inbox processing had ~10 missing dark mode variants on borders, text colors, and hover states.
+- Added Firefox dark scrollbar support (`scrollbar-color`).
+- Toast animation now respects `prefers-reduced-motion`.
+
+### Removed
+- **Dead lists system** — Removed `/api/lists` route, `listItemsStore`, and 6 unnecessary API calls per sync cycle (wish_list, reading, movies, shows, albums, travel).
+- **Dead routine system** — Removed `/api/routine` route, `routineBlocksStore`, and 1 unnecessary API call per sync cycle.
+- **Dead recurring-tasks route** — Removed `/api/recurring-tasks` (no UI references it since review cleanup).
+- **Duplicate apple-touch-icon** — Removed `public/icons/apple-touch-icon.png` (layout uses `/apple-touch-icon.png`).
+
+### Performance
+- Eliminated 7 unnecessary API calls per sync cycle (6 lists + 1 routine = 7 fewer fetches every 5 minutes).
+- Removed 1 duplicate database query per dashboard load.
+
 ## [0.7.2] - 2026-03-30
 
 ### Added

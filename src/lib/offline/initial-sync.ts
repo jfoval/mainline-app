@@ -60,12 +60,11 @@ function filterPending(items: any[], pendingIds: Set<string>): any[] {
 
 /** Fetch all data from the server and populate IndexedDB, skipping records with pending local mutations */
 async function fetchAllData(): Promise<void> {
-  const [actions, inbox, projects, dailyNotes, routine, referenceDocs, disciplines, disciplineLogs, contextLists, dailyBlocksRes, journalEntries, horizonItems] = await Promise.all([
+  const [actions, inbox, projects, dailyNotes, referenceDocs, disciplines, disciplineLogs, contextLists, dailyBlocksRes, journalEntries, horizonItems] = await Promise.all([
     fetchWithTimeout('/api/actions?status=active').then(r => r.ok ? r.json() : []),
     fetchWithTimeout('/api/inbox').then(r => r.ok ? r.json() : []),
     fetchWithTimeout('/api/projects').then(r => r.ok ? r.json() : []),
     fetchWithTimeout('/api/daily-notes').then(r => r.ok ? r.json() : []),
-    fetchWithTimeout('/api/routine').then(r => r.ok ? r.json() : { blocks: [] }),
     fetchWithTimeout('/api/reference').then(r => r.ok ? r.json() : []),
     fetchWithTimeout('/api/disciplines').then(r => r.ok ? r.json() : []),
     fetchWithTimeout('/api/disciplines/logs?days=30').then(r => r.ok ? r.json() : []),
@@ -74,15 +73,6 @@ async function fetchAllData(): Promise<void> {
     fetchWithTimeout('/api/journal').then(r => r.ok ? r.json() : []),
     fetchWithTimeout('/api/horizon-items').then(r => r.ok ? r.json() : []),
   ]);
-
-  // Fetch all list types
-  const listTypes = ['wish_list', 'reading', 'movies', 'shows', 'albums', 'travel'];
-  const listResults = await Promise.all(
-    listTypes.map(type =>
-      fetchWithTimeout(`/api/lists?type=${type}`).then(r => r.ok ? r.json() : [])
-    )
-  );
-  const allListItems = listResults.flat();
 
   // Extract daily blocks from response
   const dailyBlocks = dailyBlocksRes.blocks || (Array.isArray(dailyBlocksRes) ? dailyBlocksRes : []);
@@ -93,10 +83,8 @@ async function fetchAllData(): Promise<void> {
   const tables = [
     offlineDb.next_actions,
     offlineDb.inbox_items,
-    offlineDb.list_items,
     offlineDb.projects,
     offlineDb.daily_notes,
-    offlineDb.routine_blocks,
     offlineDb.reference_docs,
     offlineDb.disciplines,
     offlineDb.discipline_logs,
@@ -109,11 +97,8 @@ async function fetchAllData(): Promise<void> {
   await offlineDb.transaction('rw', tables, async () => {
     const safeActions = filterPending(actions, pendingIds);
     const safeInbox = filterPending(inbox, pendingIds);
-    const safeListItems = filterPending(allListItems, pendingIds);
     const safeProjects = filterPending(projects, pendingIds);
     const safeDailyNotes = filterPending(Array.isArray(dailyNotes) ? dailyNotes : [dailyNotes], pendingIds);
-    const routineBlocks = routine.blocks || routine;
-    const safeRoutine = filterPending(Array.isArray(routineBlocks) ? routineBlocks : [], pendingIds);
     const safeReferenceDocs = filterPending(referenceDocs, pendingIds);
     const safeDisciplines = filterPending(Array.isArray(disciplines) ? disciplines : [], pendingIds);
     const safeDisciplineLogs = filterPending(Array.isArray(disciplineLogs) ? disciplineLogs : [], pendingIds);
@@ -124,10 +109,8 @@ async function fetchAllData(): Promise<void> {
 
     if (safeActions.length) await offlineDb.next_actions.bulkPut(safeActions);
     if (safeInbox.length) await offlineDb.inbox_items.bulkPut(safeInbox);
-    if (safeListItems.length) await offlineDb.list_items.bulkPut(safeListItems);
     if (safeProjects.length) await offlineDb.projects.bulkPut(safeProjects);
     if (safeDailyNotes.length) await offlineDb.daily_notes.bulkPut(safeDailyNotes);
-    if (safeRoutine.length) await offlineDb.routine_blocks.bulkPut(safeRoutine);
     if (safeReferenceDocs.length) await offlineDb.reference_docs.bulkPut(safeReferenceDocs);
     if (safeDisciplines.length) await offlineDb.disciplines.bulkPut(safeDisciplines);
     if (safeDisciplineLogs.length) await offlineDb.discipline_logs.bulkPut(safeDisciplineLogs);
@@ -139,8 +122,8 @@ async function fetchAllData(): Promise<void> {
     // Mark all tables as synced
     const now = Date.now();
     const syncTables = [
-      'next_actions', 'inbox_items', 'list_items',
-      'projects', 'daily_notes', 'routine_blocks', 'reference_docs',
+      'next_actions', 'inbox_items',
+      'projects', 'daily_notes', 'reference_docs',
       'disciplines', 'discipline_logs', 'context_lists', 'daily_blocks', 'journal_entries', 'horizon_items',
     ];
     await offlineDb.sync_meta.bulkPut(

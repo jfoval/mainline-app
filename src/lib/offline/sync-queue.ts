@@ -21,13 +21,11 @@ function tableFromUrl(url: string): string {
   if (url.includes('/api/actions')) return 'next_actions';
   if (url.includes('/api/projects')) return 'projects';
   if (url.includes('/api/daily-notes')) return 'daily_notes';
-  if (url.includes('/api/lists')) return 'list_items';
   if (url.includes('/api/inbox')) return 'inbox_items';
   if (url.includes('/api/disciplines/logs')) return 'discipline_logs';
   if (url.includes('/api/disciplines')) return 'disciplines';
   if (url.includes('/api/context-lists')) return 'context_lists';
   if (url.includes('/api/daily-blocks')) return 'daily_blocks';
-  if (url.includes('/api/routine')) return 'routine_blocks';
   if (url.includes('/api/journal')) return 'journal_entries';
   if (url.includes('/api/horizon-items')) return 'horizon_items';
   return 'unknown';

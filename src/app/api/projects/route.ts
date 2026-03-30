@@ -83,6 +83,8 @@ export async function PATCH(req: NextRequest) {
     rawUpdates.updated_at = nowLocal();
     if (rawUpdates.status === 'completed' || rawUpdates.status === 'archived') {
       rawUpdates.completed_at = rawUpdates.updated_at;
+    } else if (rawUpdates.status === 'active') {
+      rawUpdates.completed_at = null;
     }
 
     const update = buildUpdate(rawUpdates, [...ALLOWED_PATCH_FIELDS, 'updated_at']);

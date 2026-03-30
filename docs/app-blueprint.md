@@ -2,7 +2,7 @@
 ## Personal Productivity System
 
 **Last updated:** 2026-03-30
-**Status:** Production-ready (v0.7.2). Deployed on Vercel. 20 pages, ~35 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting (DB-persisted, survives cold starts), fetch timeouts, dashboard caching (queries parallelized), service worker v12 (full precache). AI uses Claude Sonnet 4.6. Week pattern rotation system. Disciplines & values tracking (batched stats queries). User-configurable context lists with inline context manager. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v017. Journal with AI insights. Horizons named-item blocks. Daily inbox type checkboxes. Automatic data retention system. 80 tests. HTTP security headers. CSP header. React error boundary. Backup restore hardened. Server-side login rate limiting (DB-persisted). Input type validation. Mobile touch targets enlarged across all pages. iOS Safari auto-zoom fix (16px minimum font on inputs at mobile widths + viewport maximum-scale=1). MIT licensed. CONTRIBUTING.md.
+**Status:** Production-ready (v0.8.0). Deployed on Vercel. 20 pages, ~35 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting (DB-persisted, survives cold starts), fetch timeouts, dashboard caching (queries parallelized), service worker v12 (full precache). AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking (batched stats queries). User-configurable context lists with inline context manager. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v017. Journal with AI insights. Horizons named-item blocks. Daily inbox type checkboxes. Automatic data retention system. 80 tests. HTTP security headers. CSP header. React error boundary. Backup restore hardened. Server-side login rate limiting (DB-persisted). Input type validation. Mobile touch targets enlarged across all pages. iOS Safari auto-zoom fix (16px minimum font on inputs at mobile widths). MIT licensed. CONTRIBUTING.md.
 
 ---
 
@@ -10,7 +10,7 @@
 
 A self-deployed personal productivity app. Each customer gets their own instance on Vercel + Neon. Single-user, offline-first, AI-powered.
 
-**Tech:** Next.js 16, TypeScript, Tailwind v4, Neon Postgres (`@neondatabase/serverless`), Claude API (Sonnet), PWA
+**Tech:** Next.js 16, TypeScript, Tailwind v4, Neon Postgres (`@neondatabase/serverless`), Claude API (Opus), PWA
 **GitHub:** `https://github.com/jfoval/mainline-app` (public)
 **Live:** Deployed on Vercel (auto-deploys on push to `main`)
 **Database:** Neon Postgres (free tier, US East 1)
@@ -131,7 +131,7 @@ All server-side date/time logic uses a configurable timezone via the `nowCentral
 - **Helper:** `nowCentral()` uses `Intl.DateTimeFormat` with the configured timezone — no external libraries needed
 - **Returns:** `timeStr` (HH:MM), `dateStr` (YYYY-MM-DD), `dayOfWeek`, `weekday`, `timestamp`, and a `date` object
 - **`nowLocal()`** calls `nowCentral().timestamp` for all `updated_at` fields
-- **Used by:** All API routes that depend on current time (routine, dashboard, ai, review, recurring-tasks)
+- **Used by:** All API routes that depend on current time (dashboard, ai, review)
 - **Rule:** Never use raw `new Date()` for time-sensitive logic in API routes — always use `nowCentral()`
 
 ---
@@ -156,7 +156,7 @@ The Ideal Calendar supports multiple named week patterns (e.g., "Week A" / "Week
 - **Per-table store configs** — queryLocal, fetchUrl, create/update/remove (`src/lib/offline/stores.ts`)
 - **React hook `useOfflineStore()`** — replaces useState+useEffect+fetch
 - **SyncStatus pill** — red "Offline" / orange "Syncing X..." in bottom-right corner
-- **Service worker v11** — caches app shell + key pages, versioned cache for deploy cache busting, notification click handler
+- **Service worker v12** — caches app shell + key pages, versioned cache for deploy cache busting, notification click handler
 - **Initial sync** — first visit hydrates all priority tables from server (30s timeout per fetch)
 - **Incremental sync** — refreshes all data every 5 minutes while online; `syncInProgress` flag prevents concurrent runs from the timer, online event, and visibilitychange firing simultaneously
 - **Reconnect sync** — listens for `online` event and syncs immediately on reconnect
@@ -167,17 +167,17 @@ The Ideal Calendar supports multiple named week patterns (e.g., "Week A" / "Week
 - **Local notifications** — Notification API for inbox overflow and stalled projects (quiet hours 9pm-7am, 30-min interval)
 - **Update notifications** — checks upstream GitHub repo for newer versions (24h client cache, 1h server cache), shows indigo banner with "How to Update" modal guiding users through GitHub fork sync. Settings → About shows current version + manual check button. Version injected at build time via `NEXT_PUBLIC_APP_VERSION` from package.json.
 
-### Tables mirrored in IndexedDB (13)
-`next_actions`, `inbox_items`, `list_items`, `projects`, `daily_notes`, `routine_blocks`, `reference_docs`, `disciplines`, `discipline_logs`, `context_lists`, `daily_blocks`, `journal_entries`, `horizon_items`
+### Tables mirrored in IndexedDB (12)
+`next_actions`, `inbox_items`, `projects`, `daily_notes`, `routine_blocks`, `reference_docs`, `disciplines`, `discipline_logs`, `context_lists`, `daily_blocks`, `journal_entries`, `horizon_items`
 
 ### iOS Safari zoom fix
-- iOS Safari auto-zooms on form inputs with font-size below 16px, and the zoom persists after the input loses focus — breaking the layout. Fix: global CSS rule in `globals.css` enforces `font-size: 16px` on all `input`, `select`, and `textarea` elements at mobile widths (`@media (max-width: 768px)`). Viewport meta tag in `layout.tsx` also includes `maximum-scale=1` to prevent pinch-zoom-related layout drift.
+- iOS Safari auto-zooms on form inputs with font-size below 16px, and the zoom persists after the input loses focus — breaking the layout. Fix: global CSS rule in `globals.css` enforces `font-size: 16px` on all `input`, `select`, and `textarea` elements at mobile widths (`@media (max-width: 768px)`).
 
 ### What works offline on mobile
 - View and check off next actions (all context lists)
 - Capture to inbox (text + voice via Web Speech API)
 - View reference lists
-- Create new actions, inbox items, list items, projects
+- Create new actions, inbox items, projects
 
 ### What only works online (by design)
 - Processing inbox, reviews, AI features, dashboard, horizons

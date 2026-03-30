@@ -299,6 +299,11 @@ export default function SettingsPage() {
               if (notificationsEnabled) {
                 localStorage.setItem('mainline-notifications', 'false');
                 setNotificationsEnabled(false);
+                fetch('/api/settings', {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ notification_enabled: 'false' }),
+                }).catch(() => {});
               } else {
                 const permission = await Notification.requestPermission();
                 if (permission === 'granted') {

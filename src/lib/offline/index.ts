@@ -1,7 +1,7 @@
 export { offlineDb } from './db';
 export type {
-  InboxItem, NextAction, ListItem,
-  Project, DailyNote, RoutineBlock, ReferenceDoc,
+  InboxItem, NextAction,
+  Project, DailyNote, ReferenceDoc,
   Discipline, DisciplineLog, ContextList, DailyBlock,
   JournalEntry, HorizonItem,
 } from './db';
@@ -12,10 +12,8 @@ export { processQueue, getPendingCount } from './sync-queue';
 export {
   nextActionsStore,
   inboxStore,
-  listItemsStore,
   projectsStore,
   dailyNotesStore,
-  routineBlocksStore,
   referenceDocsStore,
   disciplinesStore,
   disciplineLogsStore,

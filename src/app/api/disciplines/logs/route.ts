@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
 import { v4 as uuid } from 'uuid';
-import { nowLocal } from '@/lib/api-helpers';
+import { nowLocal, daysAgoStr } from '@/lib/api-helpers';
 
 export async function GET(req: NextRequest) {
   try {
@@ -28,9 +28,7 @@ export async function GET(req: NextRequest) {
 
     // Default: recent logs (last N days)
     const numDays = Math.min(Number(days) || 30, 90);
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - numDays);
-    const cutoffStr = cutoff.toISOString().slice(0, 10);
+    const cutoffStr = daysAgoStr(numDays);
 
     const items = await sql`
       SELECT * FROM discipline_logs WHERE date >= ${cutoffStr} ORDER BY date DESC

@@ -17,6 +17,7 @@
 }
 
 html.dark {
+  scrollbar-color: #475569 transparent;
   --background: #0f172a;
   --foreground: #e2e8f0;
   --primary: #3b82f6;
@@ -152,7 +153,9 @@ html.dark .hover\:bg-red-50:hover { background-color: rgba(239, 68, 68, 0.15) !i
 html.dark .hover\:bg-green-50:hover { background-color: rgba(16, 185, 129, 0.15) !important; }
 
 /* Toast animations */
-@keyframes toast-slide-up {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes toast-slide-up {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
 }

@@ -170,7 +170,7 @@ export default function ReviewPage() {
             <Calendar size={32} className="text-primary mb-3" />
             <h2 className="text-lg font-semibold">Weekly Review</h2>
             <p className="text-sm text-muted mt-2">6-step guided walkthrough. Clear inboxes, review projects, actions, and areas of focus.</p>
-            <p className="text-xs text-muted mt-3">Saturday 7:30-8:30 AM · 60-90 min</p>
+            <p className="text-xs text-muted mt-3">Weekly · 60-90 min</p>
             {lastWeekly ? (
               <p className={`text-xs mt-2 font-medium ${
                 (Date.now() - new Date(lastWeekly).getTime()) > 8 * 24 * 60 * 60 * 1000
@@ -242,7 +242,7 @@ export default function ReviewPage() {
       {/* Header + Progress */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <button onClick={() => { setReviewType(null); setData(null); }} className="text-sm text-muted hover:text-foreground transition-colors mb-1 block">
+          <button onClick={() => { clearProgress(); setReviewType(null); setData(null); }} className="text-sm text-muted hover:text-foreground transition-colors mb-1 block">
             ← Back to Review Menu
           </button>
           <h1 className="text-2xl font-bold">{reviewType === 'monthly' ? 'Monthly Deep Review' : 'Weekly Review'}</h1>
