@@ -108,6 +108,7 @@ Where everything gets captured before you decide what to do with it.
 
 The decision tree, one item at a time. For each item:
 
+- **Edit the item text** — press `E` to focus and select all text for quick rewriting before routing. The edited text carries through when you route it as a next action.
 - **Is it actionable?** Choose Yes, No, or "Under 2 minutes — do it now"
 - **If actionable:** refine the action text, pick a context list (@Work, @Home, @Errands, etc.), or create a multi-step project
 - **If not actionable:** route it to Trash, Someday/Maybe Personal (`S`), Someday/Maybe Work (`W`), Reference (`R`), or any of your reference folders
@@ -332,6 +333,7 @@ Hints are shown next to each sidebar item.
 
 | Key | Action |
 |-----|--------|
+| `E` | Edit item text (focuses and selects all) |
 | `Y` | Yes — it's actionable |
 | `N` | No — not actionable |
 | `D` | Do it now (under 2 minutes) |

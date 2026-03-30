@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Trash2, CheckSquare, FolderKanban, BookOpen, Lightbulb,
@@ -97,6 +97,18 @@ export default function ProcessPage() {
   } | null>(null);
   const [undoing, setUndoing] = useState(false);
 
+  // Inline content editing
+  const contentInputRef = useRef<HTMLInputElement>(null);
+  const [editedContent, setEditedContent] = useState('');
+
+  const currentItem = items[currentIndex];
+  const progress = items.length > 0 ? ((currentIndex) / items.length) * 100 : 100;
+
+  // Sync editedContent when current item changes
+  useEffect(() => {
+    if (currentItem) setEditedContent(currentItem.content);
+  }, [currentItem?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -135,16 +147,14 @@ export default function ProcessPage() {
     }
   }
 
-  const currentItem = items[currentIndex];
-  const progress = items.length > 0 ? ((currentIndex) / items.length) * 100 : 100;
-
   // Keyboard shortcuts
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     const tag = (e.target as HTMLElement)?.tagName?.toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
 
     if (step === 'actionable') {
-      if (e.key === 'y' || e.key === 'Y') { e.preventDefault(); if (currentItem) { setActionText(currentItem.content); setStep('route_action'); } }
+      if (e.key === 'e' || e.key === 'E') { e.preventDefault(); contentInputRef.current?.focus(); contentInputRef.current?.select(); return; }
+      if (e.key === 'y' || e.key === 'Y') { e.preventDefault(); if (currentItem) { setActionText(editedContent || currentItem.content); setStep('route_action'); } }
       else if (e.key === 'n' || e.key === 'N') { e.preventDefault(); enterNonAction(); }
       else if (e.key === 'd' || e.key === 'D') { e.preventDefault(); routeItem({ type: 'do_now' }); }
     } else if (step === 'route_action') {
@@ -167,7 +177,7 @@ export default function ProcessPage() {
       if (e.key === 'Escape') { e.preventDefault(); setStep(step === 'route_reference' ? 'route_non_action' : 'route_action'); }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step, currentItem, contexts]);
+  }, [step, currentItem, contexts, editedContent]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -466,7 +476,16 @@ export default function ProcessPage() {
 
       {/* Current Item */}
       <div className="bg-card rounded-xl p-6 border-2 border-primary mb-6">
-        <p className="text-lg font-medium">{currentItem.content}</p>
+        <div className="flex items-center gap-2">
+          <input
+            ref={contentInputRef}
+            type="text"
+            value={editedContent}
+            onChange={e => setEditedContent(e.target.value)}
+            className="flex-1 text-lg font-medium bg-transparent border-none outline-none text-foreground focus:ring-2 focus:ring-primary/40 focus:rounded-lg focus:px-2 focus:-mx-2"
+          />
+          <kbd className="text-[10px] px-1.5 py-0.5 rounded bg-background text-muted font-mono shrink-0 border border-border">E</kbd>
+        </div>
         {currentItem.url && (
           <a href={currentItem.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline mt-2 block">
             {currentItem.url}
@@ -516,7 +535,7 @@ export default function ProcessPage() {
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => {
-                setActionText(currentItem.content);
+                setActionText(editedContent || currentItem.content);
                 setStep('route_action');
               }}
               className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:border-primary transition-colors text-left"
