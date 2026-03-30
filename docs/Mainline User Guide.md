@@ -82,7 +82,7 @@ Your home screen. Shows (in order):
 - **Alerts** for stalled projects and overflowing inbox
 - **Quick Stats** — inbox count, action counts, active projects
 - **Now / Up Next** — current and next calendar block with times
-- **Top 3** — today's three priorities
+- **Top 3** — today's three priorities (#1 is highlighted as the most important task)
 - **Disciplines** — today's habit tracker
 - **Next Actions** — action counts per context list
 - **Daily Calendar** — today's schedule, pulled from your Ideal Calendar pattern and editable for today only

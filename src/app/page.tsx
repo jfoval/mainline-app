@@ -456,10 +456,10 @@ export default function Dashboard() {
               <p className="text-sm text-primary font-medium"><span>1.</span> {data.daily_note.top3_first}</p>
             )}
             {data.daily_note.top3_second && (
-              <p className="text-sm text-primary font-medium"><span>2.</span> {data.daily_note.top3_second}</p>
+              <p className="text-sm"><span className="font-medium">2.</span> {data.daily_note.top3_second}</p>
             )}
             {data.daily_note.top3_third && (
-              <p className="text-sm text-primary font-medium"><span>3.</span> {data.daily_note.top3_third}</p>
+              <p className="text-sm"><span className="font-medium">3.</span> {data.daily_note.top3_third}</p>
             )}
           </div>
         </div>

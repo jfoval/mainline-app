@@ -81,7 +81,7 @@ A self-deployed personal productivity app. Each customer gets their own instance
 ### Daily Workflows
 - **Morning Process** (`/process`) — 3-step guided flow: daily note & reflection (what matters most, who to be) + **Top 3 priorities inline** (#1 = "one action to move forward most", #2, #3; stalled projects flagged) → inbox with **inbox type checkboxes** (Physical/Work Email/Personal Email, user-configurable via gear icon; check state saves to `daily_notes.inbox_checks`) → animated completion celebration (auto-redirects to dashboard)
 - **Shutdown** (`/shutdown`) — 3-step: capture sweep → evening reflection (did well, fell short, do differently) → animated completion celebration (auto-redirects to dashboard)
-- **Dashboard** (`/`) — **Quick Stats above Now/Up Next** (new order: stats → Now/Up Next → Top 3 → Disciplines → Next Actions → Daily Calendar). Mini timeline, voice capture, refresh button with spinner.
+- **Dashboard** (`/`) — **Quick Stats above Now/Up Next** (new order: stats → Now/Up Next → Top 3 → Disciplines → Next Actions → Daily Calendar). #1 priority is highlighted as the most important task. Mini timeline, voice capture, refresh button with spinner.
 
 ### Core Productivity
 - **Inbox** (`/inbox`) — text + voice capture (Web Speech API, `V` hotkey hint on mic button, `P` hotkey hint on Process button). Capture input not autofocused so hotkeys work on page load. Search filter for 5+ items.
