@@ -241,13 +241,13 @@ export default function ReferencePage() {
                       className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-green-500/50"
                     />
                     <div className="flex gap-1">
-                      <button onClick={() => renameCategory(cat, editCategoryName)} className="p-1 rounded hover:bg-green-50 text-green-600"><Check size={14} /></button>
+                      <button onClick={() => renameCategory(cat, editCategoryName)} className="p-1 rounded hover:bg-green-50 dark:hover:bg-green-900/30 text-green-600"><Check size={14} /></button>
                       <button onClick={() => setEditingCategory(null)} className="p-1 rounded hover:bg-muted/20 text-muted"><X size={14} /></button>
                     </div>
                   </div>
                 ) : deletingCategory === cat ? (
                   <div className="p-4 rounded-xl bg-card border-2 border-red-400 space-y-2">
-                    <p className="text-xs text-red-700 font-medium">Delete &ldquo;{cat}&rdquo; and all its items?</p>
+                    <p className="text-xs text-red-700 dark:text-red-400 font-medium">Delete &ldquo;{cat}&rdquo; and all its items?</p>
                     <div className="flex gap-2">
                       <button onClick={() => deleteCategory(cat)} className="px-3 py-1 rounded-lg bg-red-600 text-white text-xs hover:bg-red-700">Delete</button>
                       <button onClick={() => setDeletingCategory(null)} className="px-3 py-1 rounded-lg text-muted text-xs hover:text-foreground">Cancel</button>

@@ -112,7 +112,7 @@ export default function AIPage() {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+        <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-sm text-red-700 dark:text-red-300">
           {error}
           {error.includes('API key') && (
             <Link href="/settings" className="ml-2 text-primary hover:underline">Go to Settings</Link>

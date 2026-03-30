@@ -2,6 +2,28 @@
 
 All notable changes to Mainline will be documented here.
 
+## [0.7.1] - 2026-03-30
+
+### Fixed — Critical
+- **UTC date bug** — client-side `todayStr()` used `toISOString()` (UTC), causing wrong-day data after 6 PM in US timezones. Created shared `src/lib/date-utils.ts` using local timezone. Fixed in process, shutdown, disciplines, journal, dashboard, actions, inbox processing, and ideal calendar pages.
+- **Server timezone date math** — `nowCentral().date` now uses `Date.UTC()` and `getMonday()` uses UTC methods, fixing date calculations on Vercel (which runs in UTC).
+
+### Fixed — UI/UX
+- **Dark mode color gaps** — fixed ~10 locations with hardcoded light-mode colors: actions context COLOR_MAP, disciplines checklist, reference rename/delete, settings sign-out, recovery warning, AI error banner, inbox AI suggestions, review page, login error.
+- **Hover-only buttons invisible to keyboard users** — added `focus:opacity-100` / `focus-within:opacity-100` to delete/archive/edit buttons in inbox, projects, project detail, actions, and horizons pages.
+- **Duplicate daily-blocks fetch** — DailyCalendar now accepts optional `initialBlocks` prop; dashboard passes pre-fetched blocks, eliminating a redundant API call.
+
+### Fixed — Error Handling
+- **Undo delete silent failure** — `undoableFetchDelete` now checks response status and logs errors instead of silently dropping failed DELETEs.
+- **Fire-and-forget fetch in project detail** — `completeAction` now awaits the API call with error handling.
+- **Missing error handling** — added `res.ok` checks to horizons (add/save/delete), disciplines (save), and ideal calendar (create pattern).
+- **Missing try/catch** — wrapped AI route and maintenance route handlers in try/catch returning structured 500 errors.
+
+### Fixed — Other
+- **Unused imports removed** — `Lightbulb` from inbox/process, `ChevronDown`/`ChevronRight` from ideal calendar.
+- **Service worker logout** — cache deletion now uses `event.waitUntil()` to prevent premature SW termination.
+- **Proxy improvements** — added `robots.txt` to public paths; top-level import for session validity (removes dynamic import overhead).
+
 ## [0.7.0] - 2026-03-30
 
 ### Security

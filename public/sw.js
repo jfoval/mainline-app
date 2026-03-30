@@ -92,8 +92,10 @@ self.addEventListener('message', (event) => {
   }
   // Clear all caches on logout so no authenticated pages are served after sign-out
   if (event.data?.type === 'LOGOUT') {
-    caches.keys().then((keys) =>
-      Promise.all(keys.map((k) => caches.delete(k)))
+    event.waitUntil(
+      caches.keys().then((keys) =>
+        Promise.all(keys.map((k) => caches.delete(k)))
+      )
     );
   }
 });

@@ -1,12 +1,13 @@
 import sql from '@/lib/db';
 
-/** Get the Monday of a given week as "YYYY-MM-DD" */
+/** Get the Monday of a given week as "YYYY-MM-DD" (works with both local and UTC dates) */
 export function getMonday(date: Date): string {
   const d = new Date(date);
-  const day = d.getDay();
+  // Use UTC methods to avoid server-timezone dependency (dates are stored at noon UTC)
+  const day = d.getUTCDay();
   const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  d.setUTCDate(d.getUTCDate() + diff);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
 }
 
 /** Resolve which pattern applies for a given week.

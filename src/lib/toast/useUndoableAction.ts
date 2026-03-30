@@ -56,7 +56,14 @@ export function useUndoableAction() {
         },
         onExpire: async () => {
           removePendingDelete(id);
-          await fetch(deleteUrl, { method: 'DELETE' });
+          try {
+            const res = await fetch(deleteUrl, { method: 'DELETE' });
+            if (!res.ok) {
+              console.error(`Delete failed (${res.status}): ${deleteUrl}`);
+            }
+          } catch (err) {
+            console.error('Delete request failed:', err);
+          }
           opts?.onSettled?.();
         },
       });

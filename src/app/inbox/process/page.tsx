@@ -3,10 +3,11 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Trash2, CheckSquare, FolderKanban, BookOpen, Lightbulb,
+  Trash2, CheckSquare, FolderKanban, BookOpen,
   Briefcase, FolderOpen,
   ArrowRight, ArrowLeft, Zap, Archive, Sparkles, Loader2, Plus, Undo2
 } from 'lucide-react';
+import { todayStr } from '@/lib/date-utils';
 
 interface InboxItem {
   id: string;
@@ -200,7 +201,7 @@ export default function ProcessPage() {
         if (destination.projectId) body.project_id = destination.projectId;
         if (destination.context === 'waiting_for' && waitingPerson) {
           body.waiting_on_person = waitingPerson;
-          body.waiting_since = new Date().toISOString().slice(0, 10);
+          body.waiting_since = todayStr();
         }
         const res = await fetch('/api/actions', {
           method: 'POST',
@@ -508,12 +509,13 @@ export default function ProcessPage() {
             <div className="p-3 rounded-lg bg-purple-50 dark:bg-purple-900/30 border border-purple-200 text-sm">
               <p className="font-medium text-purple-700 flex items-center gap-1 mb-1"><Sparkles size={14} /> AI Suggestion</p>
               <p className="text-purple-900 dark:text-purple-200">{aiSuggestion.suggestion}</p>
+
               {aiSuggestion.context && <p className="text-xs text-purple-600 mt-1">Context: {aiSuggestion.context}</p>}
               {aiSuggestion.project_match && <p className="text-xs text-purple-600">Project: {aiSuggestion.project_match}</p>}
               {aiSuggestion.two_minute && <p className="text-xs text-amber-600 font-medium mt-1">2-minute rule — just do it now!</p>}
               {aiSuggestion.concrete === false && aiSuggestion.reworded && (
                 <div className="mt-2 p-2 rounded bg-amber-50 dark:bg-amber-900/30 border border-amber-200">
-                  <p className="text-xs text-amber-700 font-medium">This action seems vague. Try:</p>
+                  <p className="text-xs text-amber-700 dark:text-amber-300 font-medium">This action seems vague. Try:</p>
                   <p className="text-sm text-amber-900 mt-0.5">{aiSuggestion.reworded}</p>
                 </div>
               )}

@@ -11,6 +11,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import DailyCalendar from '@/components/DailyCalendar';
 import { formatTime, timeToMinutes } from '@/lib/time-utils';
+import { todayStr } from '@/lib/date-utils';
 
 interface DashboardData {
   date: string;
@@ -508,7 +509,7 @@ export default function Dashboard() {
                   });
                   // Persist
                   try {
-                    const today = new Date().toISOString().slice(0, 10);
+                    const today = todayStr();
                     const res = await fetch('/api/disciplines/logs', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
@@ -566,7 +567,7 @@ export default function Dashboard() {
       </div>
 
       {/* Daily Calendar */}
-      <DailyCalendar date={data.date} />
+      <DailyCalendar date={data.date} initialBlocks={data.blocks} />
     </div>
   );
 }

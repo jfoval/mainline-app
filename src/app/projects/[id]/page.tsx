@@ -125,7 +125,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: actionId, status: 'completed' }),
-    });
+    }).catch(err => console.error('Failed to complete action:', err));
     addToast('Action completed', {
       onUndo: async () => {
         await fetch('/api/actions', {
@@ -307,7 +307,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                   </div>
                   <button
                     onClick={() => deleteAction(action.id)}
-                    className="p-1 opacity-0 group-hover:opacity-100 text-danger"
+                    className="p-1 opacity-0 group-hover:opacity-100 focus:opacity-100 text-danger"
                   >
                     <Trash2 size={12} />
                   </button>

@@ -170,7 +170,7 @@ function CategoryGroup({ category, projects, onArchive }: {
               </div>
               <button
                 onClick={(e) => { e.preventDefault(); onArchive(project.id); }}
-                className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-muted/10 text-muted transition-all"
+                className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-muted/10 text-muted transition-all"
                 title="Archive"
               >
                 <Archive size={14} />

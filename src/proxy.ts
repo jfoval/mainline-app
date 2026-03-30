@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { jwtVerify } from 'jose';
 import { getJwtSecret } from '@/lib/jwt-secret';
+import { checkSessionValidity } from '@/lib/session-validity';
 
 const PUBLIC_PATHS = [
   '/login',
@@ -15,6 +16,7 @@ const PUBLIC_PATHS = [
   '/icons',
   '/favicon.ico',
   '/branding',
+  '/robots.txt',
 ];
 
 function isPublicPath(pathname: string): boolean {
@@ -48,7 +50,6 @@ export async function proxy(req: NextRequest) {
 
     // Check if token was issued before a password change (session invalidation)
     if (payload.iat) {
-      const { checkSessionValidity } = await import('@/lib/session-validity');
       const isValid = await checkSessionValidity(payload.iat);
       if (!isValid) {
         if (pathname.startsWith('/api/')) {

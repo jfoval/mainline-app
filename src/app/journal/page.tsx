@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useOfflineStore, dailyNotesStore, journalEntriesStore } from '@/lib/offline';
 import { useUndoableAction } from '@/lib/toast/useUndoableAction';
+import { todayStr, localDateStr } from '@/lib/date-utils';
 
 const TAG_OPTIONS = ['gratitude', 'idea', 'lesson', 'goal', 'win', 'struggle'];
 
@@ -19,14 +20,10 @@ const TAG_COLORS: Record<string, string> = {
   struggle: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
 };
 
-function getToday(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function shiftDate(dateStr: string, days: number): string {
   const d = new Date(dateStr + 'T12:00:00');
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return localDateStr(d);
 }
 
 function formatDateDisplay(dateStr: string): string {
@@ -45,7 +42,7 @@ function formatTime(timestamp: string): string {
 }
 
 export default function JournalPage() {
-  const [selectedDate, setSelectedDate] = useState(getToday);
+  const [selectedDate, setSelectedDate] = useState(todayStr);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   // Data
@@ -93,7 +90,7 @@ export default function JournalPage() {
     return fields;
   }, [dailyNote]);
 
-  const isToday = selectedDate === getToday();
+  const isToday = selectedDate === todayStr();
 
   // Handlers
   async function handleAdd() {
@@ -171,7 +168,7 @@ export default function JournalPage() {
           />
           {!isToday && (
             <button
-              onClick={() => setSelectedDate(getToday())}
+              onClick={() => setSelectedDate(todayStr())}
               className="text-xs px-2 py-1 rounded-full bg-primary text-primary-foreground font-medium"
             >
               Today

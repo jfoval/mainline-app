@@ -108,8 +108,8 @@ export function nowCentral() {
   const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].indexOf(weekday);
 
   return {
-    /** Date object set to the Central Time calendar date at noon */
-    date: new Date(year, month - 1, day, 12, 0, 0),
+    /** Date object set to the configured timezone calendar date at noon UTC (for date math only) */
+    date: new Date(Date.UTC(year, month - 1, day, 12, 0, 0)),
     dayOfWeek,
     weekday,
     hour,

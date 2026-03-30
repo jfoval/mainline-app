@@ -15,6 +15,7 @@ import {
   BarChart3,
 } from 'lucide-react';
 import { useUndoableAction } from '@/lib/toast';
+import { todayStr } from '@/lib/date-utils';
 
 interface Discipline {
   id: string;
@@ -44,10 +45,6 @@ interface DisciplineLog {
   date: string;
   completed: number;
   notes: string | null;
-}
-
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
 }
 
 export default function DisciplinesPage() {
@@ -117,8 +114,9 @@ export default function DisciplinesPage() {
     if (!formName.trim()) return;
     setSaving(true);
     try {
+      let res: Response;
       if (editingId) {
-        await fetch('/api/disciplines', {
+        res = await fetch('/api/disciplines', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -131,7 +129,7 @@ export default function DisciplinesPage() {
           }),
         });
       } else {
-        await fetch('/api/disciplines', {
+        res = await fetch('/api/disciplines', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -143,6 +141,7 @@ export default function DisciplinesPage() {
           }),
         });
       }
+      if (!res.ok) { console.error('Failed to save discipline'); return; }
       resetForm();
       await load();
     } finally {
@@ -279,7 +278,7 @@ export default function DisciplinesPage() {
                       key={d.id}
                       onClick={() => toggleTodayLog(d.id)}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                        done ? 'bg-green-50 border border-green-200' : 'bg-background border border-border hover:border-primary/30'
+                        done ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700' : 'bg-background border border-border hover:border-primary/30'
                       }`}
                     >
                       <span className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
@@ -313,7 +312,7 @@ export default function DisciplinesPage() {
                       key={d.id}
                       onClick={() => toggleTodayLog(d.id)}
                       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
-                        done ? 'bg-green-50 border border-green-200' : 'bg-background border border-border hover:border-primary/30'
+                        done ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700' : 'bg-background border border-border hover:border-primary/30'
                       }`}
                     >
                       <span className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${

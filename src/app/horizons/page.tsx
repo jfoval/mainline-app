@@ -78,7 +78,7 @@ export default function HorizonsPage() {
     setAddSaving(true);
     try {
       const typeItems = items.filter(i => i.horizon_type === horizonType);
-      await fetch('/api/horizon-items', {
+      const res = await fetch('/api/horizon-items', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -88,6 +88,7 @@ export default function HorizonsPage() {
           sort_order: typeItems.length,
         }),
       });
+      if (!res.ok) { console.error('Failed to add horizon item'); return; }
       setNewName('');
       setNewDescription('');
       setAddingToType(null);
@@ -101,7 +102,7 @@ export default function HorizonsPage() {
     if (!editingId || !editName.trim()) return;
     setEditSaving(true);
     try {
-      await fetch('/api/horizon-items', {
+      const res = await fetch('/api/horizon-items', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -110,6 +111,7 @@ export default function HorizonsPage() {
           description: editDescription.trim() || null,
         }),
       });
+      if (!res.ok) { console.error('Failed to save horizon item'); return; }
       setEditingId(null);
       fetchItems();
     } finally {
@@ -119,7 +121,12 @@ export default function HorizonsPage() {
 
   async function deleteItem(id: string) {
     setItems(prev => prev.filter(i => i.id !== id));
-    await fetch(`/api/horizon-items?id=${id}`, { method: 'DELETE' });
+    try {
+      const res = await fetch(`/api/horizon-items?id=${id}`, { method: 'DELETE' });
+      if (!res.ok) console.error('Failed to delete horizon item');
+    } catch (err) {
+      console.error('Delete horizon item failed:', err);
+    }
     fetchItems();
   }
 
@@ -233,7 +240,7 @@ export default function HorizonsPage() {
                             <p className="text-xs text-muted mt-0.5">{item.description}</p>
                           )}
                         </div>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex-shrink-0">
                           <button onClick={() => startEdit(item)} className="p-1 text-muted hover:text-foreground rounded" aria-label="Edit item">
                             <Pencil size={12} />
                           </button>

@@ -130,11 +130,11 @@ export default function RecoveryPage() {
           )}
 
           {error && (
-            <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-3">
+            <div className="mb-6 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 flex items-start gap-3">
               <AlertTriangle size={18} className="text-amber-600 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium text-amber-800">AI recovery unavailable</p>
-                <p className="text-xs text-amber-700 mt-1">
+                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">AI recovery unavailable</p>
+                <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                   No API key configured or the request failed. Here is a manual recovery plan instead.
                 </p>
               </div>

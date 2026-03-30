@@ -47,21 +47,21 @@ function checkRateLimit(): boolean {
 }
 
 export async function POST(req: NextRequest) {
-  await ensureDb();
-
-  if (!checkRateLimit()) {
-    return NextResponse.json({ error: 'Rate limit exceeded. Please wait a moment.' }, { status: 429 });
-  }
-
-  const body = await req.json();
-  const { action, data } = body;
-
-  const apiKey = await getApiKey();
-  if (!apiKey) {
-    return NextResponse.json({ error: 'No Claude API key configured. Add one in Settings or set ANTHROPIC_API_KEY environment variable.' }, { status: 400 });
-  }
-
   try {
+    await ensureDb();
+
+    if (!checkRateLimit()) {
+      return NextResponse.json({ error: 'Rate limit exceeded. Please wait a moment.' }, { status: 429 });
+    }
+
+    const body = await req.json();
+    const { action, data } = body;
+
+    const apiKey = await getApiKey();
+    if (!apiKey) {
+      return NextResponse.json({ error: 'No Claude API key configured. Add one in Settings or set ANTHROPIC_API_KEY environment variable.' }, { status: 400 });
+    }
+
     switch (action) {
       case 'process_inbox': return NextResponse.json(await processInboxItem(apiKey, data));
       case 'morning_briefing': return NextResponse.json(await morningBriefing(apiKey));

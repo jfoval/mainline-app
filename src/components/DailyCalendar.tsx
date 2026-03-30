@@ -11,7 +11,7 @@ import { CSS } from '@dnd-kit/utilities';
 
 interface DailyBlock {
   id: string;
-  date: string;
+  date?: string;
   start_time: string;
   end_time: string;
   label: string;
@@ -19,10 +19,10 @@ interface DailyBlock {
   is_non_negotiable: number;
 }
 
-export default function DailyCalendar({ date }: { date: string }) {
-  const [blocks, setBlocks] = useState<DailyBlock[]>([]);
+export default function DailyCalendar({ date, initialBlocks }: { date: string; initialBlocks?: DailyBlock[] }) {
+  const [blocks, setBlocks] = useState<DailyBlock[]>(initialBlocks || []);
   const { undoableFetchDelete } = useUndoableAction();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialBlocks);
   const [currentTime, setCurrentTime] = useState('');
 
   // Add form state
@@ -51,7 +51,7 @@ export default function DailyCalendar({ date }: { date: string }) {
     }
   }, [date]);
 
-  useEffect(() => { loadBlocks(); }, [loadBlocks]);
+  useEffect(() => { if (!initialBlocks) loadBlocks(); }, [loadBlocks, initialBlocks]);
 
   // Update current time every minute
   useEffect(() => {

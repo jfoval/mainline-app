@@ -160,7 +160,7 @@ export default function ReviewPage() {
             onClick={() => startReview('weekly')}
             className={`p-6 rounded-xl bg-card border transition-colors text-left ${
               lastWeekly && (Date.now() - new Date(lastWeekly).getTime()) > 8 * 24 * 60 * 60 * 1000
-                ? 'border-amber-300 bg-amber-50/50' : 'border-border hover:border-primary/50'
+                ? 'border-amber-300 bg-amber-50/50 dark:bg-amber-900/20' : 'border-border hover:border-primary/50'
             }`}
           >
             <Calendar size={32} className="text-primary mb-3" />
@@ -185,7 +185,7 @@ export default function ReviewPage() {
             onClick={() => startReview('monthly')}
             className={`p-6 rounded-xl bg-card border transition-colors text-left ${
               lastMonthly && (Date.now() - new Date(lastMonthly).getTime()) > 35 * 24 * 60 * 60 * 1000
-                ? 'border-amber-300 bg-amber-50/50' : 'border-border hover:border-primary/50'
+                ? 'border-amber-300 bg-amber-50/50 dark:bg-amber-900/20' : 'border-border hover:border-primary/50'
             }`}
           >
             <Sparkles size={32} className="text-amber-500 mb-3" />

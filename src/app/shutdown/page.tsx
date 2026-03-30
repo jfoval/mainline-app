@@ -11,6 +11,7 @@ import {
   Sun,
 } from 'lucide-react';
 import CompletionCelebration from '@/components/CompletionCelebration';
+import { todayStr } from '@/lib/date-utils';
 
 // ── Types ────────────────────────────────────────────────────────────
 interface DailyNote {
@@ -39,11 +40,6 @@ const STEPS = [
   { id: 'reflection', label: 'Evening Reflection', icon: Sun },
   { id: 'complete', label: 'Day Complete', icon: Moon },
 ];
-
-// ── Helpers ──────────────────────────────────────────────────────────
-function todayStr() {
-  return new Date().toISOString().slice(0, 10);
-}
 
 // ── Component ────────────────────────────────────────────────────────
 export default function ShutdownPage() {

@@ -116,7 +116,7 @@ export async function GET() {
 
     // Yesterday's "do differently" for dashboard reminder
     const yesterdayDate = new Date(ct.date.getTime() - 24 * 60 * 60 * 1000);
-    const yesterday = `${yesterdayDate.getFullYear()}-${String(yesterdayDate.getMonth() + 1).padStart(2, '0')}-${String(yesterdayDate.getDate()).padStart(2, '0')}`;
+    const yesterday = `${yesterdayDate.getUTCFullYear()}-${String(yesterdayDate.getUTCMonth() + 1).padStart(2, '0')}-${String(yesterdayDate.getUTCDate()).padStart(2, '0')}`;
     const yesterdayNoteRows = await sql`SELECT evening_do_differently FROM daily_notes WHERE date = ${yesterday}`;
     const doDifferentlyToday = (yesterdayNoteRows[0] as { evening_do_differently: string | null } | undefined)?.evening_do_differently || null;
 
@@ -127,7 +127,7 @@ export async function GET() {
     const waitingDays = Number(thresholdMap.get('alert_waiting_days')) || 7;
 
     const staleDate = new Date(ct.date.getTime() - waitingDays * 24 * 60 * 60 * 1000);
-    const staleDateStr = `${staleDate.getFullYear()}-${String(staleDate.getMonth() + 1).padStart(2, '0')}-${String(staleDate.getDate()).padStart(2, '0')}`;
+    const staleDateStr = `${staleDate.getUTCFullYear()}-${String(staleDate.getUTCMonth() + 1).padStart(2, '0')}-${String(staleDate.getUTCDate()).padStart(2, '0')}`;
     const staleWaiting = await sql`
       SELECT * FROM next_actions WHERE context = 'waiting_for' AND status = 'active' AND waiting_since IS NOT NULL AND waiting_since <= ${staleDateStr}
     ` as Array<{ content: string; waiting_on_person: string | null; waiting_since: string }>;

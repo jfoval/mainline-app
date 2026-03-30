@@ -10,6 +10,7 @@ import { useHotkeys } from '@/hooks/useGlobalHotkeys';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { todayStr } from '@/lib/date-utils';
 
 interface ContextItem {
   id?: string;
@@ -20,22 +21,22 @@ interface ContextItem {
 }
 
 const COLOR_MAP: Record<string, string> = {
-  blue: 'bg-blue-100 text-blue-700',
-  green: 'bg-green-100 text-green-700',
-  orange: 'bg-orange-100 text-orange-700',
-  yellow: 'bg-yellow-100 text-yellow-700',
-  purple: 'bg-purple-100 text-purple-700',
-  teal: 'bg-teal-100 text-teal-700',
-  gray: 'bg-gray-100 text-gray-700',
-  indigo: 'bg-indigo-100 text-indigo-700',
-  red: 'bg-red-100 text-red-700',
-  pink: 'bg-pink-100 text-pink-700',
+  blue: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+  green: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+  orange: 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+  yellow: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+  purple: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+  teal: 'bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300',
+  gray: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+  indigo: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+  red: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+  pink: 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300',
 };
 
 const COLOR_OPTIONS = Object.keys(COLOR_MAP);
 
 function getColorClasses(color: string | null): string {
-  return COLOR_MAP[color || 'gray'] || 'bg-gray-100 text-gray-700';
+  return COLOR_MAP[color || 'gray'] || 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
 }
 
 function SortableActionItem({ action, onComplete, onDelete }: { action: NextAction; onComplete: (id: string) => void; onDelete: (id: string) => void }) {
@@ -70,7 +71,7 @@ function SortableActionItem({ action, onComplete, onDelete }: { action: NextActi
       <button
         onClick={() => onDelete(action.id)}
         aria-label="Delete action"
-        className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-danger/10 text-danger transition-all"
+        className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-danger/10 text-danger transition-all"
       >
         <Trash2 size={14} />
       </button>
@@ -163,7 +164,7 @@ function ActionsContent() {
 
     if (activeContext === 'waiting_for' && waitingPerson) {
       body.waiting_on_person = waitingPerson;
-      body.waiting_since = new Date().toISOString().slice(0, 10);
+      body.waiting_since = todayStr();
     }
     if (activeContext === 'agendas' && agendaPerson) {
       body.agenda_person = agendaPerson;

@@ -164,7 +164,7 @@ export default function SettingsPage() {
         </div>
 
         {apiKeySaveResult && (
-          <p className={`text-sm mt-3 ${apiKeySaveResult.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
+          <p className={`text-sm mt-3 ${apiKeySaveResult.startsWith('Error') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
             {apiKeySaveResult}
           </p>
         )}
@@ -179,7 +179,7 @@ export default function SettingsPage() {
               {testing ? 'Testing...' : 'Test Connection'}
             </button>
             {testResult && (
-              <p className={`text-sm mt-2 ${testResult.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
+              <p className={`text-sm mt-2 ${testResult.startsWith('Error') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
                 {testResult}
               </p>
             )}
@@ -448,7 +448,7 @@ export default function SettingsPage() {
           </label>
         </div>
         {importResult && (
-          <p className={`text-sm mt-3 ${importResult.startsWith('Error') ? 'text-red-600' : 'text-green-600'}`}>
+          <p className={`text-sm mt-3 ${importResult.startsWith('Error') ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
             {importResult}
           </p>
         )}
@@ -462,7 +462,7 @@ export default function SettingsPage() {
         </div>
         <button
           onClick={handleLogout}
-          className="px-4 py-2 rounded-lg border border-red-300 text-red-600 hover:bg-red-50 text-sm"
+          className="px-4 py-2 rounded-lg border border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 text-sm"
         >
           Sign Out
         </button>

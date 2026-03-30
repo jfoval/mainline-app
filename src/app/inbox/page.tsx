@@ -241,7 +241,7 @@ export default function InboxPage() {
               </div>
               <button
                 onClick={() => deleteItem(item.id)}
-                className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-danger/10 text-danger transition-all"
+                className="p-2 rounded-lg opacity-0 group-hover:opacity-100 focus:opacity-100 hover:bg-danger/10 text-danger transition-all"
                 title="Delete"
                 aria-label="Delete item"
               >

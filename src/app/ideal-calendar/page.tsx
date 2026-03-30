@@ -3,10 +3,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { TIME_OPTIONS, formatTime } from '@/lib/time-utils';
 import {
-  Plus, Trash2, Save, Calendar, ChevronDown, ChevronRight,
+  Plus, Trash2, Save, Calendar,
   RotateCcw, Edit3, X, Check, Copy,
 } from 'lucide-react';
 import { useUndoableAction } from '@/lib/toast';
+import { todayStr } from '@/lib/date-utils';
 
 // ── Types ─────────────────────────────────────────────────────
 interface Block {
@@ -66,7 +67,7 @@ export default function IdealCalendarPage() {
   // Rotation setup
   const [showRotation, setShowRotation] = useState(false);
   const [rotationPatternIds, setRotationPatternIds] = useState<string[]>([]);
-  const [rotationStartDate, setRotationStartDate] = useState(new Date().toISOString().slice(0, 10));
+  const [rotationStartDate, setRotationStartDate] = useState(todayStr());
 
   // ── Load data ─────────────────────────────────────────────
   const loadData = useCallback(async () => {
@@ -105,6 +106,7 @@ export default function IdealCalendarPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newPatternName.trim() }),
       });
+      if (!res.ok) { console.error('Failed to create pattern'); return; }
       const created = await res.json();
       setPatterns(prev => [...prev, { ...created, blocks: [] }]);
       setActivePatternId(created.id);
