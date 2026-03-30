@@ -324,7 +324,7 @@ export default function MorningProcessPage() {
               </div>
               <h3 className="font-semibold text-foreground pt-2">Today&apos;s Top 3</h3>
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-1">#1 — What one action, if completed today, would move my life forward most?</label>
+                <label className="block text-sm font-semibold text-foreground mb-1">#1 — What one action, if completed today, would move my life forward most? <span className="font-normal text-muted-foreground">(do the hardest thing first)</span></label>
                 <textarea
                   rows={2}
                   value={top3First}

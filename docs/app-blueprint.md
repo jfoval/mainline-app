@@ -239,7 +239,7 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 ## Daily Workflow
 
 ### Morning (7:30-8:00) — Morning Process page
-1. Daily Note & Reflection — "What matters most today?", "Who do I want to be today?", then Top 3 priorities inline: #1 = "What one action would move my life forward most?", #2 and #3 for next most important outcomes. Stalled projects flagged.
+1. Daily Note & Reflection — "What matters most today?", "Who do I want to be today?", then Top 3 priorities inline: #1 = "What one action would move my life forward most?" (with "do the hardest thing first" hint), #2 and #3 for next most important outcomes. Stalled projects flagged.
 2. Process inbox — every item through decision tree. Also check physical desk inbox.
 3. Completion animation — animated checkmark celebration, auto-redirects to dashboard.
 
