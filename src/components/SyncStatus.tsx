@@ -31,7 +31,7 @@ export default function SyncStatus() {
       {showConflictBadge && (
         <a
           href="/conflicts"
-          className="flex items-center gap-2 bg-orange-100 text-orange-700 px-3 py-1.5 rounded-full text-sm font-medium shadow-lg hover:bg-orange-200 transition-colors"
+          className="flex items-center gap-2 bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 px-3 py-1.5 rounded-full text-sm font-medium shadow-lg hover:bg-orange-200 dark:hover:bg-orange-900/60 transition-colors"
         >
           <span className="w-2 h-2 rounded-full bg-orange-500" />
           {conflictCount} conflict{conflictCount !== 1 ? 's' : ''}
@@ -39,15 +39,15 @@ export default function SyncStatus() {
       )}
 
       {!isOnline ? (
-        <div className="flex items-center gap-2 bg-red-100 text-red-700 px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
+        <div className="flex items-center gap-2 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
           <span className="w-2 h-2 rounded-full bg-red-500" />
           Offline
-          {pendingCount > 0 && <span className="text-red-500">({pendingCount} pending)</span>}
+          {pendingCount > 0 && <span className="text-red-500 dark:text-red-400">({pendingCount} pending)</span>}
         </div>
       ) : pendingCount > 0 ? (
         <button
           onClick={() => syncNow()}
-          className="flex items-center gap-2 bg-orange-100 text-orange-700 px-3 py-1.5 rounded-full text-sm font-medium shadow-lg hover:bg-orange-200 transition-colors"
+          className="flex items-center gap-2 bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-300 px-3 py-1.5 rounded-full text-sm font-medium shadow-lg hover:bg-orange-200 dark:hover:bg-orange-900/60 transition-colors"
         >
           <span className="w-2 h-2 rounded-full bg-orange-500 motion-safe:animate-pulse" />
           Syncing {pendingCount}...
