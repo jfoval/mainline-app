@@ -372,7 +372,7 @@ Both the **Inbox** and **Next Actions** pages have a search bar that filters ite
 
 ## Offline & Mobile
 
-The app is designed for comfortable mobile use. Buttons, chips, selects, and icon actions across inbox processing, actions, reference, and calendar pages use enlarged touch targets so they are easy to tap on phone screens.
+The app is designed for comfortable mobile use. Buttons, chips, selects, and icon actions across inbox processing, actions, reference, and calendar pages use enlarged touch targets so they are easy to tap on phone screens. On iPhone, form inputs (calendar blocks, journal entries, etc.) no longer trigger Safari's auto-zoom behavior — the screen stays at normal zoom while typing and after you finish editing.
 
 The app works offline on your iPhone for the most common tasks.
 

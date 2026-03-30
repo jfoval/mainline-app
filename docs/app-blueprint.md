@@ -2,7 +2,7 @@
 ## Personal Productivity System
 
 **Last updated:** 2026-03-30
-**Status:** Production-ready (v0.7.2). Deployed on Vercel. 20 pages, ~35 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting (DB-persisted, survives cold starts), fetch timeouts, dashboard caching (queries parallelized), service worker v12 (full precache). AI uses Claude Sonnet 4.6. Week pattern rotation system. Disciplines & values tracking (batched stats queries). User-configurable context lists with inline context manager. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v017. Journal with AI insights. Horizons named-item blocks. Daily inbox type checkboxes. Automatic data retention system. 80 tests. HTTP security headers. CSP header. React error boundary. Backup restore hardened. Server-side login rate limiting (DB-persisted). Input type validation. Mobile touch targets enlarged across all pages. MIT licensed. CONTRIBUTING.md.
+**Status:** Production-ready (v0.7.2). Deployed on Vercel. 20 pages, ~35 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting (DB-persisted, survives cold starts), fetch timeouts, dashboard caching (queries parallelized), service worker v12 (full precache). AI uses Claude Sonnet 4.6. Week pattern rotation system. Disciplines & values tracking (batched stats queries). User-configurable context lists with inline context manager. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v017. Journal with AI insights. Horizons named-item blocks. Daily inbox type checkboxes. Automatic data retention system. 80 tests. HTTP security headers. CSP header. React error boundary. Backup restore hardened. Server-side login rate limiting (DB-persisted). Input type validation. Mobile touch targets enlarged across all pages. iOS Safari auto-zoom fix (16px minimum font on inputs at mobile widths + viewport maximum-scale=1). MIT licensed. CONTRIBUTING.md.
 
 ---
 
@@ -169,6 +169,9 @@ The Ideal Calendar supports multiple named week patterns (e.g., "Week A" / "Week
 
 ### Tables mirrored in IndexedDB (13)
 `next_actions`, `inbox_items`, `list_items`, `projects`, `daily_notes`, `routine_blocks`, `reference_docs`, `disciplines`, `discipline_logs`, `context_lists`, `daily_blocks`, `journal_entries`, `horizon_items`
+
+### iOS Safari zoom fix
+- iOS Safari auto-zooms on form inputs with font-size below 16px, and the zoom persists after the input loses focus — breaking the layout. Fix: global CSS rule in `globals.css` enforces `font-size: 16px` on all `input`, `select`, and `textarea` elements at mobile widths (`@media (max-width: 768px)`). Viewport meta tag in `layout.tsx` also includes `maximum-scale=1` to prevent pinch-zoom-related layout drift.
 
 ### What works offline on mobile
 - View and check off next actions (all context lists)
