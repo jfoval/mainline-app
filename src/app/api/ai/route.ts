@@ -98,7 +98,177 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// ─── Shared System Snapshot ──────────────────────
+interface SystemSnapshot {
+  today: string;
+  dayName: string;
+  inboxCount: number;
+  projects: Array<{ title: string; category: string; purpose: string | null; actionCount: number }>;
+  stalledProjects: Array<{ title: string; category: string }>;
+  actions: Array<{ content: string; context: string; projectTitle: string | null; waiting_on_person: string | null; waiting_since: string | null; agenda_person: string | null }>;
+  actionCounts: Record<string, number>;
+  waitingFor: Array<{ content: string; waiting_on_person: string; waiting_since: string }>;
+  horizons: Array<{ type: string; content: string }>;
+  dailyNote: Record<string, string | null> | null;
+  recentJournal: Array<{ entry_date: string; content: string; tag: string | null }>;
+  disciplines: Array<{ name: string; completed: boolean }>;
+  daysSinceReview: number;
+}
+
+async function getSystemSnapshot(): Promise<SystemSnapshot> {
+  const ct = nowCentral();
+  const today = ct.dateStr;
+  const dayName = ct.weekday;
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  const [
+    inboxResult,
+    projects,
+    allActions,
+    horizons,
+    dailyNoteRows,
+    journalEntries,
+    disciplineRows,
+    disciplineLogRows,
+    lastReviewRows,
+  ] = await Promise.all([
+    sql`SELECT COUNT(*) as count FROM inbox_items WHERE status = 'pending'`,
+    sql`SELECT p.title, p.category, p.purpose,
+         (SELECT COUNT(*) FROM next_actions WHERE project_id = p.id AND status = 'active') as action_count
+         FROM projects p WHERE p.status = 'active' ORDER BY p.title`,
+    sql`SELECT na.content, na.context, p.title as project_title, na.waiting_on_person, na.waiting_since, na.agenda_person
+         FROM next_actions na LEFT JOIN projects p ON na.project_id = p.id
+         WHERE na.status = 'active' ORDER BY na.context, na.sort_order`,
+    sql`SELECT type, content FROM horizons ORDER BY type`,
+    sql`SELECT * FROM daily_notes WHERE date = ${today}`,
+    sql`SELECT entry_date, content, tag FROM journal_entries WHERE entry_date >= ${sevenDaysAgo} ORDER BY entry_date DESC, created_at DESC LIMIT 20`,
+    sql`SELECT id, name FROM disciplines WHERE is_active = 1 ORDER BY sort_order`,
+    sql`SELECT discipline_id FROM discipline_logs WHERE date = ${today}`,
+    sql`SELECT value FROM settings WHERE key = 'last_weekly_review'`,
+  ]);
+
+  const inboxCount = Number(inboxResult[0].count);
+
+  const projectList = (projects as Array<{ title: string; category: string; purpose: string | null; action_count: number }>)
+    .map(p => ({ title: p.title, category: p.category, purpose: p.purpose, actionCount: Number(p.action_count) }));
+  const stalledProjects = projectList.filter(p => p.actionCount === 0);
+
+  const actionList = allActions as SystemSnapshot['actions'];
+
+  const actionCounts: Record<string, number> = {};
+  for (const a of actionList) {
+    actionCounts[a.context] = (actionCounts[a.context] || 0) + 1;
+  }
+
+  const waitingFor = actionList
+    .filter(a => a.context === 'waiting_for' && a.waiting_on_person)
+    .map(a => ({ content: a.content, waiting_on_person: a.waiting_on_person!, waiting_since: a.waiting_since || '' }));
+
+  const dailyNote = (dailyNoteRows[0] as Record<string, string | null>) || null;
+  const recentJournal = journalEntries as SystemSnapshot['recentJournal'];
+
+  const completedIds = new Set((disciplineLogRows as Array<{ discipline_id: string }>).map(r => r.discipline_id));
+  const disciplines = (disciplineRows as Array<{ id: string; name: string }>)
+    .map(d => ({ name: d.name, completed: completedIds.has(d.id) }));
+
+  const lastReview = lastReviewRows[0] as { value: string } | undefined;
+  const daysSinceReview = lastReview ? Math.floor((Date.now() - new Date(lastReview.value).getTime()) / (24 * 60 * 60 * 1000)) : 999;
+
+  const horizonList = horizons as SystemSnapshot['horizons'];
+
+  return {
+    today, dayName, inboxCount, projects: projectList, stalledProjects,
+    actions: actionList, actionCounts, waitingFor, horizons: horizonList,
+    dailyNote, recentJournal, disciplines, daysSinceReview,
+  };
+}
+
+function formatSnapshotForPrompt(s: SystemSnapshot): string {
+  const sections: string[] = [];
+
+  sections.push(`Today: ${s.dayName}, ${s.today}`);
+  sections.push(`Inbox: ${s.inboxCount} items pending`);
+
+  // Projects
+  sections.push(`\nACTIVE PROJECTS (${s.projects.length}):`);
+  if (s.projects.length > 0) {
+    for (const p of s.projects) {
+      sections.push(`- ${p.title} [${p.category}] — ${p.actionCount} action(s)${p.purpose ? ` — purpose: ${p.purpose}` : ''}`);
+    }
+  }
+  if (s.stalledProjects.length > 0) {
+    sections.push(`\nSTALLED PROJECTS (no next action): ${s.stalledProjects.map(p => p.title).join(', ')}`);
+  }
+
+  // Actions by context
+  sections.push(`\nNEXT ACTIONS BY CONTEXT (${Object.values(s.actionCounts).reduce((a, b) => a + b, 0)} total):`);
+  const contexts = [...new Set(s.actions.map(a => a.context))];
+  for (const ctx of contexts) {
+    const ctxActions = s.actions.filter(a => a.context === ctx);
+    sections.push(`@${ctx} (${ctxActions.length}):`);
+    for (const a of ctxActions.slice(0, 15)) {
+      let line = `  - ${a.content}`;
+      if (a.projectTitle) line += ` (project: ${a.projectTitle})`;
+      if (a.waiting_on_person) line += ` [waiting on: ${a.waiting_on_person}${a.waiting_since ? ` since ${a.waiting_since}` : ''}]`;
+      if (a.agenda_person) line += ` [agenda: ${a.agenda_person}]`;
+      sections.push(line);
+    }
+    if (ctxActions.length > 15) sections.push(`  ... and ${ctxActions.length - 15} more`);
+  }
+
+  // Waiting-for summary
+  if (s.waitingFor.length > 0) {
+    const stale = s.waitingFor.filter(w => {
+      const days = Math.floor((Date.now() - new Date(w.waiting_since).getTime()) / (24 * 60 * 60 * 1000));
+      return days >= 7;
+    });
+    if (stale.length > 0) {
+      sections.push(`\nSTALE WAITING-FOR (7+ days): ${stale.map(w => `${w.content} (${w.waiting_on_person}, ${w.waiting_since})`).join('; ')}`);
+    }
+  }
+
+  // Daily note
+  if (s.dailyNote) {
+    const parts: string[] = [];
+    if (s.dailyNote.top3_first) parts.push(`Top 3: ${[s.dailyNote.top3_first, s.dailyNote.top3_second, s.dailyNote.top3_third].filter(Boolean).join(', ')}`);
+    if (s.dailyNote.reflection_matters_most) parts.push(`Matters most: ${s.dailyNote.reflection_matters_most}`);
+    if (s.dailyNote.evening_did_well) parts.push(`Did well: ${s.dailyNote.evening_did_well}`);
+    if (s.dailyNote.evening_fell_short) parts.push(`Fell short: ${s.dailyNote.evening_fell_short}`);
+    if (parts.length > 0) {
+      sections.push(`\nTODAY'S NOTE:\n${parts.join('\n')}`);
+    }
+  }
+
+  // Horizons
+  if (s.horizons.length > 0) {
+    sections.push(`\nHORIZONS:`);
+    for (const h of s.horizons) {
+      if (h.content) sections.push(`${h.type}: ${h.content.slice(0, 200)}`);
+    }
+  }
+
+  // Disciplines
+  if (s.disciplines.length > 0) {
+    const done = s.disciplines.filter(d => d.completed).length;
+    sections.push(`\nDISCIPLINES: ${done}/${s.disciplines.length} done today (${s.disciplines.map(d => `${d.name}: ${d.completed ? 'done' : 'pending'}`).join(', ')})`);
+  }
+
+  // Journal
+  if (s.recentJournal.length > 0) {
+    sections.push(`\nRECENT JOURNAL (last 7 days):`);
+    for (const e of s.recentJournal.slice(0, 10)) {
+      sections.push(`[${e.entry_date}]${e.tag ? ` #${e.tag}` : ''}: ${e.content.slice(0, 150)}`);
+    }
+  }
+
+  // Review
+  sections.push(`\nDays since last weekly review: ${s.daysSinceReview === 999 ? 'Never' : s.daysSinceReview}`);
+
+  return sections.join('\n');
+}
+
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
+const DEFAULT_MAX_TOKENS = 1024;
 const MODELS: Record<string, string> = {
   process_inbox: DEFAULT_MODEL,
   morning_briefing: DEFAULT_MODEL,
@@ -107,9 +277,15 @@ const MODELS: Record<string, string> = {
   recovery: DEFAULT_MODEL,
   journal_insights: DEFAULT_MODEL,
 };
+const MAX_TOKENS: Record<string, number> = {
+  ask: 2048,
+  morning_briefing: 1500,
+  journal_insights: 2048,
+};
 
 async function callClaude(apiKey: string, system: string, userMessage: string, action?: string): Promise<string> {
   const model = (action && MODELS[action]) || DEFAULT_MODEL;
+  const maxTokens = (action && MAX_TOKENS[action]) || DEFAULT_MAX_TOKENS;
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -119,7 +295,7 @@ async function callClaude(apiKey: string, system: string, userMessage: string, a
     },
     body: JSON.stringify({
       model,
-      max_tokens: 1024,
+      max_tokens: maxTokens,
       system,
       messages: [{ role: 'user', content: userMessage }],
     }),
@@ -181,61 +357,61 @@ Respond with a JSON object (no markdown): {"actionable": boolean, "suggestion": 
 
 // ─── Morning Briefing ──────────────────────
 async function morningBriefing(apiKey: string) {
-  const ct = nowCentral();
-  const today = ct.dateStr;
-  const dayName = ct.weekday;
-
-  const inboxCountResult = await sql`SELECT COUNT(*) as count FROM inbox_items WHERE status = 'pending'`;
-  const inboxCount = Number(inboxCountResult[0].count);
-
-  const stalledProjects = await sql`
-    SELECT p.title FROM projects p WHERE p.status = 'active' AND (SELECT COUNT(*) FROM next_actions WHERE project_id = p.id AND status = 'active') = 0
-  ` as Array<{ title: string }>;
-
-  const workActions = await sql`
-    SELECT content FROM next_actions WHERE context = 'work' AND status = 'active' ORDER BY sort_order LIMIT 10
-  ` as Array<{ content: string }>;
-
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-  const waitingStale = await sql`
-    SELECT content, waiting_on_person FROM next_actions WHERE context = 'waiting_for' AND status = 'active' AND waiting_since IS NOT NULL AND waiting_since <= ${sevenDaysAgo}
-  ` as Array<{ content: string; waiting_on_person: string }>;
-
-  const dailyNoteRows = await sql`SELECT * FROM daily_notes WHERE date = ${today}`;
-  const dailyNote = dailyNoteRows[0] as Record<string, string> | undefined;
-
-  const context = `Today: ${dayName}, ${today}
-Inbox items: ${inboxCount}
-Stalled projects: ${stalledProjects.map(p => p.title).join(', ') || 'None'}
-@work actions: ${workActions.map(a => a.content).join('; ') || 'None'}
-Stale waiting-for: ${waitingStale.map(w => `${w.content} (${w.waiting_on_person})`).join('; ') || 'None'}
-Top 3 from daily note: ${dailyNote ? [dailyNote.top3_first, dailyNote.top3_second, dailyNote.top3_third].filter(Boolean).join(', ') : 'Not set yet'}`;
+  const snapshot = await getSystemSnapshot();
+  const systemContext = formatSnapshotForPrompt(snapshot);
 
   const system = `You are a productivity assistant. Generate a concise morning briefing. Be direct, warm but professional. Focus on:
-1. What needs attention today
-2. Any alerts (stalled projects, stale waiting-for, full inbox)
-3. Recommended focus areas
-Keep it to 150 words max. No markdown headers.`;
+1. What needs attention today (reference specific items)
+2. Any alerts (stalled projects, stale waiting-for, full inbox, overdue review, incomplete disciplines)
+3. Recommended focus areas based on their actual action lists and priorities
+Keep it to 200 words max. No markdown headers.`;
 
-  const response = await callClaude(apiKey, system, context);
+  const response = await callClaude(apiKey, system, systemContext);
   return { briefing: response };
 }
 
 // ─── Prioritize Day ──────────────────────
 async function prioritizeDay(apiKey: string) {
-  const workActions = await sql`
-    SELECT na.content, p.title as project_title FROM next_actions na LEFT JOIN projects p ON na.project_id = p.id WHERE na.context = 'work' AND na.status = 'active' ORDER BY na.sort_order
-  ` as Array<{ content: string; project_title: string }>;
+  const snapshot = await getSystemSnapshot();
 
-  const context = `@work actions:\n${workActions.map(a => `- ${a.content}${a.project_title ? ` (${a.project_title})` : ''}`).join('\n') || 'None'}`;
+  // Build context with all actions, stalled projects, and daily note
+  const sections: string[] = [];
 
-  const system = `You are a productivity assistant. Help the user prioritize their day by recommending their Top 3 tasks from their @work list.
+  sections.push(`Today: ${snapshot.dayName}, ${snapshot.today}`);
+
+  if (snapshot.dailyNote) {
+    const top3 = [snapshot.dailyNote.top3_first, snapshot.dailyNote.top3_second, snapshot.dailyNote.top3_third].filter(Boolean);
+    if (top3.length > 0) sections.push(`Today's Top 3 (already set): ${top3.join(', ')}`);
+  }
+
+  if (snapshot.stalledProjects.length > 0) {
+    sections.push(`Stalled projects (need next action): ${snapshot.stalledProjects.map(p => p.title).join(', ')}`);
+  }
+
+  // All actions by context
+  const contexts = [...new Set(snapshot.actions.map(a => a.context))];
+  for (const ctx of contexts) {
+    const ctxActions = snapshot.actions.filter(a => a.context === ctx);
+    sections.push(`\n@${ctx} (${ctxActions.length}):`);
+    for (const a of ctxActions) {
+      let line = `- ${a.content}`;
+      if (a.projectTitle) line += ` (${a.projectTitle})`;
+      if (a.waiting_on_person) line += ` [waiting on: ${a.waiting_on_person}]`;
+      sections.push(line);
+    }
+  }
+
+  const context = sections.join('\n');
+
+  const system = `You are a productivity assistant. Help the user prioritize their day by recommending their Top 3 tasks from ALL their action lists (not just @work).
 
 Consider:
 - Urgency and deadlines
 - Impact and importance
 - Dependencies (what unblocks other work)
 - Energy and focus requirements
+- Stalled projects that need unblocking
+- Already-set priorities in their daily note (align with or suggest changes)
 
 Return JSON (no markdown): {"top3": [{"task": "...", "why": "..."}]}`;
 
@@ -250,23 +426,18 @@ Return JSON (no markdown): {"top3": [{"task": "...", "why": "..."}]}`;
 
 // ─── General Assistant ──────────────────────
 async function askAssistant(apiKey: string, data: { question: string; context?: string }) {
-  const inboxCountResult = await sql`SELECT COUNT(*) as count FROM inbox_items WHERE status = 'pending'`;
-  const projectCountResult = await sql`SELECT COUNT(*) as count FROM projects WHERE status = 'active'`;
-  const actionCountResult = await sql`SELECT COUNT(*) as count FROM next_actions WHERE status = 'active'`;
+  const snapshot = await getSystemSnapshot();
+  const systemContext = formatSnapshotForPrompt(snapshot);
 
-  const inboxCount = Number(inboxCountResult[0].count);
-  const projectCount = Number(projectCountResult[0].count);
-  const actionCount = Number(actionCountResult[0].count);
+  const system = `You are a productivity assistant built into a personal productivity app. You have full access to the user's system data below. Use it to give specific, actionable answers — reference actual project names, action items, and data.
 
-  const system = `You are a productivity assistant built into a personal productivity app. You have context about the user's system:
-- ${inboxCount} inbox items pending
-- ${projectCount} active projects
-- ${actionCount} active next actions
-${data.context || ''}
+CURRENT SYSTEM STATE:
+${systemContext}
+${data.context ? `\nADDITIONAL CONTEXT: ${data.context}` : ''}
 
-Be concise, practical, and direct. You understand capture-organize-act methodology deeply.`;
+Be concise, practical, and direct. You understand capture-organize-act methodology deeply. When the user asks about their system, reference specific items by name.`;
 
-  const response = await callClaude(apiKey, system, data.question);
+  const response = await callClaude(apiKey, system, data.question, 'ask');
   return { response };
 }
 
