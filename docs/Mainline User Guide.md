@@ -442,7 +442,7 @@ Your data is never touched by a deploy.
 
 ## Backups & Safety
 
-Your data is protected automatically:
+Your data is protected at multiple levels:
 
 - **Database:** Hosted on Neon Postgres with automatic backups and point-in-time recovery
 - **Manual export:** Export all data as JSON from Settings anytime
@@ -450,6 +450,19 @@ Your data is protected automatically:
 - **Offline copy:** All common data is cached locally on your devices via IndexedDB
 - **Session security:** Login sessions last 7 days. Changing your password immediately invalidates all existing sessions.
 - **Single user:** Your app is password-protected — only you can access it
+
+### If Something Goes Wrong
+
+**Neon backups are independent of the app.** Even if the app is broken, offline, or deleted, your database is safe. You can always log into the Neon console (console.neon.tech) directly to access, query, or export your data.
+
+**Accidentally deleted data?** Neon supports point-in-time restore via branching. In the Neon console, create a new branch from a timestamp before the deletion — that branch contains a full copy of your database as it existed at that moment. You can query it, export data, or point your app at it.
+
+**Neon history retention depends on your plan:**
+- Free tier: 24 hours
+- Launch plan: 7 days
+- Scale plan: 30 days
+
+**Recommendation:** Export a JSON backup from Settings regularly (weekly at minimum). This is a backup you fully control — it doesn't expire and doesn't depend on Neon's retention window. If Neon's history has rolled past the point you need, a recent JSON export is your safety net.
 
 ### Automatic Data Cleanup
 

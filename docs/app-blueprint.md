@@ -196,7 +196,9 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 
 ### Database Durability
 - Neon Postgres handles backups, point-in-time recovery, and high availability
-- JSON export available: POST `/api/backup` returns full database dump
+- Neon backups are independent of the app — accessible via Neon console even if the app is down
+- Point-in-time restore via branching: create a branch from any timestamp within retention window (Free: 24h, Launch: 7d, Scale: 30d)
+- JSON export available: POST `/api/backup` returns full database dump — recommended weekly as a safety net beyond Neon's retention
 - JSON import available: POST `/api/backup/restore` — truncates + re-inserts in FK-safe order
 
 ### Data Retention (Automatic Cleanup)
