@@ -353,7 +353,7 @@ Number hints are shown on each context tab.
 
 ## Dark Mode
 
-Toggle dark mode in **Settings → Appearance**. The preference is saved and persists across sessions. Dark mode uses deep navy and slate tones — not pure black — for easier reading in low light.
+Dark mode is the default for all new users. Toggle to light mode in **Settings → Appearance** if preferred — your choice is saved and persists across sessions and devices. Dark mode uses deep navy and slate tones — not pure black — for easier reading in low light.
 
 The login and setup pages always use the light theme.
 

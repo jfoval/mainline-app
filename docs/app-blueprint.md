@@ -167,7 +167,7 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 - **Tab focus sync** — refreshes data when user returns to the tab (`visibilitychange`)
 - **Sync queue hardening** — exponential backoff (2s-30s), 5 retries, smart 404 handling
 - **Safe table refresh** — incremental sync uses set-difference delete (not `clear()`) so locally-created records that haven't synced yet are never wiped; pending mutations are also skipped during upsert to avoid overwriting local edits with stale server state
-- **Dark mode** — CSS variable overrides on `html.dark`, persisted to localStorage + settings API, flash-prevention inline script
+- **Dark mode** — default for new users. CSS variable overrides on `html.dark`, persisted to localStorage + settings API, flash-prevention inline script. Switching to light mode is remembered across refreshes/devices.
 - **Local notifications** — Notification API for inbox overflow and stalled projects (quiet hours 9pm-7am, 30-min interval)
 - **Update notifications** — checks upstream GitHub repo for newer versions (24h client cache, 1h server cache), shows indigo banner with "How to Update" modal guiding users through GitHub fork sync. Settings → About shows current version + manual check button. Version injected at build time via `NEXT_PUBLIC_APP_VERSION` from package.json.
 
