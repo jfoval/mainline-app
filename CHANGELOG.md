@@ -60,7 +60,7 @@ All notable changes to Mainline will be documented here.
 ### Changed
 - Morning process: 3 steps (Daily Note & Reflection → Process Inbox → Ready to Work)
 - Shutdown routine: 3 steps (Capture Sweep → Evening Reflection → Day Complete)
-- Monthly review: 11 steps (6 weekly + 5 monthly-specific)
+- Monthly review: 10 steps (6 weekly + 4 monthly-specific)
 
 ## [0.5.1] - 2026-03-28
 

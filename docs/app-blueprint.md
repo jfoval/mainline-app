@@ -76,7 +76,7 @@ A self-deployed personal productivity app. Each customer gets their own instance
 
 ---
 
-## What's Built (18+ pages, ~30 API routes)
+## What's Built (20 pages, ~35 API routes)
 
 ### Daily Workflows
 - **Morning Process** (`/process`) — 3-step guided flow: **Top 3 priorities** (#1 "Top thing to do" with "do the hardest thing first" hint, #2, #3; stalled projects flagged) + **Morning Reflection** ("What could hold me back today?" with prompts: Fear/Self-doubt/Distraction/Ego/Excuses/Limiting beliefs; "Who do I want to be today?" with prompts: Mindset/Energy/Character/How I treat people/How I handle adversity/What I model/What I build) → inbox with **inbox type checkboxes** (Physical/Work Email/Personal Email, user-configurable via gear icon; check state saves to `daily_notes.inbox_checks`) → animated completion celebration (auto-redirects to dashboard)
@@ -91,7 +91,7 @@ A self-deployed personal productivity app. Each customer gets their own instance
 - **Projects** (`/projects`, `/projects/[id]`) — CRUD with categories (active projects only), stalled project detection
 
 ### Schedule System
-- **Ideal Calendar** (`/ideal-calendar`) — week pattern editor with bi-weekly rotation (e.g., Girls Week / Non-Girls Week). Create named patterns with blocks per day.
+- **Ideal Calendar** (`/ideal-calendar`) — week pattern editor with multi-week rotation (e.g., Week A / Week B). Create named patterns with blocks per day.
 - **Daily Calendar** (on dashboard) — auto-hydrated from ideal calendar. Per-day edits. Drag-to-reorder blocks (swaps time slots).
 - **Disciplines** (`/disciplines`) — daily habit/value tracking with streaks and completion percentages
 
@@ -139,7 +139,7 @@ All server-side date/time logic uses a configurable timezone via the `nowCentral
 
 ## Week Pattern Rotation
 
-The Ideal Calendar supports multiple named week patterns (e.g., "Girls Week" / "Non-Girls Week") with automatic rotation.
+The Ideal Calendar supports multiple named week patterns (e.g., "Week A" / "Week B") with automatic rotation.
 
 - **Rotation:** Configured via the Ideal Calendar page — patterns alternate on a schedule defined in `week_pattern_rotation` and `week_schedule` tables
 - **Resolution:** `src/lib/pattern-resolver.ts` — determines which pattern applies for any given week
@@ -157,7 +157,7 @@ The Ideal Calendar supports multiple named week patterns (e.g., "Girls Week" / "
 - **Per-table store configs** — queryLocal, fetchUrl, create/update/remove (`src/lib/offline/stores.ts`)
 - **React hook `useOfflineStore()`** — replaces useState+useEffect+fetch
 - **SyncStatus pill** — red "Offline" / orange "Syncing X..." in bottom-right corner
-- **Service worker v10** — caches app shell + key pages, versioned cache for deploy cache busting, notification click handler
+- **Service worker v11** — caches app shell + key pages, versioned cache for deploy cache busting, notification click handler
 - **Initial sync** — first visit hydrates all priority tables from server (30s timeout per fetch)
 - **Incremental sync** — refreshes all data every 5 minutes while online; `syncInProgress` flag prevents concurrent runs from the timer, online event, and visibilitychange firing simultaneously
 - **Reconnect sync** — listens for `online` event and syncs immediately on reconnect
@@ -188,7 +188,7 @@ The Ideal Calendar supports multiple named week patterns (e.g., "Girls Week" / "
 
 ### Migration System
 - `src/lib/migrations/runner.ts` — embedded SQL migrations (Postgres dialect), `schema_version` table tracks applied versions
-- 16 migrations applied: baseline through daily_blocks, disciplines, context_lists, updated_at backfill, legacy table cleanup, reflection questions, journal_entries, inbox_checks (014), horizon_items (015), cleanup_indexes (016)
+- 17 migrations applied: baseline through daily_blocks, disciplines, context_lists, updated_at backfill, legacy table cleanup, reflection questions, journal_entries, inbox_checks (014), horizon_items (015), cleanup_indexes (016), performance_indexes (017)
 - Note: Neon HTTP driver is stateless — each `sql.query()` is an independent request. DDL auto-commits in Postgres. No cross-query transactions.
 
 ### Database Durability
@@ -278,10 +278,9 @@ The Ideal Calendar supports multiple named week patterns (e.g., "Girls Week" / "
 Weekly review steps 1-6 first, then:
 
 7. Someday/Maybe review (activate, delete, or leave — items stored in Reference)
-8. Thinking doc connections (clusters, orphans, consolidation)
-9. Goals check (goals vs active projects — aligned?)
-10. Systems check (pick 1-2 areas to evaluate)
-11. Personal pulse (spending time on what matters?)
+8. Goals check (goals vs active projects — aligned?)
+9. Systems check (pick 1-2 areas to evaluate)
+10. Personal pulse (spending time on what matters?)
 
 ---
 
@@ -309,7 +308,7 @@ Default seed contexts: Work, Errands, Home, Waiting For (person + what + date), 
 
 ## Routine Types
 
-non_girls_week, girls_week, saturday, sunday
+Legacy fallback types used by pattern resolver when no rotation is configured.
 
 ## Themed Afternoons
 

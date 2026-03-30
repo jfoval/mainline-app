@@ -8,9 +8,13 @@ import type {
 import { enqueue } from './sync-queue';
 import { v4 as uuid } from 'uuid';
 
-// Helper to get current local datetime string matching SQLite format
+// Helper to get current local datetime string matching the server's format (YYYY-MM-DD HH:MM:SS).
+// Uses the browser's local time to approximate the server's configured timezone.
+// For most single-user deployments, the browser and server timezone match.
 function nowLocal(): string {
-  return new Date().toISOString().slice(0, 19).replace('T', ' ');
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
 }
 
 // ---- Store Config Type ----

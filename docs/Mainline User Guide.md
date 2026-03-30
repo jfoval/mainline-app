@@ -245,13 +245,12 @@ Guided weekly and monthly review workflow. The app tracks when you last complete
 5. Review calendar — look back 1 week, forward 2 weeks
 6. Review areas of focus — are all areas represented in your projects?
 
-**Monthly Deep Review (11 steps, extends to 2–3 hours):**
+**Monthly Deep Review (10 steps, extends to 2–3 hours):**
 Do the weekly 6 steps first, then:
 7. Someday/Maybe review — activate, delete, or leave for next month
-8. Thinking doc connections — clusters, orphans, consolidation
-9. Goals check — are your goals aligned with your active projects?
-10. Systems check — pick 1–2 areas to evaluate
-11. Personal pulse — are you spending time on what matters?
+8. Goals check — are your goals aligned with your active projects?
+9. Systems check — pick 1–2 areas to evaluate
+10. Personal pulse — are you spending time on what matters?
 
 ---
 
