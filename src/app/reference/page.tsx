@@ -52,7 +52,6 @@ export default function ReferencePage() {
 
   // Separate fixed and user categories
   const userCategories = refCategories.filter(c => !FIXED_CATEGORIES.includes(c));
-  const activeFixedCategories = FIXED_CATEGORIES.filter(c => refCategories.includes(c));
 
   async function openRefCategory(category: string) {
     setActiveRefCategory(category);

@@ -9,6 +9,7 @@ const PUBLIC_PATHS = [
   '/api/auth/login',
   '/api/auth/logout',
   '/api/setup',
+  '/api/setup/status',
   '/api/setup/test-key',
   '/_next',
   '/manifest.json',

@@ -87,8 +87,10 @@ export default function SetupPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-8">
-          <img src="/branding/logo-horizontal-dark.svg" alt="Mainline" className="mx-auto mb-4 h-12 dark:hidden" />
-          <img src="/branding/logo-horizontal-light.svg" alt="Mainline" className="mx-auto mb-4 h-12 hidden dark:block" />
+          {/* eslint-disable-next-line @next/next/no-img-element -- SVG logo, no optimization benefit */}
+          <img src="/branding/logo-horizontal-dark.svg" alt="Mainline" className="mx-auto mb-4 h-12 w-auto dark:hidden" />
+          {/* eslint-disable-next-line @next/next/no-img-element -- SVG logo, no optimization benefit */}
+          <img src="/branding/logo-horizontal-light.svg" alt="Mainline" className="mx-auto mb-4 h-12 w-auto hidden dark:block" />
           <p className="text-muted mt-2">Let&apos;s get your productivity system set up.</p>
         </div>
 

@@ -56,15 +56,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const { addToast } = useToast();
   const { undoableFetchDelete } = useUndoableAction();
 
-  useEffect(() => {
-    fetchProject();
-    fetch('/api/context-lists').then(r => r.ok ? r.json() : []).then(data => {
-      if (Array.isArray(data) && data.length > 0) {
-        setContexts(data.map((c: { key: string; name: string }) => ({ key: c.key, label: `@${c.name}` })));
-      }
-    }).catch(() => {});
-  }, [id]);
-
   async function fetchProject() {
     const res = await fetch(`/api/projects/${id}`);
     if (!res.ok) return;
@@ -73,6 +64,16 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     setActions(data.actions);
     setActionsLoaded(true);
   }
+
+  useEffect(() => {
+    fetchProject();
+    fetch('/api/context-lists').then(r => r.ok ? r.json() : []).then(data => {
+      if (Array.isArray(data) && data.length > 0) {
+        setContexts(data.map((c: { key: string; name: string }) => ({ key: c.key, label: `@${c.name}` })));
+      }
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   async function saveProject() {
     if (!project) return;

@@ -2,7 +2,7 @@
 
 Your complete productivity system in one app.
 
-**Version 0.7.0 · March 2026**
+**Version 0.7.2 · March 2026**
 
 ---
 

@@ -34,12 +34,20 @@ async function ensureDailyBlocks(date: string, dayOfWeek: number) {
           ORDER BY start_time, sort_order
         `;
 
-        for (const tb of templateBlocks) {
-          const id = uuid();
-          await sql`
-            INSERT INTO daily_blocks (id, date, start_time, end_time, label, description, is_non_negotiable, source_block_id)
-            VALUES (${id}, ${date}, ${tb.start_time}, ${tb.end_time}, ${tb.label}, ${tb.description || null}, ${tb.is_non_negotiable || 0}, ${tb.id})
-          `;
+        if (templateBlocks.length > 0) {
+          const placeholders: string[] = [];
+          const values: unknown[] = [];
+          let idx = 1;
+          for (const tb of templateBlocks) {
+            const id = uuid();
+            placeholders.push(`($${idx}, $${idx+1}, $${idx+2}, $${idx+3}, $${idx+4}, $${idx+5}, $${idx+6}, $${idx+7})`);
+            values.push(id, date, tb.start_time, tb.end_time, tb.label, tb.description || null, tb.is_non_negotiable || 0, tb.id);
+            idx += 8;
+          }
+          await sql.query(
+            `INSERT INTO daily_blocks (id, date, start_time, end_time, label, description, is_non_negotiable, source_block_id) VALUES ${placeholders.join(', ')}`,
+            values
+          );
         }
       }
     })();
@@ -85,84 +93,85 @@ export async function GET() {
       nextBlock = blocks.find(b => b.start_time > timeStr) || null;
     }
 
-    const inboxCountResult = await sql`SELECT COUNT(*) as count FROM inbox_items WHERE status = 'pending'`;
+    // Parallelize all independent queries (was ~12 sequential round-trips, now ~2)
+    const yesterdayDate = new Date(ct.date.getTime() - 24 * 60 * 60 * 1000);
+    const yesterday = `${yesterdayDate.getUTCFullYear()}-${String(yesterdayDate.getUTCMonth() + 1).padStart(2, '0')}-${String(yesterdayDate.getUTCDate()).padStart(2, '0')}`;
+
+    const [
+      inboxCountResult,
+      contextCountRows,
+      activeProjects,
+      stalledProjects,
+      dailyNoteRows,
+      yesterdayNoteRows,
+      thresholdRows,
+      activeDisciplines,
+      logsToday,
+      lastReviewRows,
+    ] = await Promise.all([
+      sql`SELECT COUNT(*) as count FROM inbox_items WHERE status = 'pending'`,
+      sql`SELECT context, COUNT(*) as count FROM next_actions WHERE status = 'active' GROUP BY context`,
+      sql`SELECT * FROM projects WHERE status = 'active' ORDER BY updated_at DESC`,
+      sql`
+        SELECT p.id, p.title, p.category FROM projects p
+        LEFT JOIN next_actions a ON a.project_id = p.id AND a.status = 'active'
+        WHERE p.status = 'active'
+        GROUP BY p.id, p.title, p.category
+        HAVING COUNT(a.id) = 0
+      `,
+      sql`SELECT * FROM daily_notes WHERE date = ${today}`,
+      sql`SELECT evening_do_differently FROM daily_notes WHERE date = ${yesterday}`,
+      sql`SELECT key, value FROM settings WHERE key IN ('alert_inbox_threshold', 'alert_waiting_days', 'last_weekly_review')`,
+      sql`SELECT id, name FROM disciplines WHERE is_active = 1 ORDER BY sort_order, name`,
+      sql`SELECT discipline_id, completed FROM discipline_logs WHERE date = ${today}`,
+      sql`SELECT value FROM settings WHERE key = 'last_weekly_review'`,
+    ]);
+
     const inboxCount = Number(inboxCountResult[0].count);
 
-    const contextCountRows = await sql`
-      SELECT context, COUNT(*) as count FROM next_actions WHERE status = 'active' GROUP BY context
-    ` as Array<{ context: string; count: string }>;
     const actionCounts: Record<string, number> = {};
-    for (const row of contextCountRows) {
+    for (const row of contextCountRows as Array<{ context: string; count: string }>) {
       actionCounts[row.context] = Number(row.count);
     }
 
-    const activeProjects = await sql`SELECT * FROM projects WHERE status = 'active' ORDER BY updated_at DESC` as Array<{ id: string; title: string; category: string }>;
-
-    // Single query to find stalled projects (no N+1)
-    const stalledProjects = await sql`
-      SELECT p.id, p.title, p.category FROM projects p
-      LEFT JOIN next_actions a ON a.project_id = p.id AND a.status = 'active'
-      WHERE p.status = 'active'
-      GROUP BY p.id, p.title, p.category
-      HAVING COUNT(a.id) = 0
-    ` as Array<{ id: string; title: string; category: string }>;
-
-    const dailyNoteRows = await sql`SELECT * FROM daily_notes WHERE date = ${today}`;
     const dailyNote = dailyNoteRows[0] as {
       top3_first: string | null;
       top3_second: string | null;
       top3_third: string | null;
     } | undefined;
 
-    // Yesterday's "do differently" for dashboard reminder
-    const yesterdayDate = new Date(ct.date.getTime() - 24 * 60 * 60 * 1000);
-    const yesterday = `${yesterdayDate.getUTCFullYear()}-${String(yesterdayDate.getUTCMonth() + 1).padStart(2, '0')}-${String(yesterdayDate.getUTCDate()).padStart(2, '0')}`;
-    const yesterdayNoteRows = await sql`SELECT evening_do_differently FROM daily_notes WHERE date = ${yesterday}`;
     const doDifferentlyToday = (yesterdayNoteRows[0] as { evening_do_differently: string | null } | undefined)?.evening_do_differently || null;
 
-    // Load configurable alert thresholds from settings
-    const thresholdRows = await sql`SELECT key, value FROM settings WHERE key IN ('alert_inbox_threshold', 'alert_waiting_days')` as Array<{ key: string; value: string }>;
-    const thresholdMap = new Map(thresholdRows.map(r => [r.key, r.value]));
+    // Alert thresholds
+    const thresholdMap = new Map((thresholdRows as Array<{ key: string; value: string }>).map(r => [r.key, r.value]));
     const inboxThreshold = Number(thresholdMap.get('alert_inbox_threshold')) || 10;
     const waitingDays = Number(thresholdMap.get('alert_waiting_days')) || 7;
 
+    // Stale waiting-for (depends on waitingDays from settings, so runs after)
     const staleDate = new Date(ct.date.getTime() - waitingDays * 24 * 60 * 60 * 1000);
     const staleDateStr = `${staleDate.getUTCFullYear()}-${String(staleDate.getUTCMonth() + 1).padStart(2, '0')}-${String(staleDate.getUTCDate()).padStart(2, '0')}`;
     const staleWaiting = await sql`
       SELECT * FROM next_actions WHERE context = 'waiting_for' AND status = 'active' AND waiting_since IS NOT NULL AND waiting_since <= ${staleDateStr}
     ` as Array<{ content: string; waiting_on_person: string | null; waiting_since: string }>;
 
-    // Discipline progress for today — return individual items with completion status
+    // Discipline progress for today
     let disciplinesDone = 0;
-    let disciplinesTotal = 0;
+    const disciplinesTotal = (activeDisciplines as Array<{ id: string; name: string }>).length;
     let disciplineItems: Array<{ id: string; name: string; completed: boolean }> = [];
-    try {
-      const activeDisciplines = await sql`SELECT id, name FROM disciplines WHERE is_active = 1 ORDER BY sort_order, name` as Array<{ id: string; name: string }>;
-      disciplinesTotal = activeDisciplines.length;
-
-      if (disciplinesTotal > 0) {
-        const logsToday = await sql`
-          SELECT discipline_id, completed FROM discipline_logs
-          WHERE date = ${today}
-        ` as Array<{ discipline_id: string; completed: number }>;
-        const logMap = new Map(logsToday.map(l => [l.discipline_id, l.completed === 1]));
-
-        disciplineItems = activeDisciplines.map(d => ({
-          id: d.id,
-          name: d.name,
-          completed: logMap.get(d.id) || false,
-        }));
-        disciplinesDone = disciplineItems.filter(d => d.completed).length;
-      }
-    } catch {
-      // Table may not exist yet for existing installs before migration runs
+    if (disciplinesTotal > 0) {
+      const logMap = new Map((logsToday as Array<{ discipline_id: string; completed: number }>).map(l => [l.discipline_id, l.completed === 1]));
+      disciplineItems = (activeDisciplines as Array<{ id: string; name: string }>).map(d => ({
+        id: d.id,
+        name: d.name,
+        completed: logMap.get(d.id) || false,
+      }));
+      disciplinesDone = disciplineItems.filter(d => d.completed).length;
     }
 
     // Weekly review overdue check
-    const lastReviewRows = await sql`SELECT value FROM settings WHERE key = 'last_weekly_review'` as Array<{ value: string }>;
     let daysSinceWeeklyReview: number | null = null;
-    if (lastReviewRows.length > 0 && lastReviewRows[0].value) {
-      const lastReview = new Date(lastReviewRows[0].value);
+    if ((lastReviewRows as Array<{ value: string }>).length > 0 && (lastReviewRows as Array<{ value: string }>)[0].value) {
+      const lastReview = new Date((lastReviewRows as Array<{ value: string }>)[0].value);
       daysSinceWeeklyReview = Math.floor((ct.date.getTime() - lastReview.getTime()) / (24 * 60 * 60 * 1000));
     }
 

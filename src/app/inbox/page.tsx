@@ -37,12 +37,11 @@ export default function InboxPage() {
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const transcriptRef = useRef('');
 
-  async function saveVoiceCapture(text: string) {
+  const saveVoiceCapture = useCallback(async function saveVoiceCapture(text: string) {
     if (!text.trim()) return;
     await create({ content: text.trim(), source: 'voice' });
-  }
+  }, [create]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const toggleVoiceCapture = useCallback(function toggleVoiceCapture() {
     // If already recording, stop and save whatever we have
     if (isRecording && recognitionRef.current) {
@@ -115,7 +114,7 @@ export default function InboxPage() {
     };
 
     recognition.start();
-  }, [isRecording]);
+  }, [isRecording, saveVoiceCapture]);
 
   // Keyboard shortcuts (only active when not typing in an input)
   useEffect(() => {

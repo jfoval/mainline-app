@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Compass, Loader2, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 

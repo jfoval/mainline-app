@@ -46,6 +46,19 @@ export function validateRequired(
   return null;
 }
 
+/** Check that specified fields are strings (rejects numbers, arrays, objects) */
+export function validateStrings(
+  body: Record<string, unknown>,
+  fields: string[]
+): string | null {
+  for (const f of fields) {
+    if (body[f] !== undefined && body[f] !== null && typeof body[f] !== 'string') {
+      return `Field "${f}" must be a string`;
+    }
+  }
+  return null;
+}
+
 /** Check that a value is one of the allowed options */
 export function validateEnum(
   value: unknown,

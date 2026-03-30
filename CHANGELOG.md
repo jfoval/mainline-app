@@ -2,6 +2,38 @@
 
 All notable changes to Mainline will be documented here.
 
+## [0.7.2] - 2026-03-30
+
+### Added
+- **MIT LICENSE** — open source license file for public repo.
+- **CONTRIBUTING.md** — contribution guidelines for public repo.
+- **React error boundary** — wraps all page content; shows friendly fallback on crash instead of white screen.
+- **robots.txt** — `Disallow: /` to keep search engines out of personal instances.
+- **Input type validation** — new `validateStrings()` helper; applied to inbox, actions, and projects POST routes.
+
+### Security
+- **Login rate limiter persisted to database** — survives serverless cold starts. Also uses `x-real-ip` header (Vercel) instead of spoofable `x-forwarded-for`.
+- **AI rate limiter persisted to database** — survives serverless cold starts.
+- **AI error messages sanitized** — Anthropic API errors are now mapped to user-friendly messages; raw error details no longer leaked to client.
+- **`/api/setup/status` added to public paths** — first-time users can check setup status without auth.
+
+### Performance
+- **Dashboard queries parallelized** — ~12 sequential DB round-trips reduced to ~2 using `Promise.all`.
+- **Disciplines stats N+1 eliminated** — 3 queries per discipline reduced to 2 batched queries total.
+- **Daily block hydration batched** — sequential per-block INSERTs replaced with single multi-row INSERT.
+
+### Fixed
+- **Hydration mismatch** — iOS Safari detection moved from `useState` initializer to `useEffect`; `suppressHydrationWarning` added to `<body>` for dark mode script.
+- **SW cache version mismatch** — `ServiceWorker.tsx` cache name synced with `sw.js` (v12).
+- **Service worker precache gaps** — added 6 missing routes (journal, horizons, ai, recovery, inbox/process, login).
+- **AI model cost** — default changed from Claude Opus to Claude Sonnet (significantly cheaper for users).
+- **SVG logo warnings** — reverted to `<img>` for SVG logos with eslint-disable (Next.js Image doesn't optimize SVGs).
+- **Dead code removed** — unused `DAY_ABBREVS`, `activeFixedCategories`, `useEffect` import, stale eslint-disable directive.
+- **React hook dependencies fixed** — `saveVoiceCapture` wrapped in `useCallback`; `fetchProject` dependency warning resolved.
+- **Stale SQLite migration files deleted** — 3 unused `.sql` files from pre-Postgres era removed.
+- **Local machine path removed** — `/Users/johnfoval/...` path removed from `docs/app-blueprint.md`.
+- **Docs updated** — User Guide and blueprint reflect v0.7.2, Sonnet model, SW v12.
+
 ## [0.7.1] - 2026-03-30
 
 ### Fixed — Critical

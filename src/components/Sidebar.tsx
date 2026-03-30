@@ -77,7 +77,8 @@ export default function Sidebar() {
       >
         <div className="pl-12 pr-4 md:pl-4 py-4 border-b border-white/10">
           <Link href="/" className="flex items-center gap-3 outline-none focus:outline-none">
-            <img src="/branding/logo-horizontal-light.svg" alt="Mainline" className="h-10" />
+            {/* eslint-disable-next-line @next/next/no-img-element -- SVG logo, no optimization benefit */}
+            <img src="/branding/logo-horizontal-light.svg" alt="Mainline" className="h-10 w-auto" />
           </Link>
         </div>
 

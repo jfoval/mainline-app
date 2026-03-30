@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
 import { v4 as uuid } from 'uuid';
-import { nowLocal } from '@/lib/api-helpers';
+import { nowLocal, validateStrings } from '@/lib/api-helpers';
 
 export async function GET() {
   try {
@@ -23,6 +23,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const id = body.id || uuid();
     const { content, source = 'manual', url = null } = body;
+
+    const typeErr = validateStrings(body, ['content', 'source', 'url']);
+    if (typeErr) return NextResponse.json({ error: typeErr }, { status: 400 });
 
     if (!content || (typeof content === 'string' && !content.trim())) {
       return NextResponse.json({ error: 'content is required' }, { status: 400 });

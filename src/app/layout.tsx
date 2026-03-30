@@ -8,6 +8,7 @@ import Providers from "@/components/Providers";
 import SyncStatus from "@/components/SyncStatus";
 import MainContent from "@/components/MainContent";
 import GlobalHotkeys from "@/components/GlobalHotkeys";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -60,13 +61,14 @@ export default function RootLayout({
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         <ServiceWorkerRegistrar />
         <InstallPrompt />
         <Providers>
           <GlobalHotkeys />
           <Sidebar />
-          <MainContent>{children}</MainContent>
+          <MainContent><ErrorBoundary>{children}</ErrorBoundary></MainContent>
           <SyncStatus />
         </Providers>
       </body>

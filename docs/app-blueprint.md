@@ -1,8 +1,8 @@
 # Mainline App Blueprint
 ## Personal Productivity System
 
-**Last updated:** 2026-03-29
-**Status:** Production-ready. Deployed on Vercel. 20 pages, ~35 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v11. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists with inline context manager. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v017. Journal with AI insights. Horizons named-item blocks. Daily inbox type checkboxes. Automatic data retention system. 80 tests. HTTP security headers. CSP header. Error boundary + global error boundary + 404 page. Backup restore hardened. Server-side login rate limiting. Sync data-loss fix.
+**Last updated:** 2026-03-30
+**Status:** Production-ready (v0.7.2). Deployed on Vercel. 20 pages, ~35 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting (DB-persisted, survives cold starts), fetch timeouts, dashboard caching (queries parallelized), service worker v12 (full precache). AI uses Claude Sonnet 4.6. Week pattern rotation system. Disciplines & values tracking (batched stats queries). User-configurable context lists with inline context manager. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v017. Journal with AI insights. Horizons named-item blocks. Daily inbox type checkboxes. Automatic data retention system. 80 tests. HTTP security headers. CSP header. React error boundary. Backup restore hardened. Server-side login rate limiting (DB-persisted). Input type validation. MIT licensed. CONTRIBUTING.md.
 
 ---
 
@@ -10,8 +10,7 @@
 
 A self-deployed personal productivity app. Each customer gets their own instance on Vercel + Neon. Single-user, offline-first, AI-powered.
 
-**Tech:** Next.js 16, TypeScript, Tailwind v4, Neon Postgres (`@neondatabase/serverless`), Claude API (Opus), PWA
-**Location:** `/Users/johnfoval/Desktop/Mainline/app/`
+**Tech:** Next.js 16, TypeScript, Tailwind v4, Neon Postgres (`@neondatabase/serverless`), Claude API (Sonnet), PWA
 **GitHub:** `https://github.com/jfoval/mainline-app` (public)
 **Live:** Deployed on Vercel (auto-deploys on push to `main`)
 **Database:** Neon Postgres (free tier, US East 1)

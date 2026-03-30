@@ -10,20 +10,17 @@ interface BeforeInstallPromptEvent extends Event {
 
 export default function InstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showIOSPrompt, setShowIOSPrompt] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
-    return isIOS && isSafari;
-  });
+  const [showIOSPrompt, setShowIOSPrompt] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // Check if already dismissed
+    // Check if already dismissed or installed
     if (localStorage.getItem('pwa-install-dismissed')) return;
-
-    // Check if already installed (standalone mode)
     if (window.matchMedia('(display-mode: standalone)').matches) return;
+
+    // Detect iOS Safari (client-only to avoid hydration mismatch)
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isSafari = /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
 
     // Android/Chrome: listen for beforeinstallprompt
     const handler = (e: Event) => {
@@ -31,6 +28,11 @@ export default function InstallPrompt() {
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
     window.addEventListener('beforeinstallprompt', handler);
+
+    // Use a microtask to set iOS state (avoids synchronous setState in effect body)
+    if (isIOS && isSafari) {
+      queueMicrotask(() => setShowIOSPrompt(true));
+    }
 
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
 import { v4 as uuid } from 'uuid';
-import { buildUpdate, nowLocal, validateRequired } from '@/lib/api-helpers';
+import { buildUpdate, nowLocal, validateRequired, validateStrings } from '@/lib/api-helpers';
 
 // Context validation removed — users can define their own context lists (Phase 5)
 // Any non-empty string is valid as a context
@@ -51,6 +51,9 @@ export async function POST(req: NextRequest) {
 
     const missing = validateRequired(body, ['content', 'context']);
     if (missing) return NextResponse.json({ error: missing }, { status: 400 });
+
+    const typeErr = validateStrings(body, ['content', 'context', 'project_id', 'waiting_on_person', 'agenda_person']);
+    if (typeErr) return NextResponse.json({ error: typeErr }, { status: 400 });
 
     const {
       content,

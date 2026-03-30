@@ -21,25 +21,31 @@ async function hydrate(date: string, dayOfWeek: number): Promise<Array<Record<st
 
   if (templateBlocks.length === 0) return [];
 
-  // Insert copies into daily_blocks
-  const inserted = [];
-  for (const tb of templateBlocks) {
-    const id = uuid();
-    await sql`
-      INSERT INTO daily_blocks (id, date, start_time, end_time, label, description, is_non_negotiable, source_block_id)
-      VALUES (${id}, ${date}, ${tb.start_time}, ${tb.end_time}, ${tb.label}, ${tb.description || null}, ${tb.is_non_negotiable || 0}, ${tb.id})
-    `;
-    inserted.push({
-      id,
-      date,
-      start_time: tb.start_time,
-      end_time: tb.end_time,
-      label: tb.label,
-      description: tb.description || null,
-      is_non_negotiable: tb.is_non_negotiable || 0,
-      source_block_id: tb.id,
-    });
+  // Batch insert all blocks in a single query
+  const inserted = templateBlocks.map(tb => ({
+    id: uuid(),
+    date,
+    start_time: tb.start_time as string,
+    end_time: tb.end_time as string,
+    label: tb.label as string,
+    description: (tb.description as string) || null,
+    is_non_negotiable: (tb.is_non_negotiable as number) || 0,
+    source_block_id: tb.id as string,
+  }));
+
+  const placeholders: string[] = [];
+  const values: unknown[] = [];
+  let idx = 1;
+  for (const row of inserted) {
+    placeholders.push(`($${idx}, $${idx+1}, $${idx+2}, $${idx+3}, $${idx+4}, $${idx+5}, $${idx+6}, $${idx+7})`);
+    values.push(row.id, row.date, row.start_time, row.end_time, row.label, row.description, row.is_non_negotiable, row.source_block_id);
+    idx += 8;
   }
+
+  await sql.query(
+    `INSERT INTO daily_blocks (id, date, start_time, end_time, label, description, is_non_negotiable, source_block_id) VALUES ${placeholders.join(', ')}`,
+    values
+  );
 
   return inserted;
 }

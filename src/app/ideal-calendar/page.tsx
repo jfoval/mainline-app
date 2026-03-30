@@ -39,8 +39,6 @@ interface Rotation {
 }
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const DAY_ABBREVS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
 // TIME_OPTIONS and formatTime imported from @/lib/time-utils
 
 // ── Component ──────────────────────────────────────────────────

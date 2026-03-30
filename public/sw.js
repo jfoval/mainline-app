@@ -1,4 +1,4 @@
-const CACHE_VERSION = 11;
+const CACHE_VERSION = 12;
 const CACHE_NAME = `mainline-v${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [
@@ -6,6 +6,7 @@ const PRECACHE_URLS = [
   '/manifest.json',
   '/actions',
   '/inbox',
+  '/inbox/process',
   '/reference',
   '/projects',
   '/process',
@@ -13,8 +14,13 @@ const PRECACHE_URLS = [
   '/disciplines',
   '/review',
   '/ideal-calendar',
+  '/journal',
+  '/horizons',
+  '/ai',
+  '/recovery',
   '/settings',
   '/conflicts',
+  '/login',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
 ];

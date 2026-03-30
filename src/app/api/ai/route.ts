@@ -31,18 +31,39 @@ async function getApiKey(): Promise<string | null> {
   return cachedApiKey;
 }
 
-// Simple in-memory rate limiter
+// Hybrid rate limiter: in-memory + database-backed (survives serverless cold starts)
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 20;
-const requestTimestamps: number[] = [];
+let requestTimestamps: number[] = [];
+let lastDbSync = 0;
 
-function checkRateLimit(): boolean {
+async function checkRateLimit(): Promise<boolean> {
   const now = Date.now();
+
+  // Hydrate from DB if memory is empty (cold start)
+  if (requestTimestamps.length === 0 && now - lastDbSync > RATE_LIMIT_WINDOW_MS) {
+    try {
+      const rows = await sql`SELECT value FROM settings WHERE key = 'ai_rate_limit'`;
+      if (rows.length > 0) {
+        const stored = JSON.parse(rows[0].value as string) as number[];
+        requestTimestamps = stored.filter(t => t > now - RATE_LIMIT_WINDOW_MS);
+      }
+    } catch { /* settings table may not exist */ }
+    lastDbSync = now;
+  }
+
+  // Prune expired timestamps
   while (requestTimestamps.length > 0 && requestTimestamps[0] < now - RATE_LIMIT_WINDOW_MS) {
     requestTimestamps.shift();
   }
+
   if (requestTimestamps.length >= RATE_LIMIT_MAX) return false;
   requestTimestamps.push(now);
+
+  // Persist to DB (fire-and-forget, non-blocking)
+  const value = JSON.stringify(requestTimestamps);
+  sql`INSERT INTO settings (key, value) VALUES ('ai_rate_limit', ${value}) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`.catch(() => {});
+
   return true;
 }
 
@@ -50,7 +71,7 @@ export async function POST(req: NextRequest) {
   try {
     await ensureDb();
 
-    if (!checkRateLimit()) {
+    if (!await checkRateLimit()) {
       return NextResponse.json({ error: 'Rate limit exceeded. Please wait a moment.' }, { status: 429 });
     }
 
@@ -77,7 +98,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-const DEFAULT_MODEL = 'claude-opus-4-6';
+const DEFAULT_MODEL = 'claude-sonnet-4-6';
 const MODELS: Record<string, string> = {
   process_inbox: DEFAULT_MODEL,
   morning_briefing: DEFAULT_MODEL,
@@ -106,7 +127,15 @@ async function callClaude(apiKey: string, system: string, userMessage: string, a
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error((err as Record<string, Record<string, string>>).error?.message || `API error: ${res.status}`);
+    const apiMsg = (err as Record<string, Record<string, string>>).error?.message || '';
+    // Return user-friendly messages for common errors; don't leak raw Anthropic internals
+    if (res.status === 401) throw new Error('Invalid API key. Check your Anthropic API key in Settings.');
+    if (res.status === 429) throw new Error('Anthropic rate limit reached. Please wait a moment and try again.');
+    if (res.status === 529) throw new Error('Anthropic API is temporarily overloaded. Please try again later.');
+    if (apiMsg.toLowerCase().includes('credit') || apiMsg.toLowerCase().includes('billing')) {
+      throw new Error('Anthropic billing issue. Check your API account at console.anthropic.com.');
+    }
+    throw new Error(`AI request failed (status ${res.status}). Check your API key and account.`);
   }
 
   const result = await res.json();

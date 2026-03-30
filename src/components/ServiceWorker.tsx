@@ -7,7 +7,7 @@ export function ServiceWorkerRegistrar() {
     if ('serviceWorker' in navigator) {
       // Clear old caches on startup
       // SW cache version — keep in sync with CACHE_NAME in public/sw.js
-      const CURRENT_CACHE = 'mainline-v11';
+      const CURRENT_CACHE = 'mainline-v12';
       caches.keys().then((names) => {
         names.forEach((name) => { if (name !== CURRENT_CACHE) caches.delete(name); });
       });

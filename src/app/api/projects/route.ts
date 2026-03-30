@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import sql from '@/lib/db';
 import { ensureDb } from '@/lib/init';
 import { v4 as uuid } from 'uuid';
-import { buildUpdate, nowLocal } from '@/lib/api-helpers';
+import { buildUpdate, nowLocal, validateStrings } from '@/lib/api-helpers';
 
 const ALLOWED_PATCH_FIELDS = [
   'title', 'category', 'purpose', 'key_milestones', 'planning_steps',
@@ -46,6 +46,9 @@ export async function POST(req: NextRequest) {
       notes = '',
       status = 'active',
     } = body;
+
+    const typeErr = validateStrings(body, ['title', 'category', 'purpose', 'notes', 'status']);
+    if (typeErr) return NextResponse.json({ error: typeErr }, { status: 400 });
 
     if (!title || !title.trim()) {
       return NextResponse.json({ error: 'title is required' }, { status: 400 });

@@ -1,3 +1,2 @@
-# This is a private single-user app. No public content to index.
 User-agent: *
 Disallow: /
