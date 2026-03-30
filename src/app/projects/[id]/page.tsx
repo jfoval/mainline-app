@@ -145,8 +145,8 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     });
   }
 
-  function archiveProject() {
-    fetch(`/api/projects/${id}`, {
+  async function archiveProject() {
+    await fetch(`/api/projects/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'archived' }),
@@ -154,7 +154,11 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     router.push('/projects');
   }
 
-  if (!project) return null;
+  if (!project) return (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full motion-safe:animate-spin" />
+    </div>
+  );
 
   const activeActions = actions.filter(a => a.status === 'active');
   const completedActions = actions.filter(a => a.status === 'completed');

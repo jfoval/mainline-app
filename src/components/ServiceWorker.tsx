@@ -6,8 +6,10 @@ export function ServiceWorkerRegistrar() {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       // Clear old caches on startup
+      // SW cache version — keep in sync with CACHE_NAME in public/sw.js
+      const CURRENT_CACHE = 'mainline-v11';
       caches.keys().then((names) => {
-        names.forEach((name) => { if (name !== 'mainline-v10') caches.delete(name); });
+        names.forEach((name) => { if (name !== CURRENT_CACHE) caches.delete(name); });
       });
 
       navigator.serviceWorker.register('/sw.js').then((registration) => {

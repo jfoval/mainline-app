@@ -28,6 +28,16 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "Mainline",
   },
+  openGraph: {
+    title: "Mainline",
+    description: "Personal productivity system — capture, organize, act",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "Mainline",
+    description: "Personal productivity system — capture, organize, act",
+  },
 };
 
 export const viewport: Viewport = {

@@ -22,8 +22,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
       - name: Type check
         run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+        env:
+          DATABASE_URL: postgresql://test:test@localhost/test
 
       - name: Run tests
         run: npm test -- --no-coverage

@@ -23,9 +23,9 @@ const FALLBACK_STEPS: RecoveryStep[] = [
 ];
 
 const SEVERITY_STYLES: Record<string, string> = {
-  light: 'bg-green-100 text-green-700',
-  moderate: 'bg-amber-100 text-amber-700',
-  heavy: 'bg-red-100 text-red-700',
+  light: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-200',
+  moderate: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-200',
+  heavy: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-200',
 };
 
 const VALID_LINKS = new Set([

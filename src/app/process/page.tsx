@@ -101,6 +101,7 @@ export default function MorningProcessPage() {
 
   // Loading
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // ── Fetch all data on mount ──────────────────────────────────────
@@ -163,6 +164,7 @@ export default function MorningProcessPage() {
         }
       } catch (err) {
         console.error('Failed to load morning process data', err);
+        setLoadError(true);
       } finally {
         setLoading(false);
       }
@@ -264,6 +266,15 @@ export default function MorningProcessPage() {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <p className="text-destructive">Failed to load data. Please try again.</p>
+        <button onClick={() => window.location.reload()} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg">Retry</button>
+      </div>
+    );
+  }
+
   // ── Render steps ─────────────────────────────────────────────────
   function renderStepContent() {
     switch (step) {
@@ -290,7 +301,7 @@ export default function MorningProcessPage() {
             )}
 
             {stalledProjects.length > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-xl p-4">
                 <h3 className="text-sm font-semibold text-red-800 mb-1">{stalledProjects.length} stalled project{stalledProjects.length !== 1 ? 's' : ''} (no next action)</h3>
                 <ul className="text-xs text-red-600 list-disc ml-5">
                   {stalledProjects.map((p, i) => <li key={i}>{p.title}</li>)}
@@ -466,7 +477,7 @@ export default function MorningProcessPage() {
                       key={t.id}
                       onClick={() => toggleInboxCheck(t.id)}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
-                        inboxChecks[t.id] ? 'bg-green-50 border border-green-200' : 'bg-background border border-border hover:border-primary/30'
+                        inboxChecks[t.id] ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700' : 'bg-background border border-border hover:border-primary/30'
                       }`}
                     >
                       <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 ${

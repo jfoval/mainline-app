@@ -1,5 +1,7 @@
 import { offlineDb } from './db';
 
+let processingQueue = false;
+
 export async function enqueue(
   method: 'POST' | 'PATCH' | 'DELETE',
   url: string,
@@ -32,88 +34,105 @@ function tableFromUrl(url: string): string {
 }
 
 export async function processQueue(): Promise<{ processed: number; failed: number; conflicts: number }> {
-  const entries = await offlineDb.sync_queue
-    .orderBy('queueId')
-    .toArray();
+  if (processingQueue) return { processed: 0, failed: 0, conflicts: 0 };
+  processingQueue = true;
 
-  let processed = 0;
-  let failed = 0;
-  let conflicts = 0;
+  try {
+    const entries = await offlineDb.sync_queue
+      .orderBy('queueId')
+      .toArray();
 
-  for (const entry of entries) {
-    // Exponential backoff: skip entries that aren't ready for retry yet
-    if (entry.retries > 0 && entry.lastRetryAt) {
-      const backoffMs = Math.min(30000, 1000 * Math.pow(2, entry.retries)); // 2s, 4s, 8s, 16s, 30s
-      if (Date.now() - entry.lastRetryAt < backoffMs) {
-        continue; // Not ready for retry yet — skip, don't break
+    let processed = 0;
+    let failed = 0;
+    let conflicts = 0;
+
+    for (const entry of entries) {
+      // Exponential backoff: skip entries that aren't ready for retry yet
+      if (entry.retries > 0 && entry.lastRetryAt) {
+        const backoffMs = Math.min(30000, 1000 * Math.pow(2, entry.retries)); // 2s, 4s, 8s, 16s, 30s
+        if (Date.now() - entry.lastRetryAt < backoffMs) {
+          continue; // Not ready for retry yet — skip, don't break
+        }
       }
-    }
 
-    try {
-      const res = await fetch(entry.url, {
-        method: entry.method,
-        headers: entry.body ? { 'Content-Type': 'application/json' } : undefined,
-        body: entry.body,
-      });
+      try {
+        const res = await fetch(entry.url, {
+          method: entry.method,
+          headers: entry.body ? { 'Content-Type': 'application/json' } : undefined,
+          body: entry.body,
+        });
 
-      if (res.ok) {
-        await offlineDb.sync_queue.delete(entry.queueId!);
-        processed++;
-      } else if (res.status === 404) {
-        // For DELETE: item already gone — safe to dequeue
-        // For PATCH/POST: the endpoint itself may be wrong — log and dequeue to avoid infinite retries
-        if (entry.method === 'DELETE') {
+        if (res.ok) {
           await offlineDb.sync_queue.delete(entry.queueId!);
           processed++;
-        } else {
-          console.warn(`[sync] 404 on ${entry.method} ${entry.url} — dequeuing (endpoint may have changed)`);
+        } else if (res.status === 404) {
+          // For DELETE: item already gone — safe to dequeue
+          // For PATCH/POST: the endpoint itself may be wrong — log and dequeue to avoid infinite retries
+          if (entry.method === 'DELETE') {
+            await offlineDb.sync_queue.delete(entry.queueId!);
+            processed++;
+          } else {
+            console.warn(`[sync] 404 on ${entry.method} ${entry.url} — dequeuing (endpoint may have changed)`);
+            await offlineDb.sync_queue.delete(entry.queueId!);
+            failed++;
+          }
+        } else if (res.status === 409) {
+          // Conflict detected — store for user resolution
+          const conflictData = await res.json();
+          const bodyParsed = entry.body ? JSON.parse(entry.body) : {};
+          const table = tableFromUrl(entry.url);
+
+          await offlineDb.conflicts.add({
+            table,
+            recordId: bodyParsed.id || '',
+            clientVersion: bodyParsed,
+            serverVersion: conflictData.serverRecord || {},
+            detectedAt: Date.now(),
+          });
+          await offlineDb.sync_queue.delete(entry.queueId!);
+          conflicts++;
+        } else if (entry.retries >= 5) {
+          // Give up after 5 retries — notify the user via a custom event
+          console.warn(`[sync] Giving up on ${entry.method} ${entry.url} after ${entry.retries} retries (status ${res.status})`);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('mainline-sync-failure', {
+              detail: { method: entry.method, url: entry.url, status: res.status },
+            }));
+          }
           await offlineDb.sync_queue.delete(entry.queueId!);
           failed++;
+        } else {
+          await offlineDb.sync_queue.update(entry.queueId!, {
+            retries: entry.retries + 1,
+            lastRetryAt: Date.now(),
+          });
+          failed++;
+          // Don't break — continue processing other entries (non-FIFO for retries)
         }
-      } else if (res.status === 409) {
-        // Conflict detected — store for user resolution
-        const conflictData = await res.json();
-        const bodyParsed = entry.body ? JSON.parse(entry.body) : {};
-        const table = tableFromUrl(entry.url);
-
-        await offlineDb.conflicts.add({
-          table,
-          recordId: bodyParsed.id || '',
-          clientVersion: bodyParsed,
-          serverVersion: conflictData.serverRecord || {},
-          detectedAt: Date.now(),
-        });
-        await offlineDb.sync_queue.delete(entry.queueId!);
-        conflicts++;
-      } else if (entry.retries >= 5) {
-        // Give up after 5 retries (was 3)
-        console.warn(`[sync] Giving up on ${entry.method} ${entry.url} after ${entry.retries} retries (status ${res.status})`);
-        await offlineDb.sync_queue.delete(entry.queueId!);
+      } catch {
+        // Network error — increment retries with backoff timestamp
+        if (entry.retries >= 5) {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('mainline-sync-failure', {
+              detail: { method: entry.method, url: entry.url, status: 'network_error' },
+            }));
+          }
+          await offlineDb.sync_queue.delete(entry.queueId!).catch(() => {});
+        } else {
+          await offlineDb.sync_queue.update(entry.queueId!, {
+            retries: entry.retries + 1,
+            lastRetryAt: Date.now(),
+          }).catch(() => {});
+        }
         failed++;
-      } else {
-        await offlineDb.sync_queue.update(entry.queueId!, {
-          retries: entry.retries + 1,
-          lastRetryAt: Date.now(),
-        });
-        failed++;
-        // Don't break — continue processing other entries (non-FIFO for retries)
+        break; // Network down — stop queue processing
       }
-    } catch {
-      // Network error — increment retries with backoff timestamp
-      if (entry.retries >= 5) {
-        await offlineDb.sync_queue.delete(entry.queueId!).catch(() => {});
-      } else {
-        await offlineDb.sync_queue.update(entry.queueId!, {
-          retries: entry.retries + 1,
-          lastRetryAt: Date.now(),
-        }).catch(() => {});
-      }
-      failed++;
-      break; // Network down — stop queue processing
     }
-  }
 
-  return { processed, failed, conflicts };
+    return { processed, failed, conflicts };
+  } finally {
+    processingQueue = false;
+  }
 }
 
 export async function getPendingCount(): Promise<number> {

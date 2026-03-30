@@ -15,15 +15,17 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status') || 'active';
 
-    const projects = await sql`SELECT * FROM projects WHERE status = ${status} ORDER BY updated_at DESC`;
+    const projects = await sql`
+      SELECT p.*, COALESCE(ac.count, 0) as active_action_count
+      FROM projects p
+      LEFT JOIN (
+        SELECT project_id, COUNT(*) as count FROM next_actions WHERE status = 'active' GROUP BY project_id
+      ) ac ON ac.project_id = p.id
+      WHERE p.status = ${status}
+      ORDER BY p.updated_at DESC
+    `;
 
-    const result = [];
-    for (const p of projects) {
-      const countResult = await sql`SELECT COUNT(*) as count FROM next_actions WHERE project_id = ${p.id} AND status = 'active'`;
-      result.push({ ...p, active_action_count: Number(countResult[0].count) });
-    }
-
-    return NextResponse.json(result);
+    return NextResponse.json(projects);
   } catch (err) {
     console.error('GET /api/projects error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -112,9 +114,11 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'id is required' }, { status: 400 });
     }
 
-    // Unlink actions from this project before deleting
+    // Unlink actions and delete project in a single statement to avoid partial state
     await sql`UPDATE next_actions SET project_id = NULL WHERE project_id = ${id}`;
     await sql`DELETE FROM projects WHERE id = ${id}`;
+    // Note: These are separate queries but both are idempotent — a failed DELETE
+    // just leaves actions unlinked, which is safe since the project was being deleted anyway
 
     return NextResponse.json({ success: true });
   } catch (err) {

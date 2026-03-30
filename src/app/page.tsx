@@ -224,8 +224,8 @@ export default function Dashboard() {
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Stale cache banner */}
       {staleCache && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between">
-          <p className="text-sm text-amber-700">
+        <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-xl p-3 flex items-center justify-between">
+          <p className="text-sm text-amber-700 dark:text-amber-200">
             Showing cached data from {Math.round((Date.now() - staleCache) / 60000)} min ago. You appear to be offline.
           </p>
           <button
@@ -304,32 +304,32 @@ export default function Dashboard() {
             {hasAlerts ? (
               <>
                 {data.inbox_count > inboxThreshold && (
-                  <Link href="/inbox" className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                  <Link href="/inbox" className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700">
                     <AlertTriangle size={18} className="text-amber-600 shrink-0" />
-                    <p className="text-sm text-amber-700">Inbox has {data.inbox_count} items — time to process.</p>
+                    <p className="text-sm text-amber-700 dark:text-amber-200">Inbox has {data.inbox_count} items — time to process.</p>
                   </Link>
                 )}
                 {data.stalled_projects.length > 0 && (
-                  <Link href="/projects" className="flex items-center gap-3 p-3 rounded-xl bg-red-50 border border-red-200">
+                  <Link href="/projects" className="flex items-center gap-3 p-3 rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700">
                     <AlertTriangle size={18} className="text-red-600 shrink-0" />
-                    <p className="text-sm text-red-700">
+                    <p className="text-sm text-red-700 dark:text-red-200">
                       {data.stalled_projects.length} stalled project{data.stalled_projects.length > 1 ? 's' : ''}:{' '}
                       {data.stalled_projects.map(p => p.title).join(', ')}
                     </p>
                   </Link>
                 )}
                 {data.stale_waiting.length > 0 && (
-                  <Link href="/actions?context=waiting_for" className="flex items-center gap-3 p-3 rounded-xl bg-yellow-50 border border-yellow-200">
+                  <Link href="/actions?context=waiting_for" className="flex items-center gap-3 p-3 rounded-xl bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700">
                     <Clock size={18} className="text-yellow-600 shrink-0" />
-                    <p className="text-sm text-yellow-700">
+                    <p className="text-sm text-yellow-700 dark:text-yellow-200">
                       {data.stale_waiting.length} @waiting-for item{data.stale_waiting.length > 1 ? 's' : ''} older than {waitingDays} days — follow up needed.
                     </p>
                   </Link>
                 )}
                 {reviewOverdue && (
-                  <Link href="/review" className="flex items-center gap-3 p-3 rounded-xl bg-indigo-50 border border-indigo-200">
+                  <Link href="/review" className="flex items-center gap-3 p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-700">
                     <BookOpen size={18} className="text-indigo-600 shrink-0" />
-                    <p className="text-sm text-indigo-700">
+                    <p className="text-sm text-indigo-700 dark:text-indigo-200">
                       {data.days_since_weekly_review === null
                         ? 'Weekly review not yet completed — start one to keep your system current.'
                         : `Weekly review is overdue — last completed ${data.days_since_weekly_review} days ago.`}
@@ -338,9 +338,9 @@ export default function Dashboard() {
                 )}
               </>
             ) : (
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-200">
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700">
                 <CheckCircle size={18} className="text-green-600 shrink-0" />
-                <p className="text-sm text-green-700">All clear — your system is clean.</p>
+                <p className="text-sm text-green-700 dark:text-green-200">All clear — your system is clean.</p>
               </div>
             )}
           </div>
@@ -474,7 +474,7 @@ export default function Dashboard() {
 
       {/* Do Differently Today (from yesterday's shutdown) */}
       {data.do_differently_today && (
-        <div className="px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-sm text-amber-300 truncate">
+        <div className="px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-sm text-amber-700 dark:text-amber-300 truncate">
           <span className="font-medium">Do differently today:</span> {data.do_differently_today}
         </div>
       )}
@@ -507,15 +507,31 @@ export default function Dashboard() {
                     };
                   });
                   // Persist
-                  const today = new Date().toISOString().slice(0, 10);
-                  await fetch('/api/disciplines/logs', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ discipline_id: d.id, date: today, completed: newCompleted ? 1 : 0 }),
-                  });
+                  try {
+                    const today = new Date().toISOString().slice(0, 10);
+                    const res = await fetch('/api/disciplines/logs', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ discipline_id: d.id, date: today, completed: newCompleted ? 1 : 0 }),
+                    });
+                    if (!res.ok) throw new Error('Failed to save');
+                  } catch {
+                    // Rollback optimistic update on failure
+                    setData(prev => {
+                      if (!prev) return prev;
+                      const items = prev.discipline_items.map(item =>
+                        item.id === d.id ? { ...item, completed: !newCompleted } : item
+                      );
+                      return {
+                        ...prev,
+                        discipline_items: items,
+                        disciplines_done: items.filter(i => i.completed).length,
+                      };
+                    });
+                  }
                 }}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
-                  d.completed ? 'bg-green-50 border border-green-200' : 'bg-background border border-border hover:border-primary/30'
+                  d.completed ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700' : 'bg-background border border-border hover:border-primary/30'
                 }`}
               >
                 <span className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${

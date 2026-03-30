@@ -34,7 +34,6 @@ const WEEKLY_STEPS = [
 
 const MONTHLY_EXTRA_STEPS = [
   { id: 'someday_maybe', label: 'Someday/Maybe Review', icon: Archive, description: 'Review your someday/maybe list. Activate, delete, or leave for next month.' },
-  { id: 'thinking', label: 'Thinking Doc Connections', icon: Sparkles, description: 'Scan for clusters, orphans, redundancy. Any docs to consolidate?' },
   { id: 'goals', label: 'Goals Check', icon: Target, description: 'Are active projects aligned with your 1-2 year goals? Any misalignment?' },
   { id: 'systems', label: 'Systems Check', icon: RotateCcw, description: 'Pick 1-2 areas. What is working? What is friction? What could improve?' },
   { id: 'pulse', label: 'Personal Pulse Check', icon: CheckCircle2, description: 'How are you doing in your key life roles? Is work crowding out what matters most?' },
@@ -105,12 +104,20 @@ export default function ReviewPage() {
     }
   }, [reviewType, currentStep, completedSteps, restored]);
 
+  const [reviewError, setReviewError] = useState<string | null>(null);
+
   async function startReview(type: 'weekly' | 'monthly') {
     setReviewType(type);
     setCurrentStep(0);
     setCompletedSteps(new Set());
-    const res = await fetch(`/api/review?type=${type}`);
-    setData(await res.json());
+    setReviewError(null);
+    try {
+      const res = await fetch(`/api/review?type=${type}`);
+      if (!res.ok) throw new Error('Failed to load review data');
+      setData(await res.json());
+    } catch {
+      setReviewError('Failed to load review data. Please try again.');
+    }
   }
 
   async function completeReview() {
@@ -183,7 +190,7 @@ export default function ReviewPage() {
           >
             <Sparkles size={32} className="text-amber-500 mb-3" />
             <h2 className="text-lg font-semibold">Monthly Deep Review</h2>
-            <p className="text-sm text-muted mt-2">Weekly review + deeper pass: goals check, thinking docs, systems review, personal pulse.</p>
+            <p className="text-sm text-muted mt-2">Weekly review + deeper pass: someday/maybe, goals check, systems review, personal pulse.</p>
             <p className="text-xs text-muted mt-3">One Saturday/month · 2-3 hours total</p>
             {lastMonthly ? (
               <p className={`text-xs mt-2 font-medium ${
@@ -203,8 +210,21 @@ export default function ReviewPage() {
     );
   }
 
+  if (!data && reviewError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <p className="text-destructive">{reviewError}</p>
+        <button onClick={() => window.location.reload()} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg">Retry</button>
+      </div>
+    );
+  }
+
   if (!data) {
-    return <div className="max-w-4xl mx-auto text-center py-12 text-muted">Loading review data...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full motion-safe:animate-spin" />
+      </div>
+    );
   }
 
   const steps = reviewType === 'monthly' ? [...WEEKLY_STEPS, ...MONTHLY_EXTRA_STEPS] : WEEKLY_STEPS;
@@ -341,8 +361,8 @@ function StepContent({ stepId, data }: { stepId: string; data: ReviewData }) {
         <div className="space-y-3">
           <p className="text-sm">{data.active_projects.length} active projects</p>
           {data.stalled_projects.length > 0 && (
-            <div className="p-3 rounded-lg bg-red-50 border border-red-200">
-              <p className="text-sm font-medium text-red-700 flex items-center gap-1">
+            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700">
+              <p className="text-sm font-medium text-red-700 dark:text-red-200 flex items-center gap-1">
                 <AlertTriangle size={14} /> {data.stalled_projects.length} stalled (no next action)
               </p>
               <ul className="mt-2 space-y-1">
@@ -389,8 +409,8 @@ function StepContent({ stepId, data }: { stepId: string; data: ReviewData }) {
         <div className="space-y-3">
           <p className="text-sm">{data.waiting_for.length} waiting-for · {data.agendas.length} agenda items</p>
           {data.stale_waiting.length > 0 && (
-            <div className="p-3 rounded-lg bg-yellow-50 border border-yellow-200">
-              <p className="text-sm font-medium text-yellow-700">{data.stale_waiting.length} stale (7+ days)</p>
+            <div className="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700">
+              <p className="text-sm font-medium text-yellow-700 dark:text-yellow-200">{data.stale_waiting.length} stale (7+ days)</p>
               <ul className="mt-1 space-y-1">
                 {data.stale_waiting.map(w => (
                   <li key={w.id} className="text-xs text-yellow-700">
@@ -495,21 +515,6 @@ function StepContent({ stepId, data }: { stepId: string; data: ReviewData }) {
           <Link href="/reference" className="flex items-center gap-1 text-xs text-primary hover:underline">
             <ArrowRight size={12} /> Open Reference (Someday/Maybe)
           </Link>
-        </div>
-      );
-
-    case 'thinking':
-      return (
-        <div className="space-y-3 text-sm">
-          <p>Review your thinking docs for connections, redundancy, and consolidation opportunities.</p>
-          <div className="text-xs text-muted">
-            <p className="font-medium mb-1">Look for:</p>
-            <ul className="list-disc list-inside space-y-0.5">
-              <li>Ideas that connect across docs</li>
-              <li>Redundant content to consolidate</li>
-              <li>Orphan docs that need attention or deletion</li>
-            </ul>
-          </div>
         </div>
       );
 

@@ -2,7 +2,7 @@
 ## Personal Productivity System
 
 **Last updated:** 2026-03-29
-**Status:** Production-ready. Deployed on Vercel. 19+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v10. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists with inline context manager. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v016. Journal with AI insights. Horizons named-item blocks. Daily inbox type checkboxes. Automatic data retention system. 70+ tests. HTTP security headers. Error boundary + 404 page. Backup restore SQL injection hardened. Sync data-loss fix.
+**Status:** Production-ready. Deployed on Vercel. 20 pages, ~35 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v11. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists with inline context manager. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v017. Journal with AI insights. Horizons named-item blocks. Daily inbox type checkboxes. Automatic data retention system. 80 tests. HTTP security headers. CSP header. Error boundary + global error boundary + 404 page. Backup restore hardened. Server-side login rate limiting. Sync data-loss fix.
 
 ---
 
@@ -36,7 +36,7 @@ A self-deployed personal productivity app. Each customer gets their own instance
 - `src/proxy.ts` — checks JWT cookie on every request, redirects to `/login` if missing
 - Login: `POST /api/auth/login` — validates bcrypt password hash, sets HTTP-only JWT cookie (7-day expiry), rate limiting with exponential backoff after 3 failed attempts
 - Logout: `POST /api/auth/logout` — clears cookie
-- Login page: `/login` — email + password form
+- Login page: `/login` — password-only form (single user per instance)
 - Uses `jose` library for JWT, `bcryptjs` for password hashing
 
 ### Environment Variables (5, set in Vercel + `.env.local`)
@@ -102,7 +102,7 @@ A self-deployed personal productivity app. Each customer gets their own instance
 
 ### Reviews & AI
 - **Weekly Review** (`/review`) — **6 guided steps** (recurring tasks step removed; notes sections removed). Live system data. Tracks last completion date, shows overdue warning if >8 days.
-- **Monthly Review** (`/review`) — **10 steps** (weekly 6 + goals check, horizons review, systems check, personal pulse). Overdue warning if >35 days.
+- **Monthly Review** (`/review`) — **10 steps** (weekly 6 + Someday/Maybe review, goals check, systems check, personal pulse). Overdue warning if >35 days.
 - **AI Assistant** (`/ai`) — 3 tabs: morning briefing, prioritize day, ask Claude (all Opus)
 - **Recovery** (`/recovery`) — AI-powered "get back on track" guided re-engagement
 
@@ -130,23 +130,20 @@ All server-side date/time logic uses a configurable timezone via the `nowCentral
 
 - **Timezone config:** Reads from `TIMEZONE` env var → `timezone` setting in DB → defaults to `America/Chicago`. Set in Settings page or `.env.local`.
 - **Helper:** `nowCentral()` uses `Intl.DateTimeFormat` with the configured timezone — no external libraries needed
-- **Returns:** `timeStr` (HH:MM), `dateStr` (YYYY-MM-DD), `dayOfWeek`, `weekday`, `timestamp`, and a `date` object for girls-week calc
+- **Returns:** `timeStr` (HH:MM), `dateStr` (YYYY-MM-DD), `dayOfWeek`, `weekday`, `timestamp`, and a `date` object
 - **`nowLocal()`** calls `nowCentral().timestamp` for all `updated_at` fields
 - **Used by:** All API routes that depend on current time (routine, dashboard, ai, review, recurring-tasks)
 - **Rule:** Never use raw `new Date()` for time-sensitive logic in API routes — always use `nowCentral()`
 
 ---
 
-## Girls Week Auto-Detection
+## Week Pattern Rotation
 
-Girls week alternates every week and is auto-calculated — no manual toggle needed.
+The Ideal Calendar supports multiple named week patterns (e.g., "Girls Week" / "Non-Girls Week") with automatic rotation.
 
-- **Reference point:** Week of Monday March 16, 2026 = non-girls week
-- **Logic:** `src/lib/girls-week.ts` — counts weeks from reference, odd = girls week
-- **DST-safe:** Uses noon timestamps to avoid daylight saving edge cases
-- **Used by:** Dashboard, routine API, AI briefing, offline store fallback
-- **Sidebar:** Shows "Girls Week" or "Non-Girls Week" label (read-only)
-- **Timezone:** Receives `nowCentral().date` so it calculates based on Central Time day, not UTC
+- **Rotation:** Configured via the Ideal Calendar page — patterns alternate on a schedule defined in `week_pattern_rotation` and `week_schedule` tables
+- **Resolution:** `src/lib/pattern-resolver.ts` — determines which pattern applies for any given week
+- **Used by:** Daily block hydration (dashboard + daily-blocks API), offline store fallback
 
 ---
 
@@ -251,7 +248,7 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 - Check @errands when leaving house
 - Capture stray thoughts to inbox (voice or text)
 - Check @agendas before meetings
-- Check @haley during Haley time
+- Check @agendas for upcoming meetings
 
 ### Shutdown (4:45-5:00) — Shutdown page
 1. Capture sweep — anything uncaptured from today?
@@ -259,8 +256,7 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 3. Completion animation — animated checkmark celebration, auto-redirects to dashboard.
 
 ### Evening
-- @prayers during God time
-- @haley items during Haley time
+- Context-specific actions during relevant time blocks
 
 ---
 
@@ -309,7 +305,7 @@ nurik, personal, home, family, lsu, dj, music, health, finance
 
 ## Context Lists
 
-@work, @errands, @home, @waiting_for (person + what + date), @agendas (person-specific), @haley, @prayers
+Default seed contexts: Work, Errands, Home, Waiting For (person + what + date), Agendas (person-specific), Calls, Computer, Anywhere. User-configurable via inline context manager on the Next Actions page.
 
 ## Routine Types
 

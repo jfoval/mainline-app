@@ -6,31 +6,47 @@ import { getMonday, resolvePatternId } from '@/lib/pattern-resolver';
 import { v4 as uuid } from 'uuid';
 
 /** Ensure daily_blocks exist for the given date, hydrating from ideal calendar if needed */
+// Lock to prevent double hydration from concurrent requests
+let hydrationInProgress: Promise<unknown> | null = null;
+
 async function ensureDailyBlocks(date: string, dayOfWeek: number) {
   let blocks = await sql`SELECT * FROM daily_blocks WHERE date = ${date} ORDER BY start_time`;
 
   if (blocks.length === 0) {
-    // Hydrate from ideal calendar
-    const weekStart = getMonday(new Date(date + 'T12:00:00'));
-    const patternId = await resolvePatternId(weekStart);
-
-    if (patternId) {
-      const templateBlocks = await sql`
-        SELECT * FROM week_pattern_blocks
-        WHERE pattern_id = ${patternId} AND day_of_week = ${dayOfWeek}
-        ORDER BY start_time, sort_order
-      `;
-
-      for (const tb of templateBlocks) {
-        const id = uuid();
-        await sql`
-          INSERT INTO daily_blocks (id, date, start_time, end_time, label, description, is_non_negotiable, source_block_id)
-          VALUES (${id}, ${date}, ${tb.start_time}, ${tb.end_time}, ${tb.label}, ${tb.description || null}, ${tb.is_non_negotiable || 0}, ${tb.id})
-        `;
-      }
-
-      blocks = await sql`SELECT * FROM daily_blocks WHERE date = ${date} ORDER BY start_time`;
+    // Prevent double hydration from concurrent dashboard + daily-blocks requests
+    if (hydrationInProgress) {
+      await hydrationInProgress;
+      return sql`SELECT * FROM daily_blocks WHERE date = ${date} ORDER BY start_time`;
     }
+
+    hydrationInProgress = (async () => {
+      // Re-check after acquiring "lock" to handle race
+      const recheck = await sql`SELECT COUNT(*) as count FROM daily_blocks WHERE date = ${date}`;
+      if (Number(recheck[0].count) > 0) return;
+
+      const weekStart = getMonday(new Date(date + 'T12:00:00'));
+      const patternId = await resolvePatternId(weekStart);
+
+      if (patternId) {
+        const templateBlocks = await sql`
+          SELECT * FROM week_pattern_blocks
+          WHERE pattern_id = ${patternId} AND day_of_week = ${dayOfWeek}
+          ORDER BY start_time, sort_order
+        `;
+
+        for (const tb of templateBlocks) {
+          const id = uuid();
+          await sql`
+            INSERT INTO daily_blocks (id, date, start_time, end_time, label, description, is_non_negotiable, source_block_id)
+            VALUES (${id}, ${date}, ${tb.start_time}, ${tb.end_time}, ${tb.label}, ${tb.description || null}, ${tb.is_non_negotiable || 0}, ${tb.id})
+          `;
+        }
+      }
+    })();
+
+    await hydrationInProgress;
+    hydrationInProgress = null;
+    blocks = await sql`SELECT * FROM daily_blocks WHERE date = ${date} ORDER BY start_time`;
   }
 
   return blocks;
@@ -82,13 +98,14 @@ export async function GET() {
 
     const activeProjects = await sql`SELECT * FROM projects WHERE status = 'active' ORDER BY updated_at DESC` as Array<{ id: string; title: string; category: string }>;
 
-    const stalledProjects = [];
-    for (const p of activeProjects) {
-      const countResult = await sql`SELECT COUNT(*) as count FROM next_actions WHERE project_id = ${p.id} AND status = 'active'`;
-      if (Number(countResult[0].count) === 0) {
-        stalledProjects.push(p);
-      }
-    }
+    // Single query to find stalled projects (no N+1)
+    const stalledProjects = await sql`
+      SELECT p.id, p.title, p.category FROM projects p
+      LEFT JOIN next_actions a ON a.project_id = p.id AND a.status = 'active'
+      WHERE p.status = 'active'
+      GROUP BY p.id, p.title, p.category
+      HAVING COUNT(a.id) = 0
+    ` as Array<{ id: string; title: string; category: string }>;
 
     const dailyNoteRows = await sql`SELECT * FROM daily_notes WHERE date = ${today}`;
     const dailyNote = dailyNoteRows[0] as {

@@ -64,6 +64,7 @@ export default function ShutdownPage() {
 
   // Loading
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [adding, setAdding] = useState(false);
 
@@ -95,6 +96,7 @@ export default function ShutdownPage() {
 
       } catch (err) {
         console.error('Failed to load shutdown data', err);
+        setLoadError(true);
       } finally {
         setLoading(false);
       }
@@ -168,6 +170,15 @@ export default function ShutdownPage() {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="animate-spin text-primary" size={36} />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <p className="text-destructive">Failed to load data. Please try again.</p>
+        <button onClick={() => window.location.reload()} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg">Retry</button>
       </div>
     );
   }

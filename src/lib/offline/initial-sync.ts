@@ -31,7 +31,34 @@ export function clearInitialSyncFailure(): void {
   }
 }
 
-/** Fetch all data from the server and populate IndexedDB */
+/** Get IDs of records with pending mutations in the sync queue */
+async function getPendingIds(): Promise<Set<string>> {
+  const pendingIds = new Set<string>();
+  try {
+    const entries = await offlineDb.sync_queue.toArray();
+    for (const entry of entries) {
+      if (entry.body) {
+        try {
+          const parsed = JSON.parse(entry.body);
+          if (parsed.id) pendingIds.add(parsed.id);
+        } catch { /* not parseable */ }
+      }
+      // Also extract IDs from DELETE URLs (e.g., /api/actions?id=xxx)
+      const urlMatch = entry.url.match(/[?&]id=([^&]+)/);
+      if (urlMatch) pendingIds.add(urlMatch[1]);
+    }
+  } catch { /* sync_queue may not exist yet */ }
+  return pendingIds;
+}
+
+/** Filter out records with pending local mutations before bulkPut */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function filterPending(items: any[], pendingIds: Set<string>): any[] {
+  if (pendingIds.size === 0) return items;
+  return items.filter(item => !item.id || !pendingIds.has(item.id));
+}
+
+/** Fetch all data from the server and populate IndexedDB, skipping records with pending local mutations */
 async function fetchAllData(): Promise<void> {
   const [actions, inbox, projects, dailyNotes, routine, referenceDocs, disciplines, disciplineLogs, contextLists, dailyBlocksRes, journalEntries, horizonItems] = await Promise.all([
     fetchWithTimeout('/api/actions?status=active').then(r => r.ok ? r.json() : []),
@@ -60,6 +87,9 @@ async function fetchAllData(): Promise<void> {
   // Extract daily blocks from response
   const dailyBlocks = dailyBlocksRes.blocks || (Array.isArray(dailyBlocksRes) ? dailyBlocksRes : []);
 
+  // Get pending mutation IDs so we don't overwrite local edits with stale server data
+  const pendingIds = await getPendingIds();
+
   const tables = [
     offlineDb.next_actions,
     offlineDb.inbox_items,
@@ -77,20 +107,34 @@ async function fetchAllData(): Promise<void> {
     offlineDb.sync_meta,
   ];
   await offlineDb.transaction('rw', tables, async () => {
-    if (actions.length) await offlineDb.next_actions.bulkPut(actions);
-    if (inbox.length) await offlineDb.inbox_items.bulkPut(inbox);
-    if (allListItems.length) await offlineDb.list_items.bulkPut(allListItems);
-    if (projects.length) await offlineDb.projects.bulkPut(projects);
-    if (dailyNotes.length) await offlineDb.daily_notes.bulkPut(Array.isArray(dailyNotes) ? dailyNotes : [dailyNotes]);
-    const blocks = routine.blocks || routine;
-    if (Array.isArray(blocks) && blocks.length) await offlineDb.routine_blocks.bulkPut(blocks);
-    if (referenceDocs.length) await offlineDb.reference_docs.bulkPut(referenceDocs);
-    if (Array.isArray(disciplines) && disciplines.length) await offlineDb.disciplines.bulkPut(disciplines);
-    if (Array.isArray(disciplineLogs) && disciplineLogs.length) await offlineDb.discipline_logs.bulkPut(disciplineLogs);
-    if (Array.isArray(contextLists) && contextLists.length) await offlineDb.context_lists.bulkPut(contextLists);
-    if (Array.isArray(dailyBlocks) && dailyBlocks.length) await offlineDb.daily_blocks.bulkPut(dailyBlocks);
-    if (Array.isArray(journalEntries) && journalEntries.length) await offlineDb.journal_entries.bulkPut(journalEntries);
-    if (Array.isArray(horizonItems) && horizonItems.length) await offlineDb.horizon_items.bulkPut(horizonItems);
+    const safeActions = filterPending(actions, pendingIds);
+    const safeInbox = filterPending(inbox, pendingIds);
+    const safeListItems = filterPending(allListItems, pendingIds);
+    const safeProjects = filterPending(projects, pendingIds);
+    const safeDailyNotes = filterPending(Array.isArray(dailyNotes) ? dailyNotes : [dailyNotes], pendingIds);
+    const routineBlocks = routine.blocks || routine;
+    const safeRoutine = filterPending(Array.isArray(routineBlocks) ? routineBlocks : [], pendingIds);
+    const safeReferenceDocs = filterPending(referenceDocs, pendingIds);
+    const safeDisciplines = filterPending(Array.isArray(disciplines) ? disciplines : [], pendingIds);
+    const safeDisciplineLogs = filterPending(Array.isArray(disciplineLogs) ? disciplineLogs : [], pendingIds);
+    const safeContextLists = filterPending(Array.isArray(contextLists) ? contextLists : [], pendingIds);
+    const safeDailyBlocks = filterPending(Array.isArray(dailyBlocks) ? dailyBlocks : [], pendingIds);
+    const safeJournalEntries = filterPending(Array.isArray(journalEntries) ? journalEntries : [], pendingIds);
+    const safeHorizonItems = filterPending(Array.isArray(horizonItems) ? horizonItems : [], pendingIds);
+
+    if (safeActions.length) await offlineDb.next_actions.bulkPut(safeActions);
+    if (safeInbox.length) await offlineDb.inbox_items.bulkPut(safeInbox);
+    if (safeListItems.length) await offlineDb.list_items.bulkPut(safeListItems);
+    if (safeProjects.length) await offlineDb.projects.bulkPut(safeProjects);
+    if (safeDailyNotes.length) await offlineDb.daily_notes.bulkPut(safeDailyNotes);
+    if (safeRoutine.length) await offlineDb.routine_blocks.bulkPut(safeRoutine);
+    if (safeReferenceDocs.length) await offlineDb.reference_docs.bulkPut(safeReferenceDocs);
+    if (safeDisciplines.length) await offlineDb.disciplines.bulkPut(safeDisciplines);
+    if (safeDisciplineLogs.length) await offlineDb.discipline_logs.bulkPut(safeDisciplineLogs);
+    if (safeContextLists.length) await offlineDb.context_lists.bulkPut(safeContextLists);
+    if (safeDailyBlocks.length) await offlineDb.daily_blocks.bulkPut(safeDailyBlocks);
+    if (safeJournalEntries.length) await offlineDb.journal_entries.bulkPut(safeJournalEntries);
+    if (safeHorizonItems.length) await offlineDb.horizon_items.bulkPut(safeHorizonItems);
 
     // Mark all tables as synced
     const now = Date.now();

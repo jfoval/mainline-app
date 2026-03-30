@@ -2,6 +2,66 @@
 
 All notable changes to Mainline will be documented here.
 
+## [0.7.0] - 2026-03-30
+
+### Security
+- **SQL injection fix in backup restore** — column names from backup JSON are now validated against a strict regex before SQL interpolation
+- **Backup export no longer leaks secrets** — `auth_password_hash`, `jwt_secret`, `anthropic_api_key`, and `jwt_issued_after` are stripped from settings table exports
+- **Server-side login rate limiting** — replaced client-side cookie-based rate limiting (easily bypassed) with server-side IP-based rate limiting with exponential backoff
+- **Content-Security-Policy header** — added CSP to mitigate XSS attacks
+
+### Fixed — Critical
+- **Offline sync data loss** — incremental sync (`fetchAllData`) now checks the sync queue for pending mutations and skips overwriting records with local edits, preventing silent data loss during offline-to-online transitions
+- **Silent data loss on sync retry exhaustion** — sync queue now dispatches a `mainline-sync-failure` custom event when mutations are dropped after 5 retries, so the UI can notify the user
+- **Daily blocks double hydration** — added a lock to prevent concurrent dashboard + daily-blocks requests from creating duplicate blocks
+- **Conflict resolution for 7 missing tables** — `urlForTable()` now maps all 13 data tables (was only 6), enabling conflict resolution for disciplines, context lists, daily blocks, journal entries, horizon items, and reference docs
+
+### Fixed — Performance
+- **Dashboard N+1 queries eliminated** — stalled projects detection now uses a single LEFT JOIN query instead of one query per project; projects GET uses a single query with subquery for action counts
+- **Database indexes added** — migration 017 adds indexes on `next_actions(context, project_id, status)`, `inbox_items(status)`, `projects(status)`, `reference_docs(category)`
+- **Sync queue mutex** — concurrent `processQueue` calls no longer process the same entries simultaneously
+
+### Fixed — UI/UX
+- **Dark mode colors** — fixed hardcoded light-mode-only colors throughout: dashboard alerts, "Do Differently" banner, morning process warnings, review page warnings, inbox AI suggestions, recovery page severity colors
+- **Missing loading/error states** — added spinners and error UI to: project detail, review page, ideal calendar, morning process, shutdown routine
+- **AI chat auto-scroll** — chat container now scrolls to the latest message automatically
+- **Dashboard discipline toggle** — added error handling with rollback on API failure
+- **Project archive** — now awaits API response before navigating away
+
+### Added
+- **Global error boundary** (`global-error.tsx`) — catches root layout errors with a retry button
+- **OpenGraph & Twitter Card meta tags** — shared links now show title and description
+- **Service worker cache bumped to v11** — with synchronized version constant in ServiceWorker.tsx
+
+### Changed
+- Removed orphaned "Thinking Doc Connections" step from monthly review (table was dropped in migration 011)
+- PWA manifest `scope` field added for explicitness
+
+## [0.6.0] - 2026-03-29
+
+### Added
+- **Comprehensive keyboard shortcuts** — global hotkey system with two-key chords (`g` + letter for navigation), flow quick-launch (Shift+M/S/R), context tab switching (1-9), and page-specific hotkeys throughout
+- **Completion animation** — shared `CompletionCelebration` component with circle-draw + checkmark animation for morning process and shutdown routine final steps
+- **Dashboard disciplines** — moved from process flows to dashboard as interactive inline checkmarks with optimistic toggle
+- **"Do Differently Today" banner** — surfaces yesterday's evening reflection on the dashboard
+- **Dashboard voice button** — redesigned to match inbox mic button style
+- **Dark mode default** — new users now see dark mode immediately
+- **Automatic data retention** — daily cleanup of old processed inbox items (30d), completed actions/projects (90d), discipline logs (90d), daily blocks (30d), backup logs (90d). All configurable via settings.
+- **Configurable alert thresholds** — inbox overflow and stale waiting-for thresholds adjustable in Settings
+- **Weekly review overdue alert** — indigo banner on dashboard when review is overdue
+- **"All clear" dashboard state** — green banner when no alerts are active
+- **Browser notifications** — now include stale waiting-for and review overdue conditions
+- **Next actions tab counts** — context tabs show action count badges; tabs wrap on desktop, scroll on mobile
+- **Dynamic inbox routing** — reference folders loaded dynamically during inbox processing; Someday/Maybe split into Personal and Work
+- **Reference page overhaul** — removed personal lists; added Someday/Maybe (Personal & Work) cards; inline rename/delete for reference categories
+- **Inline inbox item editing** — E hotkey to edit text, Enter/Escape to confirm/cancel
+- **Morning Review in Shutdown** — moved to Evening Reflection step
+
+### Changed
+- Morning process: 3 steps (Daily Note & Reflection → Process Inbox → Ready to Work)
+- Shutdown routine: 3 steps (Capture Sweep → Evening Reflection → Day Complete)
+- Monthly review: 11 steps (6 weekly + 5 monthly-specific)
+
 ## [0.5.1] - 2026-03-28
 
 ### Fixed

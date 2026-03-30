@@ -2,7 +2,7 @@
 
 Your complete productivity system in one app.
 
-**Version 0.6.0 · March 2026**
+**Version 0.7.0 · March 2026**
 
 ---
 
@@ -79,7 +79,7 @@ Open **Shutdown** from the sidebar. 3 steps:
 
 Your home screen. Shows (in order):
 
-- **Greeting** with today's date and week type (Girls Week / Non-Girls Week, auto-detected)
+- **Greeting** with today's date and current week pattern name (from your Ideal Calendar rotation)
 - **Alerts** for stalled projects and overflowing inbox
 - **Quick Stats** — inbox count, action counts, active projects
 - **Now / Up Next** — current and next calendar block with times
@@ -126,12 +126,15 @@ The **AI assistant** can suggest routing and flag vague actions (like "handle ta
 Your context lists. Tap a tab to switch between:
 
 - **@Work** — things to do at your desk
-- **@Home** — things to do around the house
 - **@Errands** — things to do when you're out
+- **@Home** — things to do around the house
 - **@Waiting For** — things you're waiting on someone else for
 - **@Agendas** — things to bring up with specific people
-- **@Someday** — things to revisit later
-- **@Prayers** — prayer items
+- **@Calls** — phone calls to make
+- **@Computer** — things that need a computer
+- **@Anywhere** — things you can do anywhere
+
+Context lists are fully customizable — add, rename, reorder, or delete them using the gear icon on the Next Actions page.
 
 Each tab shows an **action count** badge (bold pill) next to the context name, plus a faded **hotkey number** (1-9) for keyboard switching. On desktop, tabs wrap to multiple rows so nothing goes off-screen. On mobile, tabs scroll horizontally.
 
@@ -486,7 +489,7 @@ Mainline automatically keeps your database clean by removing stale data once per
 If you're making code changes in a development session, deploy them by pushing to GitHub. Vercel auto-deploys on every push to `main`:
 
 ```bash
-cd ~/Desktop/Mainline/app
+cd /path/to/your/mainline-app
 git add -p        # stage changes
 git commit -m "description"
 git push origin main

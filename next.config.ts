@@ -12,8 +12,10 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   // Force HTTPS for 1 year (Vercel serves HTTPS, so this is safe)
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
-  // Disable browser features the app doesn't use
+  // Disable browser features the app doesn't use (microphone intentionally allowed for voice capture)
   { key: "Permissions-Policy", value: "camera=(), geolocation=(), payment=()" },
+  // Content Security Policy — mitigate XSS
+  { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://api.anthropic.com; img-src 'self' data:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" },
 ];
 
 const nextConfig: NextConfig = {

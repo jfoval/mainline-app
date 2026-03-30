@@ -545,4 +545,16 @@ const embeddedMigrations: { version: number; name: string; statements: string[] 
       `CREATE INDEX IF NOT EXISTS idx_projects_completed ON projects(completed_at) WHERE status IN ('completed', 'archived')`,
     ],
   },
+  {
+    version: 17,
+    name: '017_performance_indexes',
+    statements: [
+      `CREATE INDEX IF NOT EXISTS idx_actions_context ON next_actions(context)`,
+      `CREATE INDEX IF NOT EXISTS idx_actions_project_id ON next_actions(project_id)`,
+      `CREATE INDEX IF NOT EXISTS idx_actions_status ON next_actions(status)`,
+      `CREATE INDEX IF NOT EXISTS idx_inbox_status ON inbox_items(status)`,
+      `CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status)`,
+      `CREATE INDEX IF NOT EXISTS idx_reference_category ON reference_docs(category)`,
+    ],
+  },
 ];

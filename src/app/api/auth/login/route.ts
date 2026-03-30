@@ -4,13 +4,40 @@ import { SignJWT } from 'jose';
 import sql from '@/lib/db';
 import { getJwtSecret } from '@/lib/jwt-secret';
 
-// Simple rate limiting via cookie-based attempt tracking
-function getRateLimitInfo(req: NextRequest): { attempts: number; lockedUntil: number } {
-  try {
-    const raw = req.cookies.get('mainline-login-attempts')?.value;
-    if (!raw) return { attempts: 0, lockedUntil: 0 };
-    return JSON.parse(raw);
-  } catch { return { attempts: 0, lockedUntil: 0 }; }
+// Server-side rate limiting by IP (survives across requests in the same instance)
+const loginAttempts = new Map<string, { count: number; lockedUntil: number }>();
+
+function getClientIp(req: NextRequest): string {
+  return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+}
+
+function checkServerRateLimit(ip: string): { allowed: boolean; secondsLeft: number } {
+  const now = Date.now();
+  const entry = loginAttempts.get(ip);
+  if (!entry) return { allowed: true, secondsLeft: 0 };
+  if (entry.lockedUntil > now) {
+    return { allowed: false, secondsLeft: Math.ceil((entry.lockedUntil - now) / 1000) };
+  }
+  return { allowed: true, secondsLeft: 0 };
+}
+
+function recordFailedAttempt(ip: string): void {
+  const now = Date.now();
+  const entry = loginAttempts.get(ip) || { count: 0, lockedUntil: 0 };
+  entry.count++;
+  // Exponential backoff: 0, 0, 5s, 15s, 30s, 60s...
+  if (entry.count >= 3) {
+    entry.lockedUntil = now + Math.min(60_000, 5_000 * Math.pow(2, entry.count - 3));
+  }
+  loginAttempts.set(ip, entry);
+  // Clean up old entries (older than 10 minutes)
+  for (const [key, val] of loginAttempts) {
+    if (val.lockedUntil < now - 600_000 && val.count > 0) loginAttempts.delete(key);
+  }
+}
+
+function clearAttempts(ip: string): void {
+  loginAttempts.delete(ip);
 }
 
 export async function POST(req: NextRequest) {
@@ -21,11 +48,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Password is required' }, { status: 400 });
     }
 
-    // Rate limiting check
-    const rateLimit = getRateLimitInfo(req);
-    if (rateLimit.lockedUntil > Date.now()) {
-      const secondsLeft = Math.ceil((rateLimit.lockedUntil - Date.now()) / 1000);
-      return NextResponse.json({ error: `Too many attempts. Try again in ${secondsLeft} seconds.` }, { status: 429 });
+    // Server-side rate limiting check
+    const ip = getClientIp(req);
+    const rateLimit = checkServerRateLimit(ip);
+    if (!rateLimit.allowed) {
+      return NextResponse.json({ error: `Too many attempts. Try again in ${rateLimit.secondsLeft} seconds.` }, { status: 429 });
     }
 
     // Try settings table first, then fall back to env vars
@@ -52,15 +79,8 @@ export async function POST(req: NextRequest) {
     // Verify password
     const passwordValid = await bcrypt.compare(password, passwordHash);
     if (!passwordValid) {
-      const newAttempts = rateLimit.attempts + 1;
-      // Exponential backoff: 0, 0, 5s, 15s, 30s, 60s...
-      const lockDuration = newAttempts >= 3 ? Math.min(60, 5 * Math.pow(2, newAttempts - 3)) * 1000 : 0;
-      const response = NextResponse.json({ error: 'Invalid password' }, { status: 401 });
-      response.cookies.set('mainline-login-attempts', JSON.stringify({
-        attempts: newAttempts,
-        lockedUntil: lockDuration > 0 ? Date.now() + lockDuration : 0,
-      }), { httpOnly: true, path: '/', maxAge: 600, sameSite: 'lax' });
-      return response;
+      recordFailedAttempt(ip);
+      return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
     }
 
     // Create JWT
@@ -73,8 +93,8 @@ export async function POST(req: NextRequest) {
       .sign(secret);
 
     // Set cookie and clear rate limit
+    clearAttempts(ip);
     const response = NextResponse.json({ success: true });
-    response.cookies.delete('mainline-login-attempts');
     response.cookies.set('mainline-auth', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',

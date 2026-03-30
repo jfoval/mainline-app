@@ -26,6 +26,9 @@ const TABLE_ORDER = [
 
 const PROTECTED_TABLES = new Set(['schema_version', 'backup_log']);
 
+// Validate column names: only allow safe identifiers (letters, digits, underscores)
+const SAFE_COLUMN_RE = /^[a-z_][a-z0-9_]*$/i;
+
 export async function POST(req: NextRequest) {
   await ensureDb();
 
@@ -67,6 +70,13 @@ export async function POST(req: NextRequest) {
       for (const row of rows) {
         const cols = Object.keys(row);
         if (cols.length === 0) continue;
+
+        // Validate column names to prevent SQL injection via crafted backup files
+        const unsafeCols = cols.filter(c => !SAFE_COLUMN_RE.test(c));
+        if (unsafeCols.length > 0) {
+          console.error(`[import] Skipping row in ${table}: unsafe column names: ${unsafeCols.join(', ')}`);
+          continue;
+        }
 
         const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
         const values = cols.map(c => row[c]);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Bot, Sun, Target, MessageSquare, Loader2, Send, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
@@ -22,6 +22,12 @@ export default function AIPage() {
   // Chat state
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll chat to latest message
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatHistory, chatLoading]);
 
   // Derived loading state for current tab
   const loading = tab === 'briefing' ? briefingLoading : tab === 'prioritize' ? prioritizeLoading : chatLoading;
@@ -253,6 +259,7 @@ export default function AIPage() {
                 </div>
               </div>
             )}
+            <div ref={chatEndRef} />
           </div>
 
           <form onSubmit={sendChat} className="p-4 border-t border-border flex gap-2">

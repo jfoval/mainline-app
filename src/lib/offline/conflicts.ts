@@ -80,6 +80,13 @@ function urlForTable(table: string, data: Record<string, unknown>): string | nul
     case 'list_items': return '/api/lists';
     case 'inbox_items': return '/api/inbox';
     case 'routine_blocks': return '/api/routine';
+    case 'disciplines': return '/api/disciplines';
+    case 'discipline_logs': return '/api/disciplines/logs';
+    case 'context_lists': return '/api/context-lists';
+    case 'daily_blocks': return '/api/daily-blocks';
+    case 'journal_entries': return '/api/journal';
+    case 'horizon_items': return '/api/horizon-items';
+    case 'reference_docs': return '/api/reference';
     default: return null; // Unknown table — cannot safely resolve
   }
 }
