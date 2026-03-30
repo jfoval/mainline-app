@@ -21,7 +21,8 @@ async function checkAndNotify() {
     const data = await res.json();
 
     // Check inbox overflow
-    if (data.inbox_count > 10) {
+    const inboxThreshold = data.inbox_threshold || 10;
+    if (data.inbox_count > inboxThreshold) {
       new Notification('Inbox needs attention', {
         body: `You have ${data.inbox_count} items in your inbox. Time to process!`,
         icon: '/icons/icon-192.png',
@@ -38,6 +39,31 @@ async function checkAndNotify() {
         icon: '/icons/icon-192.png',
         tag: 'stalled-projects',
         data: { url: '/projects' },
+      });
+      return;
+    }
+
+    // Check stale waiting-for items
+    if (data.stale_waiting?.length > 0) {
+      new Notification('Follow-ups needed', {
+        body: `${data.stale_waiting.length} @waiting-for item${data.stale_waiting.length > 1 ? 's' : ''} older than ${data.waiting_days || 7} days.`,
+        icon: '/icons/icon-192.png',
+        tag: 'stale-waiting',
+        data: { url: '/actions?context=waiting_for' },
+      });
+      return;
+    }
+
+    // Check weekly review overdue
+    if (data.days_since_weekly_review === null || data.days_since_weekly_review > 7) {
+      const body = data.days_since_weekly_review === null
+        ? 'You haven\'t completed a weekly review yet.'
+        : `Last weekly review was ${data.days_since_weekly_review} days ago.`;
+      new Notification('Weekly review overdue', {
+        body,
+        icon: '/icons/icon-192.png',
+        tag: 'review-overdue',
+        data: { url: '/review' },
       });
       return;
     }

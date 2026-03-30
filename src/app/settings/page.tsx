@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Key, LogOut, Database, Download, Upload, Sun, Moon, Palette, Bell, BellOff, ExternalLink, Info, RefreshCw, Clock } from 'lucide-react';
+import { Key, LogOut, Database, Download, Upload, Sun, Moon, Palette, Bell, BellOff, ExternalLink, Info, RefreshCw, Clock, SlidersHorizontal } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { APP_VERSION } from '@/lib/version';
 
@@ -25,6 +25,10 @@ export default function SettingsPage() {
   const [timezone, setTimezone] = useState('');
   const [savingTimezone, setSavingTimezone] = useState(false);
   const [timezoneSaved, setTimezoneSaved] = useState(false);
+  const [inboxThreshold, setInboxThreshold] = useState('10');
+  const [waitingDays, setWaitingDays] = useState('7');
+  const [savingThresholds, setSavingThresholds] = useState(false);
+  const [thresholdsSaved, setThresholdsSaved] = useState(false);
 
   useEffect(() => {
     setNotificationsEnabled(localStorage.getItem('mainline-notifications') === 'true');
@@ -35,6 +39,8 @@ export default function SettingsPage() {
         if (data.anthropic_api_key === 'configured') setApiKeyHasValue(true);
         if (data.timezone) setTimezone(data.timezone);
         else setTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+        if (data.alert_inbox_threshold) setInboxThreshold(data.alert_inbox_threshold);
+        if (data.alert_waiting_days) setWaitingDays(data.alert_waiting_days);
       })
       .catch(() => {});
   }, []);
@@ -317,6 +323,64 @@ export default function SettingsPage() {
           </button>
         </div>
       )}
+
+      {/* Alert Thresholds */}
+      <div className="bg-card rounded-xl border border-border p-6 mt-6">
+        <div className="flex items-center gap-2 mb-4">
+          <SlidersHorizontal size={20} className="text-primary" />
+          <h2 className="text-lg font-semibold">Alert Thresholds</h2>
+        </div>
+        <p className="text-sm text-muted mb-4">
+          Control when dashboard alerts appear. Adjust these if the defaults are too noisy or too quiet.
+        </p>
+        <div className="space-y-4">
+          <div className="flex items-center gap-4">
+            <label className="text-sm font-medium w-56">Inbox alert when items exceed</label>
+            <input
+              type="number"
+              min="1"
+              max="100"
+              value={inboxThreshold}
+              onChange={e => setInboxThreshold(e.target.value)}
+              className="w-20 px-3 py-2 rounded-lg border border-border bg-background text-sm"
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <label className="text-sm font-medium w-56">Waiting-for stale after (days)</label>
+            <input
+              type="number"
+              min="1"
+              max="90"
+              value={waitingDays}
+              onChange={e => setWaitingDays(e.target.value)}
+              className="w-20 px-3 py-2 rounded-lg border border-border bg-background text-sm"
+            />
+          </div>
+          <button
+            onClick={async () => {
+              setSavingThresholds(true);
+              setThresholdsSaved(false);
+              try {
+                await fetch('/api/settings', {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    alert_inbox_threshold: inboxThreshold,
+                    alert_waiting_days: waitingDays,
+                  }),
+                });
+                setThresholdsSaved(true);
+                setTimeout(() => setThresholdsSaved(false), 3000);
+              } catch { /* ignore */ }
+              setSavingThresholds(false);
+            }}
+            disabled={savingThresholds}
+            className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-hover disabled:opacity-50"
+          >
+            {thresholdsSaved ? 'Saved!' : savingThresholds ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+      </div>
 
       {/* Database */}
       <div className="bg-card rounded-xl border border-border p-6 mt-6">

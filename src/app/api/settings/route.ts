@@ -5,7 +5,7 @@ import { ensureDb } from '@/lib/init';
 const ALLOWED_SETTINGS_KEYS = [
   'anthropic_api_key', 'theme', 'timezone', 'user_name', 'user_email',
   'review_day', 'morning_time', 'shutdown_time', 'notification_enabled',
-  'inbox_types',
+  'inbox_types', 'alert_inbox_threshold', 'alert_waiting_days',
 ];
 
 // Keys that should never be returned via the settings GET endpoint

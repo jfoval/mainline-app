@@ -103,10 +103,16 @@ export async function GET() {
     const yesterdayNoteRows = await sql`SELECT evening_do_differently FROM daily_notes WHERE date = ${yesterday}`;
     const doDifferentlyToday = (yesterdayNoteRows[0] as { evening_do_differently: string | null } | undefined)?.evening_do_differently || null;
 
-    const sevenDaysAgoDate = new Date(ct.date.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const sevenDaysAgo = `${sevenDaysAgoDate.getFullYear()}-${String(sevenDaysAgoDate.getMonth() + 1).padStart(2, '0')}-${String(sevenDaysAgoDate.getDate()).padStart(2, '0')}`;
+    // Load configurable alert thresholds from settings
+    const thresholdRows = await sql`SELECT key, value FROM settings WHERE key IN ('alert_inbox_threshold', 'alert_waiting_days')` as Array<{ key: string; value: string }>;
+    const thresholdMap = new Map(thresholdRows.map(r => [r.key, r.value]));
+    const inboxThreshold = Number(thresholdMap.get('alert_inbox_threshold')) || 10;
+    const waitingDays = Number(thresholdMap.get('alert_waiting_days')) || 7;
+
+    const staleDate = new Date(ct.date.getTime() - waitingDays * 24 * 60 * 60 * 1000);
+    const staleDateStr = `${staleDate.getFullYear()}-${String(staleDate.getMonth() + 1).padStart(2, '0')}-${String(staleDate.getDate()).padStart(2, '0')}`;
     const staleWaiting = await sql`
-      SELECT * FROM next_actions WHERE context = 'waiting_for' AND status = 'active' AND waiting_since IS NOT NULL AND waiting_since <= ${sevenDaysAgo}
+      SELECT * FROM next_actions WHERE context = 'waiting_for' AND status = 'active' AND waiting_since IS NOT NULL AND waiting_since <= ${staleDateStr}
     ` as Array<{ content: string; waiting_on_person: string | null; waiting_since: string }>;
 
     // Discipline progress for today — return individual items with completion status
@@ -135,6 +141,14 @@ export async function GET() {
       // Table may not exist yet for existing installs before migration runs
     }
 
+    // Weekly review overdue check
+    const lastReviewRows = await sql`SELECT value FROM settings WHERE key = 'last_weekly_review'` as Array<{ value: string }>;
+    let daysSinceWeeklyReview: number | null = null;
+    if (lastReviewRows.length > 0 && lastReviewRows[0].value) {
+      const lastReview = new Date(lastReviewRows[0].value);
+      daysSinceWeeklyReview = Math.floor((ct.date.getTime() - lastReview.getTime()) / (24 * 60 * 60 * 1000));
+    }
+
     return NextResponse.json({
       date: today,
       day_name: dayName,
@@ -144,12 +158,15 @@ export async function GET() {
       next_block: nextBlock,
       blocks,
       inbox_count: inboxCount,
+      inbox_threshold: inboxThreshold,
+      waiting_days: waitingDays,
       action_counts: actionCounts,
       total_actions: Object.values(actionCounts).reduce((a, b) => a + b, 0),
       active_project_count: activeProjects.length,
       stalled_projects: stalledProjects,
       daily_note: dailyNote || null,
       stale_waiting: staleWaiting,
+      days_since_weekly_review: daysSinceWeeklyReview,
       do_differently_today: doDifferentlyToday,
       disciplines_done: disciplinesDone,
       disciplines_total: disciplinesTotal,

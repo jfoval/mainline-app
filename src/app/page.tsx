@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { format } from 'date-fns';
 import {
   Inbox, CheckSquare, FolderKanban, Clock, AlertTriangle,
-  Users, ArrowRight,
+  Users, ArrowRight, CheckCircle, BookOpen,
   Mic, MicOff, Check, RefreshCw
 } from 'lucide-react';
 import Link from 'next/link';
@@ -27,6 +27,9 @@ interface DashboardData {
   stalled_projects: Array<{ id: string; title: string; category: string }>;
   daily_note: { top3_first: string | null; top3_second: string | null; top3_third: string | null } | null;
   stale_waiting: Array<{ content: string; waiting_on_person: string | null; waiting_since: string }>;
+  inbox_threshold: number;
+  waiting_days: number;
+  days_since_weekly_review: number | null;
   do_differently_today: string | null;
   disciplines_done: number;
   disciplines_total: number;
@@ -292,33 +295,58 @@ export default function Dashboard() {
       </div>
 
       {/* Alerts */}
-      {(data.inbox_count > 10 || data.stalled_projects.length > 0 || data.stale_waiting.length > 0) && (
-        <div className="space-y-2">
-          {data.inbox_count > 10 && (
-            <Link href="/inbox" className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
-              <AlertTriangle size={18} className="text-amber-600" />
-              <p className="text-sm text-amber-700">Inbox has {data.inbox_count} items — time to process.</p>
-            </Link>
-          )}
-          {data.stalled_projects.length > 0 && (
-            <Link href="/projects" className="flex items-center gap-3 p-3 rounded-xl bg-red-50 border border-red-200">
-              <AlertTriangle size={18} className="text-red-600" />
-              <p className="text-sm text-red-700">
-                {data.stalled_projects.length} stalled project{data.stalled_projects.length > 1 ? 's' : ''}:{' '}
-                {data.stalled_projects.map(p => p.title).join(', ')}
-              </p>
-            </Link>
-          )}
-          {data.stale_waiting.length > 0 && (
-            <Link href="/actions?context=waiting_for" className="flex items-center gap-3 p-3 rounded-xl bg-yellow-50 border border-yellow-200">
-              <Clock size={18} className="text-yellow-600" />
-              <p className="text-sm text-yellow-700">
-                {data.stale_waiting.length} @waiting-for item{data.stale_waiting.length > 1 ? 's' : ''} older than 7 days — follow up needed.
-              </p>
-            </Link>
-          )}
-        </div>
-      )}
+      {(() => {
+        const inboxThreshold = data.inbox_threshold || 10;
+        const waitingDays = data.waiting_days || 7;
+        const reviewOverdue = data.days_since_weekly_review === null || data.days_since_weekly_review > 7;
+        const hasAlerts = data.inbox_count > inboxThreshold || data.stalled_projects.length > 0 || data.stale_waiting.length > 0 || reviewOverdue;
+        return (
+          <div className="space-y-2">
+            {hasAlerts ? (
+              <>
+                {data.inbox_count > inboxThreshold && (
+                  <Link href="/inbox" className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
+                    <AlertTriangle size={18} className="text-amber-600 shrink-0" />
+                    <p className="text-sm text-amber-700">Inbox has {data.inbox_count} items — time to process.</p>
+                  </Link>
+                )}
+                {data.stalled_projects.length > 0 && (
+                  <Link href="/projects" className="flex items-center gap-3 p-3 rounded-xl bg-red-50 border border-red-200">
+                    <AlertTriangle size={18} className="text-red-600 shrink-0" />
+                    <p className="text-sm text-red-700">
+                      {data.stalled_projects.length} stalled project{data.stalled_projects.length > 1 ? 's' : ''}:{' '}
+                      {data.stalled_projects.map(p => p.title).join(', ')}
+                    </p>
+                  </Link>
+                )}
+                {data.stale_waiting.length > 0 && (
+                  <Link href="/actions?context=waiting_for" className="flex items-center gap-3 p-3 rounded-xl bg-yellow-50 border border-yellow-200">
+                    <Clock size={18} className="text-yellow-600 shrink-0" />
+                    <p className="text-sm text-yellow-700">
+                      {data.stale_waiting.length} @waiting-for item{data.stale_waiting.length > 1 ? 's' : ''} older than {waitingDays} days — follow up needed.
+                    </p>
+                  </Link>
+                )}
+                {reviewOverdue && (
+                  <Link href="/review" className="flex items-center gap-3 p-3 rounded-xl bg-indigo-50 border border-indigo-200">
+                    <BookOpen size={18} className="text-indigo-600 shrink-0" />
+                    <p className="text-sm text-indigo-700">
+                      {data.days_since_weekly_review === null
+                        ? 'Weekly review not yet completed — start one to keep your system current.'
+                        : `Weekly review is overdue — last completed ${data.days_since_weekly_review} days ago.`}
+                    </p>
+                  </Link>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-green-50 border border-green-200">
+                <CheckCircle size={18} className="text-green-600 shrink-0" />
+                <p className="text-sm text-green-700">All clear — your system is clean.</p>
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
