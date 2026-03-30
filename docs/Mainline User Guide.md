@@ -448,6 +448,21 @@ Your data is protected automatically:
 - **Session security:** Login sessions last 7 days. Changing your password immediately invalidates all existing sessions.
 - **Single user:** Your app is password-protected — only you can access it
 
+### Automatic Data Cleanup
+
+Mainline automatically keeps your database clean by removing stale data once per day. This runs silently in the background and never slows down your app.
+
+**What gets cleaned up:**
+- Processed inbox items after 30 days (already routed to actions/projects/reference)
+- Completed or archived actions after 90 days
+- Completed or archived projects after 90 days
+- Old discipline logs after 90 days
+- Old daily schedule blocks after 30 days
+
+**What is kept forever:** Your daily notes, journal entries, reference documents, horizons, and all configuration (contexts, disciplines, routine patterns, settings).
+
+**Customizing retention periods:** You can adjust any retention period via the Settings API. For example, to keep completed actions for 180 days instead of 90, set `retention_actions_days` to `180` in settings.
+
 ---
 
 ## Deploying Code Updates

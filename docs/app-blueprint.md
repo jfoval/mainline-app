@@ -1,8 +1,8 @@
 # Mainline App Blueprint
 ## Personal Productivity System
 
-**Last updated:** 2026-03-28
-**Status:** Production-ready. Deployed on Vercel. 19+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v10. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists with inline context manager. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v015. Journal with AI insights. Horizons named-item blocks. Daily inbox type checkboxes. 70+ tests. HTTP security headers. Error boundary + 404 page. Backup restore SQL injection hardened. Sync data-loss fix.
+**Last updated:** 2026-03-29
+**Status:** Production-ready. Deployed on Vercel. 19+ pages, ~30 API routes. Offline-first PWA with conflict detection, incremental sync (5 min + tab focus), rate limiting, fetch timeouts, dashboard caching, service worker v10. AI uses Claude Opus 4.6. Week pattern rotation system. Disciplines & values tracking. User-configurable context lists with inline context manager. First-run setup wizard. Dark mode. Keyboard shortcuts. Search. Drag-to-reorder. Undo. Data import/export. PWA notifications. Mini timeline. In-app update notifications. Configurable timezone via env var or Settings. Session invalidation on password change. Settings GET hides sensitive keys. Migration system at v016. Journal with AI insights. Horizons named-item blocks. Daily inbox type checkboxes. Automatic data retention system. 70+ tests. HTTP security headers. Error boundary + 404 page. Backup restore SQL injection hardened. Sync data-loss fix.
 
 ---
 
@@ -191,13 +191,29 @@ Girls week alternates every week and is auto-calculated — no manual toggle nee
 
 ### Migration System
 - `src/lib/migrations/runner.ts` — embedded SQL migrations (Postgres dialect), `schema_version` table tracks applied versions
-- 15 migrations applied: baseline through daily_blocks, disciplines, context_lists, updated_at backfill, legacy table cleanup, reflection questions, journal_entries, inbox_checks (014), horizon_items (015)
+- 16 migrations applied: baseline through daily_blocks, disciplines, context_lists, updated_at backfill, legacy table cleanup, reflection questions, journal_entries, inbox_checks (014), horizon_items (015), cleanup_indexes (016)
 - Note: Neon HTTP driver is stateless — each `sql.query()` is an independent request. DDL auto-commits in Postgres. No cross-query transactions.
 
 ### Database Durability
 - Neon Postgres handles backups, point-in-time recovery, and high availability
 - JSON export available: POST `/api/backup` returns full database dump
 - JSON import available: POST `/api/backup/restore` — truncates + re-inserts in FK-safe order
+
+### Data Retention (Automatic Cleanup)
+- `src/lib/maintenance.ts` — core cleanup module, runs once per day via fire-and-forget call in `ensureDb()`
+- Checks `last_cleanup` setting; skips if < 24 hours ago
+- Purges stale data from 6 tables with configurable retention periods:
+  - Processed inbox items: 30 days (after `processed_at`)
+  - Completed/archived actions: 90 days (after `completed_at`)
+  - Completed/archived projects: 90 days (after `completed_at`, FK-safe — skips projects with active actions)
+  - Discipline logs: 90 days
+  - Daily blocks: 30 days
+  - Backup log: 90 days
+- All periods configurable via `retention_*` settings keys (e.g., `retention_inbox_days`)
+- Stores `last_cleanup` and `last_cleanup_stats` in settings
+- Manual trigger: `POST /api/maintenance`, status: `GET /api/maintenance`
+- Migration 016 adds partial indexes for cleanup query performance
+- Data kept forever: daily_notes, journal_entries, reference_docs, horizons, all config tables
 
 ### API Hardening
 - `buildUpdate()` whitelists fields per table, generates Postgres `$1, $2, ...` parameterized queries
