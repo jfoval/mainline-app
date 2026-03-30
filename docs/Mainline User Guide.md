@@ -131,6 +131,8 @@ Your context lists. Tap a tab to switch between:
 - **@Someday** — things to revisit later
 - **@Prayers** — prayer items
 
+Each tab shows an **action count** badge (bold pill) next to the context name, plus a faded **hotkey number** (1-9) for keyboard switching. On desktop, tabs wrap to multiple rows so nothing goes off-screen. On mobile, tabs scroll horizontally.
+
 Features:
 - **Search:** Filter actions by text using the search bar
 - **Complete:** Check the box to mark done. Completed actions move to the history tab

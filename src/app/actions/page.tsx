@@ -16,6 +16,7 @@ interface ContextItem {
   key: string;
   name: string;
   color: string | null;
+  action_count?: number;
 }
 
 const COLOR_MAP: Record<string, string> = {
@@ -92,15 +93,16 @@ function ActionsContent() {
 
   async function fetchContexts() {
     try {
-      const res = await fetch('/api/context-lists');
+      const res = await fetch('/api/context-lists?counts=1');
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          setContexts(data.map((c: { id: string; key: string; name: string; color: string | null }) => ({
+          setContexts(data.map((c: { id: string; key: string; name: string; color: string | null; action_count?: number }) => ({
             id: c.id,
             key: c.key,
             name: c.name,
             color: c.color,
+            action_count: Number(c.action_count) || 0,
           })));
           return;
         }
@@ -279,20 +281,27 @@ function ActionsContent() {
 
       {/* Context Tabs */}
       <div className="relative mb-4">
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide scroll-smooth items-center" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex gap-2 overflow-x-auto md:overflow-visible md:flex-wrap pb-2 scrollbar-hide scroll-smooth items-center" style={{ WebkitOverflowScrolling: 'touch' }}>
           {contexts.map((ctx, idx) => (
             <button
               key={ctx.key}
               onClick={() => router.push(`/actions?context=${ctx.key}`)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 md:flex-shrink flex items-center gap-1.5 ${
                 activeContext === ctx.key
                   ? getColorClasses(ctx.color)
                   : 'bg-card text-muted hover:bg-primary/5'
               }`}
             >
               @{ctx.name}
+              {ctx.action_count ? (
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none min-w-[1.25rem] text-center ${
+                  activeContext === ctx.key ? 'bg-black/15 dark:bg-white/20' : 'bg-primary/15 text-primary'
+                }`}>
+                  {ctx.action_count}
+                </span>
+              ) : null}
               {idx < 9 && (
-                <kbd className="text-[10px] font-mono px-1 py-0.5 rounded bg-black/10 dark:bg-white/10 leading-none opacity-50">
+                <kbd className="text-[10px] font-mono px-1 py-0.5 rounded bg-black/10 dark:bg-white/10 leading-none opacity-40">
                   {idx + 1}
                 </kbd>
               )}
@@ -309,7 +318,7 @@ function ActionsContent() {
             <Settings size={16} />
           </button>
         </div>
-        <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-2 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none md:hidden" />
       </div>
 
       {/* Context Manager Panel */}

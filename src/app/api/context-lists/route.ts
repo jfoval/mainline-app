@@ -13,6 +13,23 @@ export async function GET(req: NextRequest) {
     await ensureDb();
     const { searchParams } = new URL(req.url);
     const includeInactive = searchParams.get('include_inactive') === '1';
+    const includeCounts = searchParams.get('counts') === '1';
+
+    if (includeCounts) {
+      const items = includeInactive
+        ? await sql`
+            SELECT cl.*, COALESCE(c.cnt, 0) as action_count
+            FROM context_lists cl
+            LEFT JOIN (SELECT context, COUNT(*) as cnt FROM next_actions WHERE status = 'active' GROUP BY context) c ON c.context = cl.key
+            ORDER BY cl.sort_order, cl.name`
+        : await sql`
+            SELECT cl.*, COALESCE(c.cnt, 0) as action_count
+            FROM context_lists cl
+            LEFT JOIN (SELECT context, COUNT(*) as cnt FROM next_actions WHERE status = 'active' GROUP BY context) c ON c.context = cl.key
+            WHERE cl.is_active = 1
+            ORDER BY cl.sort_order, cl.name`;
+      return NextResponse.json(items);
+    }
 
     const items = includeInactive
       ? await sql`SELECT * FROM context_lists ORDER BY sort_order, name`
