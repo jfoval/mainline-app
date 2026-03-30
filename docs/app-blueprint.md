@@ -84,9 +84,9 @@ A self-deployed personal productivity app. Each customer gets their own instance
 - **Dashboard** (`/`) — **Quick Stats above Now/Up Next** (new order: stats → Now/Up Next → Top 3 → Disciplines → Next Actions → Daily Calendar). Mini timeline, voice capture, refresh button with spinner.
 
 ### Core Productivity
-- **Inbox** (`/inbox`) — text + voice capture (Web Speech API). Search filter for 5+ items.
+- **Inbox** (`/inbox`) — text + voice capture (Web Speech API, `V` hotkey hint on mic button, `P` hotkey hint on Process button). Capture input not autofocused so hotkeys work on page load. Search filter for 5+ items.
 - **Inbox Processing** (`/inbox/process`) — decision tree, one item at a time, AI-assisted routing. Keyboard shortcuts (Y/N/D, 1-8 for contexts, T/S/R, Esc). Undo last routing decision. Quick-route: trash, someday/maybe, reference, wish list, reading, movie, show, album, travel.
-- **Global hotkeys** — two-key chord system (`g` then a letter) for sidebar navigation to any page. Shift+key shortcuts for quick-launching flows (Shift+M morning, Shift+S shutdown, Shift+R review). Dashboard has single-key shortcuts (V/I/A/P/W/R). Next Actions page supports 1-9 to switch context tabs. All hotkeys disabled in input fields. Visual kbd hints shown in sidebar and on context tabs.
+- **Global hotkeys** — two-key chord system (`g` then a letter) for sidebar navigation to any page. Shift+key shortcuts for quick-launching flows (Shift+M morning, Shift+S shutdown, Shift+R review). Dashboard has single-key shortcuts (V/I/A/P/W/R) with inline kbd hints on stat cards and mic button. Inbox has V/P hotkeys with kbd hints on mic and Process buttons. Next Actions page supports 1-9 to switch context tabs with number badges. All hotkeys disabled in input fields. Visual kbd hints shown in sidebar and on context tabs.
 - **Next Actions** (`/actions`) — user-configurable context lists. **Gear icon opens inline context manager**: add/edit/delete contexts with color picker (key auto-gen from name). Active/Completed toggle. Search filter. Drag-to-reorder via @dnd-kit.
 - **Projects** (`/projects`, `/projects/[id]`) — CRUD with categories, Active/Someday-Maybe toggle, stalled project detection
 

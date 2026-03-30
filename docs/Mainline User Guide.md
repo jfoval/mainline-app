@@ -87,7 +87,7 @@ Your home screen. Shows (in order):
 - **Next Actions** — action counts per context list
 - **Daily Calendar** — today's schedule, pulled from your Ideal Calendar pattern and editable for today only
 
-**Voice Capture:** The blue mic button captures thoughts directly to your inbox. Tap to start, tap to stop. Auto-saves with a green checkmark. Auto-stops after 15 seconds.
+**Voice Capture:** The blue mic button (with `V` hotkey hint) captures thoughts directly to your inbox. Tap to start, tap to stop. Auto-saves with a green checkmark. Auto-stops after 15 seconds. Stat cards show inline hotkey hints (`I` for Inbox, `A` for Actions, etc.).
 
 ---
 
@@ -95,9 +95,10 @@ Your home screen. Shows (in order):
 
 Where everything gets captured before you decide what to do with it.
 
-- Type a thought and hit **Add**, or tap the mic button for voice capture
+- Type a thought and hit **Add**, or tap the mic button (with `V` hotkey hint) for voice capture
 - Voice capture works in Safari and Chrome — it transcribes and saves automatically
-- When you have unprocessed items, a **Process Inbox** button appears
+- When you have unprocessed items, a **Process Inbox** button appears (with `P` hotkey hint)
+- The capture input is not autofocused so keyboard shortcuts (`V` for voice, `P` for process) work immediately on page load
 - Use the **search bar** to filter items by text
 
 ---
