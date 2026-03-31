@@ -44,3 +44,7 @@ yarn-error.log*
 next-env.d.ts
 branding/
 /certificates/
+
+# Word temp files and binary docs (markdown versions are in the repo)
+~$*
+*.docx
