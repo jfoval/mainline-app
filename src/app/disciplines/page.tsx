@@ -61,7 +61,6 @@ export default function DisciplinesPage() {
   const [formType, setFormType] = useState<'discipline' | 'value'>('discipline');
   const [formDescription, setFormDescription] = useState('');
   const [formFrequency, setFormFrequency] = useState('daily');
-  const [formTimeOfDay, setFormTimeOfDay] = useState('morning');
   const [saving, setSaving] = useState(false);
   const { undoableFetchDelete } = useUndoableAction();
 
@@ -95,7 +94,6 @@ export default function DisciplinesPage() {
     setFormType('discipline');
     setFormDescription('');
     setFormFrequency('daily');
-    setFormTimeOfDay('morning');
     setEditingId(null);
     setShowForm(false);
   };
@@ -105,7 +103,6 @@ export default function DisciplinesPage() {
     setFormType(d.type);
     setFormDescription(d.description || '');
     setFormFrequency(d.frequency);
-    setFormTimeOfDay(d.time_of_day);
     setEditingId(d.id);
     setShowForm(true);
   };
@@ -125,7 +122,7 @@ export default function DisciplinesPage() {
             type: formType,
             description: formDescription.trim() || null,
             frequency: formFrequency,
-            time_of_day: formTimeOfDay,
+            time_of_day: 'shutdown',
           }),
         });
       } else {
@@ -137,7 +134,7 @@ export default function DisciplinesPage() {
             type: formType,
             description: formDescription.trim() || null,
             frequency: formFrequency,
-            time_of_day: formTimeOfDay,
+            time_of_day: 'shutdown',
           }),
         });
       }
@@ -439,17 +436,6 @@ export default function DisciplinesPage() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-muted mb-1">When to check in</label>
-                  <select
-                    value={formTimeOfDay}
-                    onChange={e => setFormTimeOfDay(e.target.value)}
-                    className="w-full rounded-lg border border-border bg-background text-foreground px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                  >
-                    <option value="morning">Morning Process</option>
-                    <option value="shutdown">Shutdown Routine</option>
-                  </select>
-                </div>
               </div>
 
               <div className="flex gap-3">
@@ -484,7 +470,7 @@ export default function DisciplinesPage() {
                       <p className="text-sm font-medium text-foreground">{d.name}</p>
                       {d.description && <p className="text-xs text-muted">{d.description}</p>}
                       <p className="text-xs text-muted mt-0.5">
-                        {d.frequency} &middot; {d.time_of_day === 'morning' ? 'Morning' : 'Shutdown'}
+                        {d.frequency}
                       </p>
                     </div>
                     <div className="flex gap-1">

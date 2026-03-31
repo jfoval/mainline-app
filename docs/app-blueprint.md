@@ -79,7 +79,7 @@ A self-deployed personal productivity app. Each customer gets their own instance
 
 ### Daily Workflows
 - **Morning Process** (`/process`) — 3-step guided flow: **Top 3 priorities** (#1 "Top thing to do" with "do the hardest thing first" hint, #2, #3; stalled projects flagged) + **Morning Reflection** ("What could hold me back today?" with prompts: Fear/Self-doubt/Distraction/Ego/Excuses/Limiting beliefs; "Who do I want to be today?" with prompts: Mindset/Energy/Character/How I treat people/How I handle adversity/What I model/What I build) → inbox with **inbox type checkboxes** (Physical/Work Email/Personal Email, user-configurable via gear icon; check state saves to `daily_notes.inbox_checks`) → animated completion celebration (auto-redirects to dashboard)
-- **Shutdown** (`/shutdown`) — 3-step: capture sweep → evening reflection (shows read-only morning review at top — Top 3, "What could hold me back?", "Who do I want to be?" answers — then did well, fell short, do differently) → animated completion celebration (auto-redirects to dashboard)
+- **Shutdown** (`/shutdown`) — 4-step: capture sweep → discipline review (review disciplines and values for the day, toggle completion) → evening reflection (shows read-only morning review at top — Top 3, "What could hold me back?", "Who do I want to be?" answers — then did well, fell short, do differently) → animated completion celebration (auto-redirects to dashboard)
 - **Dashboard** (`/`) — **Quick Stats above Now/Up Next** (new order: stats → Now/Up Next → Top 3 → Disciplines → Next Actions → Daily Calendar). #1 priority is highlighted as the most important task. Mini timeline, voice capture, refresh button with spinner.
 
 ### Core Productivity
@@ -254,8 +254,9 @@ The Ideal Calendar supports multiple named week patterns (e.g., "Week A" / "Week
 
 ### Shutdown (4:45-5:00) — Shutdown page
 1. Capture sweep — anything uncaptured from today?
-2. Evening reflection — read-only "This morning you said" section at top (Top 3, "What could hold me back?", "Who I wanted to be" answers), then "What did I do well?", "Where did I fall short, and why?", "What will I do differently tomorrow?"
-3. Completion animation — animated checkmark celebration, auto-redirects to dashboard.
+2. Discipline review — review disciplines and values for the day, toggle completion
+3. Evening reflection — read-only "This morning you said" section at top (Top 3, "What could hold me back?", "Who I wanted to be" answers), then "What did I do well?", "Where did I fall short, and why?", "What will I do differently tomorrow?"
+4. Completion animation — animated checkmark celebration, auto-redirects to dashboard.
 
 ### Evening
 - Context-specific actions during relevant time blocks

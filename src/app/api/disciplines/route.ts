@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     await sql`
       INSERT INTO disciplines (id, name, type, description, frequency, time_of_day, is_active, sort_order, created_at, updated_at)
       VALUES (${id}, ${body.name}, ${body.type || 'discipline'}, ${body.description || null},
-              ${body.frequency || 'daily'}, ${body.time_of_day || 'morning'},
+              ${body.frequency || 'daily'}, ${body.time_of_day || 'shutdown'},
               ${body.is_active ?? 1}, ${body.sort_order || 0}, ${now}, ${now})
     `;
 

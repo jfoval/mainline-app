@@ -54,7 +54,7 @@ Open **Morning Process** from the sidebar. It walks you through 3 steps:
 1. **Top 3 Priorities** — #1 "Top thing to do" (do the hardest thing first), #2 "Second thing to do", #3 "Third thing to do". Stalled projects (no next action) are flagged here too.
 2. **Morning Reflection** — "What could hold me back today?" (with prompts: Fear, Self-doubt, Distraction, Ego, Excuses, Limiting beliefs) and "Who do I want to be today?" (with prompts: Mindset, Energy, Character, How I treat people, How I handle adversity, What I model, What I build).
 3. **Process Inbox** — Work through every inbox item using the decision tree. A checklist shows your configured inbox types (Physical, Work Email, Personal Email, etc.) — check each one off as you clear it. Tap the gear icon to add, edit, or delete inbox types. The check state saves daily so you can see what you've cleared.
-4. **Done** — An animated checkmark celebration plays, then you're taken back to the dashboard automatically.
+4. **Ready to Work** — An animated checkmark celebration plays, then you're taken back to the dashboard automatically.
 
 ### During the Day
 
@@ -65,11 +65,12 @@ Open **Morning Process** from the sidebar. It walks you through 3 steps:
 
 ### Shutdown (10–15 minutes)
 
-Open **Shutdown** from the sidebar. 3 steps:
+Open **Shutdown** from the sidebar. 4 steps:
 
 1. **Capture Sweep** — Add anything still in your head from today
-2. **Evening Reflection** — At the top you'll see a read-only "This morning you said" section showing your Top 3, what could hold you back, and who you wanted to be. Below that, answer: What did I do well? Where did I fall short? What will I do differently tomorrow?
-3. **Done** — An animated checkmark celebration plays, then you're taken back to the dashboard automatically.
+2. **Discipline Review** — Review your disciplines and values for the day. Items checked off on the dashboard are pre-marked. Toggle any remaining ones.
+3. **Evening Reflection** — At the top you'll see a read-only "This morning you said" section showing your Top 3, what could hold you back, and who you wanted to be. Below that, answer: What did I do well? Where did I fall short? What will I do differently tomorrow?
+4. **Day Complete** — An animated checkmark celebration plays, then you're taken back to the dashboard automatically.
 
 ---
 
@@ -482,29 +483,6 @@ Mainline automatically keeps your database clean by removing stale data once per
 **What is kept forever:** Your daily notes, journal entries, reference documents, horizons, and all configuration (contexts, disciplines, routine patterns, settings).
 
 **Customizing retention periods:** You can adjust any retention period via the Settings API. For example, to keep completed actions for 180 days instead of 90, set `retention_actions_days` to `180` in settings.
-
----
-
-## Deploying Code Updates
-
-If you're making code changes in a development session, deploy them by pushing to GitHub. Vercel auto-deploys on every push to `main`:
-
-```bash
-cd /path/to/your/mainline-app
-git add -p        # stage changes
-git commit -m "description"
-git push origin main
-```
-
-Vercel rebuilds and restarts automatically. Your data is never affected by deploys.
-
-To run locally for testing:
-
-```bash
-npm run dev       # start local dev server at localhost:3000
-npm test          # run the test suite
-npm run build     # verify the build compiles cleanly
-```
 
 ---
 

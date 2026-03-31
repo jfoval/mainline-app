@@ -9,6 +9,8 @@ import {
   Plus,
   Loader2,
   Sun,
+  Target,
+  Compass,
 } from 'lucide-react';
 import CompletionCelebration from '@/components/CompletionCelebration';
 import { todayStr } from '@/lib/date-utils';
@@ -34,9 +36,22 @@ interface InboxItem {
   status: string;
 }
 
+interface DisciplineItem {
+  id: string;
+  name: string;
+  type: 'discipline' | 'value';
+  description: string | null;
+}
+
+interface DisciplineLog {
+  discipline_id: string;
+  completed: number;
+}
+
 // ── Steps config ─────────────────────────────────────────────────────
 const STEPS = [
   { id: 'capture', label: 'Capture Sweep', icon: Inbox },
+  { id: 'disciplines', label: 'Discipline Review', icon: Target },
   { id: 'reflection', label: 'Evening Reflection', icon: Sun },
   { id: 'complete', label: 'Day Complete', icon: Moon },
 ];
@@ -49,6 +64,8 @@ export default function ShutdownPage() {
   // Data
   const [dailyNote, setDailyNote] = useState<DailyNote | null>(null);
   const [inboxItems, setInboxItems] = useState<InboxItem[]>([]);
+  const [disciplines, setDisciplines] = useState<DisciplineItem[]>([]);
+  const [disciplineLogs, setDisciplineLogs] = useState<DisciplineLog[]>([]);
   // Form state
   const [captureInput, setCaptureInput] = useState('');
   const [capturedCount, setCapturedCount] = useState(0);
@@ -68,9 +85,12 @@ export default function ShutdownPage() {
   useEffect(() => {
     async function load() {
       try {
-        const [noteRes, inboxRes] = await Promise.all([
-          fetch(`/api/daily-notes?date=${todayStr()}`),
+        const today = todayStr();
+        const [noteRes, inboxRes, discRes, logsRes] = await Promise.all([
+          fetch(`/api/daily-notes?date=${today}`),
           fetch('/api/inbox'),
+          fetch('/api/disciplines'),
+          fetch(`/api/disciplines/logs?date=${today}`),
         ]);
 
         const noteData = await noteRes.json();
@@ -89,6 +109,12 @@ export default function ShutdownPage() {
             ? inboxData.filter((i: InboxItem) => i.status === 'pending')
             : []
         );
+
+        const discData = await discRes.json();
+        setDisciplines(Array.isArray(discData) ? discData : []);
+
+        const logsData = await logsRes.json();
+        setDisciplineLogs(Array.isArray(logsData) ? logsData : []);
 
       } catch (err) {
         console.error('Failed to load shutdown data', err);
@@ -156,8 +182,8 @@ export default function ShutdownPage() {
 
   // ── Mark final step complete when reached ───────────────────────────
   useEffect(() => {
-    if (step === 2) {
-      setCompletedSteps((prev) => new Set(prev).add(2));
+    if (step === 3) {
+      setCompletedSteps((prev) => new Set(prev).add(3));
     }
   }, [step]);
 
@@ -252,8 +278,146 @@ export default function ShutdownPage() {
           </div>
         );
 
-      // ── Step 1: Evening Reflection ──────────────────────────────
-      case 1:
+      // ── Step 1: Discipline Review ─────────────────────────────
+      case 1: {
+        const habitDisciplines = disciplines.filter(d => d.type === 'discipline');
+        const valueDisciplines = disciplines.filter(d => d.type === 'value');
+        const completedCount = disciplines.filter(d =>
+          disciplineLogs.some(l => l.discipline_id === d.id && l.completed)
+        ).length;
+
+        const toggleDiscipline = async (discId: string) => {
+          const existing = disciplineLogs.find(l => l.discipline_id === discId);
+          const newCompleted = existing ? !existing.completed : true;
+
+          // Optimistic update
+          setDisciplineLogs(prev => {
+            const without = prev.filter(l => l.discipline_id !== discId);
+            return [...without, { discipline_id: discId, completed: newCompleted ? 1 : 0 }];
+          });
+
+          try {
+            const res = await fetch('/api/disciplines/logs', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ discipline_id: discId, date: todayStr(), completed: newCompleted ? 1 : 0 }),
+            });
+            if (!res.ok) throw new Error('Failed to save');
+          } catch {
+            // Rollback
+            setDisciplineLogs(prev => {
+              const without = prev.filter(l => l.discipline_id !== discId);
+              if (existing) return [...without, existing];
+              return without;
+            });
+          }
+        };
+
+        const renderToggle = (d: DisciplineItem) => {
+          const isComplete = disciplineLogs.some(l => l.discipline_id === d.id && l.completed);
+          return (
+            <button
+              key={d.id}
+              onClick={() => toggleDiscipline(d.id)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left ${
+                isComplete
+                  ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700'
+                  : 'bg-background border border-border hover:border-primary/30'
+              }`}
+            >
+              <span className={`w-5 h-5 rounded flex items-center justify-center flex-shrink-0 ${
+                isComplete ? 'bg-green-500' : 'border-2 border-border'
+              }`}>
+                {isComplete && <Check size={12} className="text-white" />}
+              </span>
+              <div className="min-w-0">
+                <span className={`text-sm ${isComplete ? 'text-foreground font-medium' : 'text-foreground'}`}>
+                  {d.name}
+                </span>
+                {d.description && (
+                  <p className="text-xs text-muted mt-0.5">{d.description}</p>
+                )}
+              </div>
+            </button>
+          );
+        };
+
+        return (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                <Target size={24} className="text-emerald-500" />
+                Discipline Review
+              </h2>
+              <p className="text-muted mt-1">
+                Review how you showed up today.
+              </p>
+            </div>
+
+            {disciplines.length === 0 ? (
+              <div className="bg-card rounded-xl border border-border p-6 text-center">
+                <p className="text-muted text-sm">No active disciplines to review.</p>
+                <p className="text-muted text-xs mt-1">Add them from the Disciplines page.</p>
+              </div>
+            ) : (
+              <>
+                {/* Progress */}
+                <div className="bg-card rounded-xl border border-border p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-foreground">Today&apos;s progress</span>
+                    <span className="text-sm font-semibold text-primary">
+                      {completedCount}/{disciplines.length}
+                    </span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-border overflow-hidden">
+                    <div
+                      className="h-full bg-green-500 rounded-full transition-all duration-300"
+                      style={{ width: `${disciplines.length > 0 ? (completedCount / disciplines.length) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Habit disciplines */}
+                {habitDisciplines.length > 0 && (
+                  <div className="bg-card rounded-xl border border-border p-5">
+                    <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <Target size={16} className="text-emerald-500" />
+                      Disciplines
+                    </h3>
+                    <div className="space-y-1.5">
+                      {habitDisciplines.map(renderToggle)}
+                    </div>
+                  </div>
+                )}
+
+                {/* Value disciplines */}
+                {valueDisciplines.length > 0 && (
+                  <div className="bg-card rounded-xl border border-border p-5">
+                    <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <Compass size={16} className="text-amber-500" />
+                      Values &mdash; Were you this today?
+                    </h3>
+                    <div className="space-y-1.5">
+                      {valueDisciplines.map(renderToggle)}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            <button
+              onClick={() => advance()}
+              className="px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-hover flex items-center gap-2 font-medium transition-colors"
+            >
+              <ChevronRight size={16} />
+              Continue
+            </button>
+          </div>
+        );
+      }
+
+      // ── Step 2: Evening Reflection ──────────────────────────────
+      case 2:
         return (
           <div className="space-y-6">
             <div>
@@ -353,8 +517,8 @@ export default function ShutdownPage() {
           </div>
         );
 
-      // ── Step 2: Day Complete ─────────────────────────────────────
-      case 2:
+      // ── Step 3: Day Complete ─────────────────────────────────────
+      case 3:
         return (
           <CompletionCelebration
             title="Shutdown Complete"
